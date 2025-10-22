@@ -1,0 +1,700 @@
+
+        /* --- Universal Button Height Consistency Fix --- */
+        /* Tinitiyak nito na ang <a> (Rate Now) at <button> (View Rating) ay may parehong taas */
+        .action-btn {
+            height: 40px; 
+            display: flex; /* Ginagamit para sa vertical centering */
+            align-items: center; /* Ginagamit para sa vertical centering */
+            justify-content: center;
+            box-sizing: border-box; /* Tinitiyak na kasama sa height ang padding */
+        }
+        
+        /* --- Modal Styling for Stars --- */
+        /* Binago ang size para mas malaki (1.8em sa JS/HTML) at mas sumunod sa design */
+        #viewStars i {
+            font-size: 1em; /* Adjusted back to standard for consistency, will use parent size */
+            vertical-align: middle;
+        }
+        
+        /* --- Custom Modal Style for Report/Rating Modals (Parent Container) --- */
+        .report-modal-content {
+            position: relative; /* Kailangan ito para gumana ang position: absolute ng close button */
+        }
+        
+        /* --- NEW CLOSE BUTTON STYLE for Service Rating Details Modal --- */
+        .modal-content .close-btn, .report-modal-content .report-close-btn, .report-modal-content .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: normal;
+            cursor: pointer;
+            line-height: 1;
+            position: absolute;
+            top: 25px;
+            right: 25px;
+        }
+        
+        /* Tiyakin na ang .report-close-btn ay may tamang hover effect */
+        .modal-content .close-btn:hover, .modal-content .close-btn:focus,
+        .report-modal-content .report-close-btn:hover, .report-modal-content .report-close-btn:focus {
+            color: #333;
+            text-decoration: none;
+        }
+
+
+        .primary-btn {
+            background-color: #E87722; 
+            color: #fff;
+            padding: 10px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.0em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-decoration: none;
+        }
+        
+        /* Tiyakin na ang default links sa dropdown ay tama ang padding at color */
+        .dropdown-menu a {
+            color: #333; /* Default text color */
+            padding: 10px 15px;
+            display: block; /* Ensures the whole li is clickable */
+            text-decoration: none;
+        }
+        .dropdown-menu li:hover a {
+            background-color: #f0f0f0; 
+        }
+
+        /* --- UPDATED STYLE: Edit Rating Icon to Blue (#004A80) --- */
+        .dropdown-menu li .edit-rating-link i {
+            color: #004A80; /* Alazima Blue for Edit */
+            margin-right: 8px; /* Added spacing for text */
+        }
+        
+        /* --- UPDATED STYLE: WhatsApp Icon to Green (#25D366) with text spacing --- */
+        .dropdown-menu li .whatsapp-link i {
+            color: #25D366; /* WhatsApp Green */
+            margin-right: 8px; /* Added spacing for text */
+            font-size: 1em; /* Normal size */
+        }
+
+        /* Ensure the Report Issue icon remains visible */
+        .dropdown-menu li .report-link i {
+            color: #B32133; /* Red for Report Issue */
+            margin-right: 8px; /* Added spacing for text */
+        }
+
+
+        
+/* --- ADDED CSS FOR INFO HOVER POP-UP --- */
+.history-header-container {
+    display: flex; /* Para magkatabi ang title at button */
+    justify-content: space-between; /* Itulak ang button sa dulo */
+    align-items: flex-start; /* Ayusin ang vertical alignment */
+    gap: 20px;
+}
+
+.info-button {
+    background-color: transparent;
+    color: #004a80; /* Blue color for distinction */
+    border: 2px solid #004a80;
+    padding: 8px 15px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    height: 40px;
+    flex-shrink: 0;
+}
+
+.info-button:hover {
+    background-color: #004a80;
+    color: white;
+}
+
+/* HOVER CONTAINER AND TOOLTIP STYLES */
+.info-button-container {
+    position: relative; /* Base for absolute positioning ng tooltip */
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.info-tooltip-content {
+    /* DEFAULT STATE: Hiding the tooltip */
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.3s, visibility 0.3s;
+    
+    /* Positioning and Styling */
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 20px;
+    max-width: 550px; /* BINAGO KO ITO: Nilakihan ang width */
+    width: max-content;
+    
+    /* Absolute Positioning */
+    position: absolute;
+    z-index: 1000;
+    top: 100%; /* Ilagay sa ibaba ng button */
+    right: 0; /* Align sa kanan ng button container */
+    margin-top: 10px; /* Spacing mula sa button */
+    text-align: left;
+}
+
+.info-tooltip-content h3 {
+    font-size: 1.5em;
+    font-weight: 700;
+    color: #004a80;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+}
+
+.info-tooltip-content ul {
+    list-style: disc; /* Ginawang bulleted list */
+    padding-left: 20px;
+    margin: 0 0 20px 0;
+}
+
+.info-tooltip-content li {
+    font-size: 1em;
+    color: #333;
+    margin-bottom: 10px;
+    line-height: 1.6;
+    border-left: none; /* Inalis ang lines na nasa gilid */
+    padding-left: 0;
+}
+
+/* Target the UL within the LI to remove its bullets and padding */
+.info-tooltip-content li ul {
+    list-style: none; /* Inalis ang bullets sa sub-list */
+    padding-left: 0; /* Inalis ang padding sa sub-list */
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.info-tooltip-content li ul li {
+    font-size: 0.95em;
+    margin-bottom: 5px;
+    color: #555;
+    line-height: 1.5;
+}
+
+.info-tooltip-content li strong {
+    color: #B32133;
+    font-weight: 700; /* Tiyakin na naka-bold */
+}
+
+.info-tooltip-content li.completed-info {
+    border-left: none; /* Inalis ang lines na nasa gilid */
+}
+
+/* HOVER EFFECT - Ito ang magpapakita ng pop-up */
+.info-button-container:hover .info-tooltip-content {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Arrow (optional) */
+.info-tooltip-content::after {
+    content: "";
+    position: absolute;
+    bottom: 100%; /* Top edge of the tooltip */
+    right: 20px; /* Position ng arrow */
+    border-width: 8px;
+    border-style: solid;
+    border-color: transparent transparent #fff transparent; /* White arrow */
+    filter: drop-shadow(0 -2px 1px rgba(0, 0, 0, 0.05)); /* Subtle shadow */
+}
+
+/* ---------------------------------------------------------------------- */
+/* --- NEW STYLES FOR RATINGS SUMMARY TAB (Ratings Summary) --- */
+/* ---------------------------------------------------------------------- */
+
+/* --- NEW STYLE: Reference Number Highlight (B32133 - Red) --- */
+/* Target ang Reference No. sa List items at sa Modals */
+
+.ref-no-value,
+.report-ref-value,
+#viewRefNo,
+#submitted-ref-number {
+    color: #B32133;
+    font-weight: 700 !important; /* Siguraduhin na bold */
+}
+/* Ensure the value itself is bold in the list item */
+.appointment-details .ref-no-detail .ref-no-value {
+    font-weight: 700;
+}
+/* Para sa Ratings List item header */
+.rating-list-item .item-header strong span {
+    color: #B32133;
+    font-weight: 700;
+}
+
+.summary-container {
+    padding: 20px; 
+    background-color: #fff; 
+    border-radius: 12px; 
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08); 
+    /* BINAGO: Tinanggal ang max-width para maging full width ng parent */
+    /* max-width: 900px; <--- INALIS ITO */
+    margin: 0 0 20px 0; 
+}
+
+.summary-container h3 {
+    margin-top: 0; 
+    color: #004A80; 
+    border-bottom: 2px solid #E87722; 
+    padding-bottom: 10px; 
+    margin-bottom: 25px;
+    font-size: 1.6em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* New wrapper to hold the card and the breakdown list side-by-side */
+.summary-content-wrapper {
+    display: flex;
+    flex-wrap: wrap; 
+    gap: 30px; 
+    justify-content: space-between; 
+    width: 100%; /* Tiyakin na full width ito */
+}
+
+.rating-summary-container {
+    display: flex;
+    justify-content: space-between; /* Siguraduhin na pantay ang pagitan */
+    gap: 15px; /* Magdagdag ng maliit na espasyo sa pagitan ng card */
+    padding: 10px 0; /* Dagdag na espasyo sa paligid ng container */
+}
+
+/* --- MODIFIED: Summary Card Design (Basic/Plain) --- */
+.summary-card {
+    margin-top: 0; 
+    padding: 25px 30px; 
+    border: 1px solid #ddd; /* Mas subtle na border */
+    border-radius: 12px; 
+    background: #fff; /* Plain white background */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08); /* Mas simple na shadow */
+    font-size: 1.1em;
+    
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    flex: 1 1 350px; 
+    max-width: 450px; /* Inadjust para mag-occupy ng mas malaking space sa full-width container */
+    transition: none; 
+}
+
+.summary-card .value {
+    font-size: 2.2em; /* Palakihin ang font ng numero/rating */
+    font-weight: bold;
+}
+
+.summary-card i.bx {
+    font-size: 2.5em; /* Palakihin ang icon */
+}
+.summary-card:hover {
+    transform: none; 
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.average-rating-display {
+    display: flex; 
+    align-items: flex-end; 
+    gap: 10px; 
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee; 
+    color: #333;
+    width: 100%; 
+    justify-content: center;
+}
+
+.average-rating-display i {
+    font-size: 2.5em; 
+    color: #FFC107; 
+    text-shadow: 0 0 5px rgba(255, 193, 7, 0.5); 
+}
+
+.average-rating-display .rating-value {
+    font-size: 2.5em; 
+    font-weight: 800; 
+    color: #004A80; 
+    line-height: 1;
+}
+
+.average-rating-label {
+    font-size: 1.1em; 
+    font-weight: 600; 
+    color: #E87722; 
+    /* BINAGO: Pinaliit ang margin-bottom (15px -> 8px) */
+  
+    /* BINAGO: Inalis ang padding-top (2px -> 0) */
+    padding-top: 0;   
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.8;
+    margin-top: 1.5px !important;    /* Bawasan ang top space */
+    margin-bottom: 1.5px !important; /* Bawasan ang bottom space */
+}
+/* --- NEW: Stats Grid Container Style (Replaces summary-stats) --- */
+.stats-grid-container {
+    width: 100%; 
+    max-width: 350px;
+    display: grid;
+    /* Gumamit ng 3 columns para sa 3 tiles */
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 15px; /* Spacing sa pagitan ng tiles */
+    padding-top: 20px;
+    border-top: 1px solid #eee; /* Separator para sa stats section */
+}
+
+/* --- NEW: Individual Stat Tile Style --- */
+.stat-tile {
+    /* Gawing column ang content (Icon, Value, Label) */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 10px 5px;
+    border-radius: 8px;
+    background-color: #f7f7f7; /* Light grey background */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    /* Tiyakin na ang font size ay tama */
+    font-size: 0.85em;
+    line-height: 1.2;
+}
+
+.tile-icon-group {
+    font-size: 1.5em; /* Mas maliit na icon kaysa sa dating 1.5em */
+    margin-bottom: 5px;
+}
+
+.tile-value {
+    font-weight: 800;
+    font-size: 1.3em; /* Pinakamalaking font para sa value */
+    color: #004A80;
+    margin-bottom: 2px;
+}
+
+.tile-value small {
+    font-size: 0.7em; /* Maliit na 'Stars' text */
+    font-weight: 600;
+    color: #555;
+}
+
+.tile-label {
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    font-size: 0.7em;
+    line-height: 1;
+}
+
+/* --- Color Coding para sa bawat Tile --- */
+
+/* Rated Services (Greenish/Check) */
+.rated-services-tile .tile-icon-group i,
+.rated-services-tile .tile-value {
+    color: #00A86B; 
+}
+.rated-services-tile {
+    border-bottom: 3px solid #00A86B; /* Accent color sa ilalim */
+}
+
+/* Highest Rating (Gold/Medal) */
+.highest-rating-tile .tile-icon-group i,
+.highest-rating-tile .tile-value {
+    color: #FFC107; 
+}
+.highest-rating-tile {
+    border-bottom: 3px solid #FFC107;
+}
+
+/* Awaiting Rating (Red/Hourglass) */
+.awaiting-rating-tile .tile-icon-group i,
+.awaiting-rating-tile .tile-value {
+    color: #B32133; 
+}
+.awaiting-rating-tile {
+    border-bottom: 3px solid #B32133;
+}
+/* --- END NEW STATS STYLES --- */
+
+
+/* --- MODIFIED: Style for Breakdown List Container --- */
+.breakdown-container {
+    flex: 1 1 400px; 
+    padding: 20px; /* Increased padding */
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    background-color: #fff; /* Ensure white background for contrast */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.breakdown-container h4 {
+    margin-top: 0; 
+    color: #004A80; /* Primary blue for title */
+    border-bottom: 2px solid #E87722; 
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+    font-size: 1.4em; /* Slightly larger title for breakdown */
+    font-weight: 700;
+}
+
+
+/* --- MODIFIED: Style for Breakdown List --- */
+.ratings-breakdown-list {
+    list-style: none; 
+    padding-left: 0; 
+    margin-top: 0; 
+}
+
+.ratings-breakdown-list li {
+    margin-bottom: 0; /* Removed margin */
+    padding: 15px 0; /* Increased padding */
+    border-bottom: 1px solid #f0f0f0; /* Softer solid line separator */
+    font-size: 1.05em;
+    color: #333;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.2s;
+}
+
+.ratings-breakdown-list li:hover {
+    background-color: #fcfcfc;
+}
+
+.ratings-breakdown-list li:last-child {
+    border-bottom: none; 
+}
+
+.ratings-breakdown-list strong {
+    font-weight: 600; 
+    color: #004A80;
+}
+
+.ratings-breakdown-list span {
+    font-weight: 600; /* Bolder rating value */
+    color: #E87722; 
+    text-align: right;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+/* Add a star icon to the rating value */
+.ratings-breakdown-list span:not(.no-ratings)::before {
+    content: "\e989"; /* boxicon code for solid star */
+    font-family: 'boxicons';
+    font-size: 1.1em;
+    color: #FFC107;
+}
+
+.ratings-breakdown-list .no-ratings {
+    color: #777;
+    font-style: italic;
+    font-weight: 500;
+}
+/* Remove the star icon for "No Ratings Yet" */
+.ratings-breakdown-list .no-ratings::before {
+    content: none !important; 
+}
+
+
+/* Media Query for smaller screens (like mobile) */
+@media (max-width: 768px) {
+    .summary-content-wrapper {
+        flex-direction: column; 
+        gap: 20px; 
+    }
+    .summary-card, .breakdown-container {
+        max-width: 100%; 
+        flex: 1 1 100%; 
+    }
+    .stats-grid-container {
+        grid-template-columns: repeat(3, 1fr); 
+        max-width: 100%;
+        gap: 10px;
+    }
+    /* Ensure the summary card adjusts on mobile */
+    .summary-card {
+        max-width: 100%;
+    }
+}
+
+/* ---------------------------------------------------------------------- */
+/* --- END STYLES FOR RATINGS SUMMARY TAB --- */
+/* ---------------------------------------------------------------------- */
+
+/* --- ADDED: Styling for the Detailed Ratings List below the Summary Box --- */
+.detailed-ratings-list-container {
+    margin-top: 30px; /* Spacing mula sa Summary Card/Breakdown box */
+    padding: 25px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    background-color: #fff; /* White background for clean look */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.detailed-ratings-list-container h4 {
+    color: #004A80; /* Primary blue for title */
+    border-bottom: 2px solid #E87722; 
+    padding-bottom: 10px;
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.4em;
+    font-weight: 700;
+}
+
+/* --- KEY CHANGE: Enhanced Card-Style for Individual Rating Items --- */
+.rating-list-item {
+    /* Removed the old dashed border */
+    border-bottom: none; 
+    
+    /* New Card Styling */
+    padding: 20px; /* Dagdagan ang internal padding */
+    margin-bottom: 15px; /* Spacing sa pagitan ng items */
+    border: 1px solid #e0e0e0; /* Subtle border */
+    border-radius: 8px; /* Rounded corners */
+    background-color: #ffffff; /* White background */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05); /* Soft shadow for lift */
+    transition: all 0.3s ease; /* Smooth transition for hover */
+}
+
+/* Optional: Hover effect to make it more interactive */
+.rating-list-item:hover {
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1); /* Slightly stronger shadow on hover */
+    transform: translateY(-2px); /* Slight lift effect */
+}
+
+
+.rating-list-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start; /* Aligned to the top */
+    margin-bottom: 10px;
+    gap: 15px; /* Spacing between title and action buttons */
+}
+
+.item-title-group {
+    flex-grow: 1;
+}
+
+.item-header strong {
+    font-size: 1.1em;
+    color: #333;
+    font-weight: 600;
+}
+
+/* NEW: Styles for the button group in the list item */
+.item-actions-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+.view-appointment-btn {
+    background-color: #004A80; /* Alazima Blue (for View Appointment) */
+    color: #fff;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    font-size: 0.9em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.view-rating-btn {
+    background-color: #E87722; /* Alazima Orange (for View Rating) */
+    color: #fff;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    font-size: 0.9em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.view-appointment-btn:hover {
+    background-color: #003366;
+}
+.view-rating-btn:hover {
+    background-color: #c9621b;
+}
+
+
+.item-rating-stars {
+    color: #FFC107;
+    font-size: 1.2em;
+}
+
+.item-feedback {
+    font-style: italic;
+    color: #555;
+    background-color: #f7f9fc;
+    padding: 15px;
+    border-left: 5px solid #007bff;
+    border-radius: 5px;
+    line-height: 1.6;
+    margin-top: 15px;
+    font-size: 0.95em;
+}
+
+.item-details {
+    font-size: 0.9em;
+    color: #777;
+    margin-top: 10px;
+}
+
+.item-details span:not(:last-child)::after {
+    content: "|";
+    margin: 0 8px;
+    color: #ccc;
+}
+
+/* Para sa mobile view (optional adjustment) */
+@media (max-width: 768px) {
+    .detailed-ratings-list-container {
+        padding: 15px;
+        margin-top: 20px; 
+    }
+    .item-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    .item-actions-group {
+        justify-content: flex-start;
+    }
+    /* Ensure the card style looks good on mobile */
+    .rating-list-item {
+        margin-bottom: 15px; 
+    }
+}
+
+

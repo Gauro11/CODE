@@ -1,0 +1,832 @@
+
+/* --- CSS Variables for new Modal styles --- */
+:root {
+    --container-color: #fefefe; /* White background for modal content */
+    --title-color1: #333;       /* Dark text color for title */
+    --z-fixed: 1000;           /* High z-index for fixed elements */
+}
+
+/* --- Core Layout & Global Helpers --- */
+.view-all-container {
+text-align: center;
+margin-top: 20px;
+}
+.view-all-link {
+display: inline-block;
+padding: 10px 20px;
+background-color: #f1f1f1;
+color: #333;
+text-decoration: none;
+font-weight: bold;
+border-radius: 8px;
+transition: background-color 0.3s, color 0.3s;
+border: 1px solid #ddd;
+}
+.view-all-link:hover {
+background-color: #e0e0e0;
+color: #000;
+}
+
+/* --- FIX: Full Sidebar Scroll and Visibility (Adjusted for Page Scrolling) --- */
+.dashboard__sidebar {
+    min-height: 100vh; 
+    overflow-y: auto; 
+    padding-bottom: 20px; 
+}
+.dashboard__sidebar .sidebar__menu {
+    padding-bottom: 30px; 
+}
+/* End of Sidebar FIX */
+
+
+.dashboard__content {
+overflow-y: visible; 
+height: auto; 
+min-height: 100vh;
+}
+
+/*==================== MODAL STYLES ====================*/
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, .5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity .3s ease, visibility .3s ease;
+    z-index: var(--z-fixed);
+}
+
+.modal.show {
+    visibility: visible;
+    opacity: 1;
+}
+
+.modal__content {
+    background-color: var(--container-color);
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, .2);
+    text-align: center;
+    width: 90%;
+    max-width: 400px; /* ORIGINAL: Ito ang default size */
+    transform: translateY(-50px);
+    transition: transform .3s ease;
+}
+
+.modal.show .modal__content {
+    transform: translateY(0);
+}
+
+.modal__title {
+    color: var(--title-color1);
+    margin-bottom: 1.5rem;
+}
+
+.modal__actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+/* --- END MODAL STYLES --- */
+
+
+/* --- NEW/UPDATED: Base Style for ALL Input Fields/Selects/Textareas --- */
+input[type="text"], 
+input[type="email"],
+input[type="password"],
+input[type="date"],
+input[type="number"],
+select,
+textarea {
+    width: 100%; 
+    padding: 10px; 
+    border: 1px solid #ccc; /* Default border color */
+    border-radius: 5px;
+    box-sizing: border-box; /* Mahalaga para sa padding */
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* --- UPDATED: Orange Focus Style for All Input Fields/Filters --- */
+input:focus, 
+select:focus,
+textarea:focus {
+    border-color: #ff9800 !important; /* Orange focus color (primary color ninyo) */
+    box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.4); /* Orange shadow */
+    outline: none; /* Tanggalin ang default outline ng browser */
+}
+/* --- END UPDATED FOCUS STYLE --- */
+
+
+.dashboard__summary {
+overflow-y: auto;
+max-height: 500px;
+padding-right: 15px;
+}
+.dashboard__summary::-webkit-scrollbar { width: 10px; }
+.dashboard__summary::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 5px; }
+.dashboard__summary::-webkit-scrollbar-thumb { background: #888; border-radius: 5px; }
+.dashboard__summary::-webkit-scrollbar-thumb:hover { background: #555; }
+/* --- Back to Top button with smooth transition and better look --- */
+#backToTopBtn {
+display: none;
+position: fixed;
+bottom: 25px;
+right: 25px;
+z-index: 99;
+border: none;
+outline: none;
+background-color: #3f51b5;
+color: white;
+cursor: pointer;
+padding: 12px 18px;
+border-radius: 50px;
+font-size: 1rem;
+font-weight: bold;
+text-transform: uppercase;
+letter-spacing: 0.5px;
+box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+transition: background-color 0.3s, transform 0.2s, opacity 0.3s;
+opacity: 0;
+text-decoration: none;
+align-items: center;
+justify-content: center;
+}
+#backToTopBtn:hover {
+background-color: #5363b9;
+transform: translateY(-3px);
+}
+#backToTopBtn i {
+margin-right: 8px;
+font-size: 1.2em;
+}
+
+/* --- Summary Cards - NEW INLINE 4-CARD LAYOUT --- */
+.summary-cards-container {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding-bottom: 20px;
+    /* Siguraduhin na ang cards ay naka-stretch sa lapad ng container */
+    justify-content: space-between; 
+}
+
+/* ================================================= */
+/* === START: UPDATED SUMMARY CARD STYLES (GRADIENT - MORE CONTRAST) === */
+.summary-card {
+    /* Base styles */
+    border-radius: 12px; /* Smoother corners */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2); /* Stronger shadow */
+    padding: 20px 25px; 
+    flex: 1 1 200px; 
+    max-width: 250px; 
+    min-width: 200px; 
+    
+    /* NEW: Gradient Background Setup - Changed angle to 150deg for better visibility */
+    background: linear-gradient(150deg, var(--start-color), var(--end-color));
+    color: white; /* White text for contrast */
+    border: none; /* Remove all borders */
+    
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Center content vertically */
+    min-height: 120px; 
+    transition: transform 0.3s ease, box-shadow 0.3s ease; 
+}
+.summary-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+}
+
+/* 1. Total Client (Pink/Magenta Gradient - MORE CONTRAST) */
+.summary-card.total-clients { 
+    --start-color: #ff4081; /* Pink/Magenta */
+    --end-color: #8c0054;   /* DARKER Pink/Purple */
+}
+/* 2. Total Bookings (Light Blue/Cyan Gradient - MORE CONTRAST) */
+.summary-card.total-bookings { 
+    --start-color: #40c4ff; /* Light Blue/Cyan */
+    --end-color: #0056b3;   /* DARKER Blue */
+}
+/* 3. No. of Concerns (Red Gradient - MORE CONTRAST) */
+.summary-card.concerns { 
+    --start-color: #ff5252; /* Bright Red */
+    --end-color: #8b0000;   /* DARK RED */
+}
+/* 4. No. of Employees (Green Gradient - MORE CONTRAST) */
+.summary-card.active-employees { 
+    --start-color: #4CAF50; /* Green */
+    --end-color: #1b5e20;   /* DARK GREEN */
+}
+
+/* Update Card Content Structure for better alignment */
+.summary-card .card-content {
+    position: relative;
+    z-index: 2; /* Make sure content is above the icon */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 80px; 
+}
+
+/* Mga bagong styles para sa loob ng stat card */
+.summary-card .stat-title {
+    margin-bottom: 5px;
+    font-size: 1.2em; /* Bigger title/label */
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9); /* Lighter text for label */
+    text-align: left; /* GINAWANG LEFT-ALIGNED (Ayon sa huling request) */
+}
+.summary-card .stat-value {
+    margin: 0;
+    font-size: 3.5rem; /* Bigger count number */
+    font-weight: bold;
+    color: white;
+    line-height: 1;
+    text-align: left; /* Ilipat sa kaliwa ang number */
+}
+
+/* Palitan ang icon size at position para sa simpleng stat card */
+.summary-card .card-icon {
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    transform: translateY(-50%);
+    font-size: 5em; /* Mas malaking icon */
+    color: rgba(255, 255, 255, 0.3); /* Pale white for background effect */
+    z-index: 1;
+}
+
+/* Temporary fix for icon types - Use boxicons that match the image intent */
+.summary-card.total-clients .card-icon { 
+    font-size: 5em;
+    right: 10px;
+}
+.summary-card.total-bookings .card-icon { 
+    font-size: 5em;
+    right: 10px;
+}
+.summary-card.concerns .card-icon { 
+    font-size: 5em;
+    right: 10px;
+}
+.summary-card.active-employees .card-icon { 
+    font-size: 5em;
+    right: 10px;
+}
+/* === END: UPDATED SUMMARY CARD STYLES === */
+/* ================================================= */
+
+
+/* --- Additional Cards Row for the other two cards (Pending/Quick Actions) --- */
+.additional-cards-row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding-bottom: 20px;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.summary-card.pending-requests-detail,
+.summary-card.quick-actions-detail {
+    flex: 1 1 45%; 
+    max-width: 48%; /* Hatiin sa dalawa ang lapad */
+    min-width: 300px;
+    min-height: 200px; 
+    
+    /* Revert to border-top style for the detail cards */
+    border-top: 8px solid;
+    border-left: none; /* Remove border-left */
+    
+    /* Override gradient card background */
+    background: #ffffff;
+    color: #333;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.summary-card.pending-requests-detail {
+    border-top-color: #FF9800; 
+}
+.summary-card.quick-actions-detail {
+    border-top-color: #4CAF50;
+}
+/* Re-introduce styles for the content inside these specific cards */
+.summary-card.pending-requests-detail h3,
+.summary-card.quick-actions-detail h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #333;
+}
+.summary-card.pending-requests-detail .feedback-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #FF9800;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    padding: 12px 20px;
+    transition: background-color 0.3s, transform 0.2s;
+    margin-top: 10px;
+}
+.summary-card.pending-requests-detail .feedback-link:hover {
+    background-color: #e68900;
+    transform: translateY(-2px);
+}
+.summary-card.quick-actions-detail a {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    background-color: #4CAF50;
+    padding: 10px 15px;
+    border-radius: 5px;
+    text-decoration: none;
+    color: white;
+    font-size: 0.95em;
+    transition: background-color 0.3s, transform 0.2s;
+    margin-bottom: 10px;
+}
+.summary-card.quick-actions-detail a:hover {
+    background-color: #45a049;
+    transform: translateY(-2px);
+}
+.summary-card.quick-actions-detail a i {
+    margin-right: 10px;
+    font-size: 1.2rem;
+    color: white;
+}
+.summary-card.quick-actions-detail ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* --- NEW: Booking Breakdown and Recent Activity Row --- */
+.booking-activity-row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+/* Para mag-full width ang booking breakdown kapag nawala ang activity section */
+.booking-breakdown-container {
+    flex: 1 1 100%; /* Mag-occupy ng buong lapad */
+    min-width: 300px;
+    padding-top: 20px;
+}
+
+/* --- NEW CSS for Side-by-Side Breakdown CONTENT (Re-applied) --- */
+.breakdown-content-wrapper {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap; /* Para mag-stack sa mobile */
+    margin-bottom: 20px; 
+}
+.booking-breakdown-container {
+    border-top: 8px solid #6A5ACD; /* Keeping the container border-top for consistency */
+}
+/* *** NEW STYLES FOR INNER BREAKDOWN SECTIONS *** */
+.breakdown-section {
+    flex: 1 1 45%; 
+    min-width: 250px; 
+
+    margin-bottom: 0;
+    padding: 15px; 
+    border: 1px solid #e0e0e0; 
+    border-radius: 8px; 
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); 
+    background-color: #f7f7f7; 
+    border-bottom: none; 
+    padding-bottom: 15px; 
+    transition: transform 0.2s;
+}
+.breakdown-section:hover {
+    transform: translateY(-2px);
+    box-shadow: 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.breakdown-section h4 {
+    color: #333; 
+    font-size: 1.3em; 
+    margin-top: 0;
+    margin-bottom: 12px;
+    border-left: 5px solid #6A5ACD; 
+    padding-left: 10px;
+    font-weight: 700;
+}
+.breakdown-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.breakdown-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 5px; 
+    font-size: 1em;
+    color: #555;
+    border-bottom: 1px solid #eeeeee; 
+}
+.breakdown-list li:last-child {
+    border-bottom: none;
+}
+.breakdown-list li .service-name {
+    font-weight: 500;
+    color: #555;
+}
+.breakdown-list li .count {
+    font-weight: bold;
+    color: #007bff; 
+}
+/* Ensure the placeholder item doesn't show a border or content */
+.breakdown-list li.placeholder-item {
+    visibility: hidden; 
+    height: 38px; 
+    border-bottom: none;
+    padding: 0;
+}
+/* --- END NEW CSS for Side-by-Side Breakdown CONTENT --- */
+
+.total-summary {
+    border-top: 2px solid #ddd;
+    padding-top: 15px;
+    margin-top: 10px;
+    font-size: 1.1em;
+    color: #333;
+    text-align: right;
+    font-weight: bold;
+}
+.total-summary span {
+    color: #B32133;
+    font-size: 1.2em;
+}
+
+/* --- END: Booking Breakdown and Recent Activity Row --- */
+
+/* --- Dashboard Containers --- */
+.dashboard__container {
+background-color: #ffffff;
+border-radius: 15px;
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+padding: 30px;
+margin-top: 30px;
+margin-bottom: 20px;
+}
+.dashboard__container.upcoming-container {
+    border-top: 8px solid #007bff; 
+}
+/* New style para sa container-title */
+.container-title {
+    font-size: 1.5em;
+    color: #333;
+    margin-bottom: 20px; 
+    text-align: left;
+    display: flex; 
+    align-items: center; 
+    gap: 12px; 
+}
+.container-title i {
+    font-size: 1.5em; 
+    color: #007bff; 
+}
+/* TANGGALIN ANG BOLD SA TITLE */
+.container-title strong {
+    font-weight: 600; /* Regular font weight */
+}
+
+/* --- Performance Overview Chart Styles --- */
+.dashboard__container.performance-overview-container {
+    border-top: 8px solid #4CAF50; /* Green border for performance */
+}
+
+/* KINAKAILANGAN: NEW FLEX CONTAINER FOR CHARTS */
+.charts-row {
+    display: flex;
+    flex-wrap: wrap; /* Mag-stack kapag maliit ang screen */
+    gap: 25px;
+    margin-top: 10px; /* ADJUSTED: Reduced space above the charts row */
+    
+}
+
+/* KINAKAILANGAN: NEW HALF-WIDTH CLASS FOR CHART CONTAINERS (INIBA SA 40%) */
+.dashboard__container.chart-half-width {
+    flex: 1 1 40%; /* Ginamit ang 40% para lumiit pa */
+    max-width: 50%; /* Nilimitahan ang maximum width sa 40% */
+    min-width: 280px; /* Inadjust ang min-width para hindi masyadong maipit */
+    padding: 20px; 
+    margin-top: 0; 
+}
+/* KINAKAILANGAN: CHART-CONTAINER FOR INNER CHART */
+.chart-container {
+    width: 100%;
+    /* 450px height sa desktop, magre-responsive sa mobile */
+    height: 350px; /* Ibinaba ang height para bumagay sa smaller width */
+    margin: 10px 0;
+}
+
+
+/* --- Appointment List Items (Updated Layout) */
+/* ... (Rest of the CSS remains unchanged) ... */
+
+/* KINAKAILANGAN: CLIENT MANAGEMENT SPECIFIC CSS */
+
+/* Container for Cards and Actions */
+.client-management-header {
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+/* Summary Cards for Client Management (Using existing .summary-cards-container) */
+.client-management-summary-card {
+    /* Replicate summary-card styles, adjust colors if needed */
+    flex: 1 1 200px; 
+    max-width: 250px;
+    min-width: 200px;
+}
+/* 1. Total Registered Clients (Blue) */
+.summary-card.client-management-summary-card.total-registered { 
+    --start-color: #2196F3; 
+    --end-color: #0D47A1;   
+}
+/* 2. Active Clients (Green) */
+.summary-card.client-management-summary-card.active-clients { 
+    --start-color: #8BC34A; 
+    --end-color: #33691E;   
+}
+/* 3. New Clients This Month (Purple) */
+.summary-card.client-management-summary-card.new-clients { 
+    --start-color: #9C27B0; 
+    --end-color: #4A148C;   
+}
+/* 4. Clients with Open Concern (Red/Orange) */
+.summary-card.client-management-summary-card.open-concerns { 
+    --start-color: #FF5722; 
+    --end-color: #BF360C;   
+}
+
+/* Button for Add Client (Quick Action) */
+/* TANGGALIN ANG CSS PARA DITO */
+.add-client-btn-container {
+    text-align: right;
+    margin-bottom: 0; /* Adjust margin if the button is removed */
+}
+.add-client-btn {
+    /* TANGGALIN ANG STYLE PARA DITO */
+}
+.add-client-btn:hover {
+    /* TANGGALIN ANG STYLE PARA DITO */
+}
+.add-client-btn i {
+    /* TANGGALIN ANG STYLE PARA DITO */
+}
+
+/* Client Table Styles */
+.client-table-container {
+    overflow-x: auto;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.client-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 700px; /* Ensure scroll on smaller screens */
+}
+
+.client-table th, .client-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.client-table th {
+    background-color: #f8f8f8;
+    color: #333;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.9em;
+}
+
+.client-table tr:hover {
+    background-color: #f5f5f5;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.8em;
+    font-weight: bold;
+    color: white;
+    text-align: center;
+}
+.status-active {
+    background-color: #4CAF50; /* Green */
+}
+.status-inactive {
+    background-color: #F44336; /* Red */
+}
+.status-pending {
+    background-color: #FFC107; /* Yellow */
+    color: #333;
+}
+
+/* Search Bar and Filter (Simple layout) */
+.client-filter-controls {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    align-items: center; /* NEW: Align items vertically */
+    justify-content: space-between; /* NEW: Spread items apart */
+}
+
+/* --- NEW CSS FOR SEARCH/FILTER ICONS --- */
+/* Parent container na may position: relative para sa absolute positioning ng icon */
+.client-filter-controls .filter-input-wrapper,
+.client-filter-controls .filter-select-wrapper {
+    flex: 1 1 200px;
+    max-width: 300px;
+    position: relative; /* Mahalaga para sa icon position */
+}
+
+/* Base style para sa icon na naka-absolute position sa loob ng wrapper */
+.client-filter-controls .filter-input-wrapper i,
+.client-filter-controls .filter-select-wrapper i {
+    position: absolute;
+    top: 50%;
+    left: 12px; /* Dito ilalagay ang icon */
+    transform: translateY(-50%);
+    color: #6c757d; /* Grayish icon color */
+    font-size: 1.2rem;
+    pointer-events: none; /* Hindi mag-block ng click sa input */
+    z-index: 5;
+}
+
+/* Adjust padding ng input at select para hindi matakpan ng icon ang text */
+.client-filter-controls .filter-input,
+.client-filter-controls .filter-select {
+    padding-left: 40px !important; /* Dagdagan ang left padding (40px) */
+}
+/* --- END NEW CSS FOR SEARCH/FILTER ICONS --- */
+
+
+/* Idagdag ang mga input/select dito para mag-inherit ng focus style */
+.client-filter-controls .filter-input,
+.client-filter-controls .filter-select {
+    /* TANGGALIN: flex: 1 1 200px; at max-width: 300px; - Ilipat sa wrapper */
+}
+
+/* === NEW CSS for CLIENT TABLE BOOKINGS COLUMN === */
+/* I-center ang header text */
+.client-table th.bookings-column {
+    text-align: center; 
+}
+/* I-center ang cell content para sa data */
+.client-table td.bookings-column {
+    text-align: center;
+    font-weight: 500;
+}
+
+/* --- NEW CSS for No Results Row (Parang sa image na gusto niyo) --- */
+.client-table tr#noResultsRow td {
+    color: #6c757d !important; /* Light Gray/Muted */
+    font-weight: 400 !important; /* Regular/Less Bold */
+    font-style: italic; /* Gawing italic */
+    padding: 20px;
+}
+/* --- END NEW CSS --- */
+
+/* --- UPDATED: CSS for ARCHIVES BUTTON (DARK ORANGE - Finalized) --- */
+.archives-btn-container {
+    flex: 0 0 auto;
+    margin-left: auto;
+}
+.archives-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #FF9800; /* Dark Orange/Amber (Primary Accent Color) */
+    color: white; /* White text */
+    padding: 8px 14px; /* BAHAGYANG LINAKHAN ANG TAAS (8px top/bottom) */
+    border-radius: 5px; 
+    font-size: 0.9rem; /* Tamang Font Size */
+    font-weight: 600; /* Bahagyang mas bold */
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2); 
+    transition: background-color 0.3s, transform 0.2s;
+}
+.archives-btn:hover {
+    background-color: #e68900; /* Darker Orange on hover */
+    transform: translateY(-1px);
+}
+/* BINAGO: Ginawang White ang icon */
+.archives-btn i {
+    margin-right: 6px; 
+    font-size: 1em; 
+    color: white; /* UPDATED: White icon */
+}
+/* --- END UPDATED ARCHIVES BUTTON CSS --- */
+
+/* --- NEW CSS FOR ARCHIVED CLIENTS MODAL --- */
+#archivedClientsModal .modal__content {
+    max-width: 900px; /* Mas malaking modal para sa table */
+    width: 95%;
+    text-align: left;
+}
+#archivedClientsModal .modal__title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #333; /* Darker title color */
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+}
+#archivedClientsModal .close-modal-btn {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    cursor: pointer;
+    color: #555;
+    transition: color 0.2s;
+}
+#archivedClientsModal .close-modal-btn:hover {
+    color: #333;
+}
+/* Table styles for the modal */
+.archived-client-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+/* Dinagdag ito para ma-specify na center alignment lang sa Action TD */
+.archived-client-table td.action-cell {
+    text-align: center;
+}
+.archived-client-table th, .archived-client-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    font-size: 0.95em;
+}
+.archived-client-table th {
+    background-color: #f5f5f5;
+    color: #333;
+    font-weight: 600;
+}
+.archived-client-table tr:last-child td {
+    border-bottom: none;
+}
+/* Action buttons sa table ng modal (BINAGO: Pinaliitan at INI-CENTER) */
+.archived-client-table .action-buttons {
+    display: flex;
+    gap: 5px; /* Pinaliitan ang gap */
+    justify-content: center; /* UPDATED: I-center ang buttons */
+}
+.archived-client-table .action-buttons button {
+    border: none;
+    padding: 6px 10px; /* Pinaliitan ang padding */
+    border-radius: 4px; /* Pinaliitan ang border-radius */
+    cursor: pointer;
+    color: white;
+    font-size: 0.9em; /* Pinaliitan ang font size */
+    transition: opacity 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.archived-client-table .action-buttons button:hover {
+    opacity: 0.85;
+}
+.archived-client-table .action-buttons button i {
+    margin-right: 0; /* TINANGGAL ANG MARGIN RIGHT PARA SA SINGLE ICON */
+    font-size: 1.1em; /* BAHAGYANG LINAKHAN ANG ICON */
+}
+/* Style para lang sa Restore Button */
+.archived-client-table .action-buttons .restore-btn {
+    background-color: #4CAF50; /* Green */
+    padding: 8px 12px; /* ADJUSTED PADDING FOR SINGLE ICON */
+}
+/* --- END ARCHIVED CLIENTS MODAL CSS --- */
+
+/* --- END: CLIENT MANAGEMENT SPECIFIC CSS --- */
+

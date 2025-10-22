@@ -1,0 +1,310 @@
+/* Custom Styles for Professional Issue Modal (Dito inilagay para hindi galawin ang FR_design.css) */
+/* MODIFIED: Gawing BLACK ang color at #007bff ang border-bottom */
+#viewReportedIssueModal .modal-title-issue-details {
+    font-size: 1.5rem;
+    color: #000; /* BLACK */ 
+    border-bottom: 2px solid #007bff; /* #007bff */
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+/* END MODIFIED */
+
+#viewReportedIssueModal .issue-ref-header {
+    /* background-color: #f7f7f7; <--- TINANGGAL ITO */
+    padding: 10px 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 1.1em;
+    font-weight: 500;
+}
+
+#viewReportedIssueModal .issue-ref-header p {
+    margin: 0;
+    font-weight: normal; 
+}
+#viewReportedIssueModal .issue-ref-header strong {
+    font-weight: 700;
+    color: #000;
+    font-size: 1em;
+}
+
+#viewReportedIssueModal .ref-no-value-large {
+    color: #B32133;
+    font-weight: 600; 
+    font-size: 1em; 
+}
+
+#viewReportedIssueModal .issue-details-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px 30px;
+    margin-bottom: 20px;
+    padding: 0 10px;
+}
+
+#viewReportedIssueModal .issue-details-grid .grid-separator {
+    grid-column: 1 / -1; 
+    border: 0;
+    border-top: 1px solid #eee; 
+    margin: 5px 0 10px 0; 
+}
+
+#viewReportedIssueModal .detail-group label {
+    display: block;
+    font-size: 0.9em;
+    color: #777;
+    margin-bottom: 3px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+#viewReportedIssueModal .detail-group .detail-value {
+    font-size: 1.05em;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+}
+
+#viewReportedIssueModal .issue-type-section,
+#viewReportedIssueModal .issue-description-section,
+#viewReportedIssueModal .issue-attachments-section,
+#viewReportedIssueModal .issue-status-section {
+    padding: 10px 10px 15px 10px;
+    margin-bottom: 10px;
+}
+
+#viewReportedIssueModal .issue-type-section label,
+#viewReportedIssueModal .issue-description-section label,
+#viewReportedIssueModal .issue-attachments-section label,
+#viewReportedIssueModal .issue-status-section label {
+    display: block;
+    font-size: 0.9em;
+    color: #000; /* GINAWANG BLACK */
+    margin-bottom: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+#viewReportedIssueModal .issue-type-tag {
+    display: inline-block;
+    background-color: #fcfcfc; 
+    color: #444; 
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 1em;
+    margin: 0;
+    border: 1px solid #ddd; 
+}
+
+#viewReportedIssueModal .description-content {
+    background-color: #fcfcfc;
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 6px;
+    line-height: 1.6;
+    color: #444;
+    white-space: pre-wrap;
+    margin: 0;
+}
+
+#viewReportedIssueModal .attachments-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+#viewReportedIssueModal .attachment-button-link {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 15px;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+    text-decoration: none !important;
+}
+
+#viewReportedIssueModal .active-attachment-link {
+    background-color: #f1f1f1; 
+    border: 1px solid #ddd;
+    color: #000; 
+    font-weight: 500; 
+}
+
+#viewReportedIssueModal .active-attachment-link:hover {
+    background-color: #e6e6e6; 
+}
+
+#viewReportedIssueModal .disabled-attachment-link {
+    background-color: #f1f1f1;
+    border: 1px dashed #ddd;
+    color: #999 !important;
+}
+
+#viewReportedIssueModal .issue-status-section {
+    padding-top: 20px;
+    margin-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+#viewReportedIssueModal .status-tag {
+    padding: 6px 12px;
+    border-radius: 5px;
+    font-weight: 700;
+    color: white; /* Default White, overriden below if needed */
+    font-size: 1em;
+    display: inline-block;
+}
+
+/* New Status Tag Classes for script use */
+#viewReportedIssueModal .status-pending {
+    
+    background-color: #e87722; /* Amber/Warning color */
+    color: white; /* WHITE text for better contrast on yellowish background */
+}
+
+#viewReportedIssueModal .status-completed {
+    /* Ito ang gagamitin natin for 'Resolved' */
+    background-color: #00A86B; /* Green */
+    color: white;
+}
+
+#viewReportedIssueModal .status-unknown {
+     /* Hindi na gagamitin */
+     background-color: #777; /* Gray */
+}
+
+
+#viewReportedIssueModal .issue-modal-footer {
+    text-align: right;
+    margin-top: 30px;
+}
+
+/* === BAGONG CSS PARA SA ISSUE LIST (PROFESSIONAL DESIGN) === */
+
+.issue-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.issue-list-item {
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.issue-list-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.issue-list-item .item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed #f0f0f0;
+}
+
+.issue-list-item .item-title-group strong {
+    font-size: 1.15em;
+    color: #333;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.issue-list-item .item-title-group span {
+    color: #B32133;
+    font-weight: 600;
+}
+
+
+.issue-list-item .issue-type-label {
+    /* MODIFIED: Light gray background at PURE BLACK font */
+    display: inline-block;
+    background-color: #f7f7f7; /* Light Gray Background */
+    color: #000; /* *** GINAWANG PURE BLACK *** */
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-weight: 600;
+    margin-top: 5px;
+    border: 1px solid #e0e0e0; /* Pale border for definition */
+}
+
+.issue-list-item .item-actions-group {
+    display: flex;
+    gap: 10px;
+}
+
+.issue-list-item .item-actions-group button {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 600;
+    transition: background-color 0.3s;
+}
+
+.issue-list-item .view-issue-btn {
+    background-color: #007bff;
+    color: white;
+}
+
+.issue-list-item .view-issue-btn:hover {
+    background-color: #0056b3;
+}
+
+.issue-list-item .contact-btn {
+    background-color: #25d366; /* WhatsApp Green */
+    color: white;
+}
+
+.issue-list-item .contact-btn:hover {
+    background-color: #128c7e;
+}
+
+.issue-list-item .item-details {
+    display: flex;
+    gap: 15px;
+    font-size: 0.9em;
+    color: #777;
+    margin-bottom: 10px;
+}
+
+.issue-list-item .item-details span {
+    display: inline-flex;
+    align-items: center;
+}
+
+.issue-list-item .item-details .status-tag {
+    /* Uses existing .status-tag styles but adjusted padding for list view */
+    padding: 3px 8px; 
+    font-size: 1em;
+}   
+
+.issue-list-item .item-feedback {
+    background-color: #f7f9fc;
+    border-left: 5px solid #007bff;
+    padding: 15px;
+    border-left: 5px solid #007bff;
+    border-radius: 5px;
+    color: #555;
+
+    font-size: 0.95em;
+    line-height: 1.6;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+/* === END BAGONG CSS === */
+

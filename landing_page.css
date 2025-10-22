@@ -1,0 +1,1401 @@
+    @import url('https://fonts.googleapis.com/css2?family=Ga+Maamli&family=KoHo:ital,wght@300;400;500;600&display=swap');
+
+
+    :root {
+        --header-height: 80px;
+    
+        /*---------- z-index vals ----------*/
+        --z-tooltip: 10;
+        --z-fixed: 100;
+    }
+
+
+
+    /*---------- all ----------*/
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    html{
+        scroll-behavior: smooth;
+    }
+
+    body, input, textarea {
+        font-family: var(--body-font);
+        font-size: var(--normal-font-size);
+    }
+
+    p {
+        line-height: 1.6rem;
+        text-align: justify;
+        font-size: var(--h3-font-size);
+    }
+
+
+    /*---------- button ----------*/
+    .buttons{
+        padding-top: 3rem;
+    }
+    .buttons button {
+        margin-right: 1rem; /* Add space to the right of each button */
+    }
+
+    .buttons button:last-child {
+        margin-right: 0; /* Remove margin from the last button */
+    }
+
+
+
+
+
+
+
+    /*---------- navigation ----------*/
+    .header {
+        width: 100%;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: var(--z-fixed);
+        padding: 0 1.5rem;
+        background-color: rgba(255, 255, 255, 1);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        transform: translateY(0);
+        opacity: 1;
+        pointer-events: auto;
+        backdrop-filter: blur(0px);
+        transition: background-color 0.4s ease,
+                    box-shadow 0.4s ease,
+                    transform 0.6s ease-out,
+                    opacity 0.6s ease-out,
+                    backdrop-filter 0.4s ease;
+    }
+
+    .header.header-hidden {
+        transform: translateY(calc(-1 * var(--header-height) + 80px));
+        opacity: 0.1;
+        box-shadow: none;
+        pointer-events: none;
+        background-color: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(5px);
+    }
+
+    .header.header-visible {
+        transform: translateY(0);
+        opacity: 1;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        pointer-events: auto;
+        background-color: rgba(255, 255, 255, 1);
+        backdrop-filter: blur(0px);
+    }
+
+    .header.header-visible .nav__list a,
+    .header.header-visible .nav__buttons button {
+        pointer-events: auto;
+    }
+
+    .scroll-header {
+        box-shadow: 0 1px 4px hsla(0, 0%, 15%, .1);
+        background-color: rgba(255, 255, 255, 0.9);
+    }
+
+    
+    /* In your landing_page.css file */
+
+/* ---------- navigation ---------- */
+.nav {
+    height: calc(var(--header-height) + 1rem);
+    display: flex;
+    /* CHANGE: We'll adjust how space is distributed */
+    /* REMOVE: justify-content: space-between; */ /* Remove this, as we'll use 'gap' more explicitly */
+    align-items: center;
+    
+    /* ADD/MODIFY THESE LINES: */
+    gap: 2rem; /* This sets a default gap between ALL direct flex items within .nav */
+    /* You might still want a global padding */
+    padding: 0 1.5rem; /* Adjust as needed */
+    
+    transition: .4s;    
+}
+
+.nav__list {
+    display: flex;
+    column-gap: 2rem;
+    list-style: none;
+    /* REVIEW THIS: If .nav has a global gap, this might not be needed or needs adjustment */
+    /* If you still want more space between the logo and the nav links, keep it or adjust. */
+    /* Experiment: Try removing it first and see the effect. */
+    margin-left: 2rem; /* Adjusted from 5rem - experiment with this value */
+    /* Remove the margin-right we added previously */
+    /* margin-right: 2rem; */ /* REMOVE THIS LINE */
+}
+
+
+
+
+
+
+    .scroll-header .nav {
+        height: var(--header-height);
+    }
+    .nav__buttons {
+        display: flex;
+        gap: 10px;
+        /* KEEP THIS: This will push the buttons to the very right, taking up all available space */
+        margin-left: auto;
+    }
+    
+
+    .button--header {
+        padding: 6px 14px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        border-radius: 20px;
+        font-weight: var(--font-medium);
+        white-space: nowrap;
+        box-sizing: border-box;
+    }
+
+    .button--sign-up {
+        background-color: #D35400;
+        color: var(--container-color);
+        border: 1px solid black;
+    }
+    .button--sign-up:hover {
+        background-color: var(--first-color);
+        opacity: 0.9;
+    }
+
+    .button--login {
+        background-color: #ffffff;
+        color: black;
+        border: 1px solid black;
+    }
+    .button--login:hover {
+        background-color: #D35400;
+        color: var(--container-color);
+    }
+
+    .nav__logo img {
+        height: 40px;
+        width: auto;
+        object-fit: contain;
+        border-radius: 5px;
+        margin-right: 10px;
+        pointer-events: none;
+        cursor: default;
+    }
+
+    .nav__list {
+        display: flex;
+        column-gap: 2rem;
+        list-style: none;
+    }
+
+    .nav__link {
+        position: relative;
+        color: var(--title-color);
+        font-weight: var(--font-medium);
+        transition: color 0.4s ease;
+        text-decoration: none;
+    }
+    .nav__link:hover {
+        color: var(--first-color);
+    }
+
+    .nav__link:before {
+        content: '';
+        position: absolute;
+        bottom: -0.2rem;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background-color: var(--first-color);
+        border-radius: 50%;
+        transition: width 0.4s ease;
+    }
+    .nav__link:hover:before,
+    .active-link:before {
+        width: 100%;
+    }
+    .active-link {
+        color: var(--first-color);
+    }
+
+    .nav__toggle {
+        display: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: var(--title-color1);
+    }
+
+    /*---------- scroll fix for anchor links ----------*/
+    section {
+        scroll-margin-top: var(--header-height);
+    }
+
+    /*---------- services section padding fix ----------*/
+    .services-section {
+        padding-top: calc(60px + var(--header-height));
+    }
+
+
+
+
+
+/* Add a new media query, or adjust an existing one, for an intermediate size */
+@media screen and (max-width: 850px) { /* Example breakpoint, try 900px, 800px, etc. */
+    .button--header {
+        padding: 5px 10px; /* Slightly reduced padding */
+        font-size: 0.8rem; /* Slightly smaller font */
+    }
+    .nav__buttons {
+        gap: 8px; /* Slightly reduced gap between buttons */
+    }
+}
+
+/* Your existing 768px media query will then apply further reductions */
+@media screen and (max-width: 768px) {
+    /* ... your existing mobile styles for buttons ... */
+    .button--header {
+        padding: 6px 10px; /* Bahagyang bawasan ang padding dito */
+        font-size: 0.8rem; /* Bahagyang paliitin ang font size dito */
+    }
+    .nav__buttons {
+        gap: 8px; /* Set consistent smaller gap */
+    }
+}
+
+/* Your existing 480px media query will handle the smallest size */
+@media screen and (max-width: 480px) {
+    .button--header {
+        padding: 4px 8px;
+        font-size: 0.75rem;
+    }
+    .nav__buttons {
+        gap: 5px;
+    }
+}
+
+
+
+/* Add a new media query, or adjust an existing one, for an intermediate size */
+@media screen and (max-width: 850px) { /* Example breakpoint, try 900px, 800px, etc. */
+    .button--header {
+        padding: 5px 10px; /* Slightly reduced padding */
+        font-size: 0.8rem; /* Slightly smaller font */
+    }
+    .nav__buttons {
+        gap: 8px; /* Slightly reduced gap between buttons */
+    }
+}
+
+/* Your existing 768px media query will then apply further reductions */
+@media screen and (max-width: 768px) {
+    /* ... your existing mobile styles for buttons ... */
+    .button--header {
+        padding: 6px 10px; /* Bahagyang bawasan ang padding dito */
+        font-size: 0.8rem; /* Bahagyang paliitin ang font size dito */
+    }
+    .nav__buttons {
+        gap: 8px; /* Set consistent smaller gap */
+    }
+}
+
+/* Your existing 480px media query will handle the smallest size */
+@media screen and (max-width: 480px) {
+    .button--header {
+        padding: 4px 8px;
+        font-size: 0.75rem;
+    }
+    .nav__buttons {
+        gap: 5px;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /*---------- mobile navigation ----------*/
+    @media screen and (max-width: 768px) {
+        .nav__menu {
+            position: fixed;
+        top: 0; /* Or adjust based on header height, e.g., var(--header-height) */
+        right: -100%; /* Start hidden off-screen to the right */
+        width: 20%; /* Adjust width of the mobile menu */ /* <--- This width might be too small! */
+        height: 100vh; /* Full viewport height */
+        background-color: var(--container-color); /* White background for the menu */
+        box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+        padding: 3rem 1.5rem 0; /* Padding for the menu content */
+        transition: right 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Smooth slide-in/out */
+        z-index: var(--z-tooltip); /* Ensure it's above content but below fixed header */
+        display: flex;
+        flex-direction: column; /* Stack items vertically */
+        row-gap: 1.5rem; /* Space between menu items */
+        }
+
+        .nav__list {
+            flex-direction: column; /* Stack navigation links vertically */
+            row-gap: 1.5rem; /* Space between vertical links */
+            padding-top: 1rem; /* Space from the top of the menu */
+        
+        }
+
+        .show-menu .nav__list {
+            display: flex; /* O 'block' kung hindi mo gusto ang flexbox stacking */
+            /* You might want to adjust other properties like padding or alignment here if needed */
+        }
+
+        .nav__link {
+            font-size: 1rem;
+            color: var(--title-color1);
+            padding: 0.5rem 0;
+        }
+
+        .show-menu {
+            right: 0;
+        }
+
+        .nav__toggle {
+            display: block;
+            margin-left: auto;
+            order: 2;
+        }
+
+        .nav {
+            justify-content: space-between;
+            padding: 0 1.5rem;
+        }
+
+        .nav__buttons {
+            order: 3;
+            margin-left: 1rem;
+        }
+
+        .nav__logo {
+            order: 1;
+        }
+
+        .header {
+            padding: 0 1rem;
+        }
+
+        .nav__close {
+            display: block;
+            position: absolute;
+            top: 1rem;
+            right: 1.5rem;
+            font-size: 2rem;
+            cursor: pointer;
+            color: var(--title-color1);
+        }
+    }
+
+    @media screen and (max-width: 480px) {
+        .nav__menu {
+            width: 85%;
+            padding: 2.5rem 1rem;
+        }
+
+        .button--header {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+        }
+
+        .nav__buttons {
+            gap: 5px;
+        }
+    }
+
+    .button--header {
+        padding: 6px 14px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        border-radius: 20px;
+        font-weight: var(--font-medium);
+        white-space: nowrap; /* Ito ang nagsisigurong one-liner ang text */
+        box-sizing: border-box; /* Mahalaga para sa tamang sukat */
+    }
+
+    .button--sign-up {
+        background-color: #D35400;
+        color: var(--container-color); /* White text */
+        border: 1px solid black;
+    }
+
+    .button--sign-up:hover {
+        background-color: var(--first-color); /* Keep the same for hover or a slightly darker orange */
+        opacity: 0.9; /* Slight opacity change on hover */
+    }
+
+    .button--login {
+        background-color:#ffffff; /* White background */
+        color: black; /* Orange text */
+        border: 1px solid black;
+    }
+
+    .button--login:hover {
+        background-color: #D35400;
+        color: var(--container-color); /* White text on hover */
+    }
+
+
+
+
+    .nav__logo img {
+        height: 40px; /* Adjust logo size */
+        width: auto; /* Set a fixed width to prevent stretching */
+        object-fit: contain; /* Ensure the logo maintains its aspect ratio */
+        border-radius: 5px; /* Optional: Add rounded corners */
+        margin-right: 10px; /* Remove any margin right */
+        pointer-events: none;
+        cursor: default;
+    }
+
+
+    .nav__list {
+        display: flex;
+        column-gap: 2rem;
+        list-style: none;
+        row-gap: 1.8rem; 
+    }
+    .nav__link {
+        position: relative;
+        color: var(--title-color);
+        font-weight: var(--font-medium);
+        transition: color 0.4s ease;
+        text-decoration: none;
+    }
+    .nav__link:hover {
+        color: var(--first-color);
+    }
+    /* Find this rule and UPDATE IT */
+    .nav__toggle {
+        display: none; /* Hidden by default for larger screens */
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: var(--title-color1); /* Use --title-color1 for black */
+    }
+
+    /* ADD these new rules for mobile navigation */
+    @media screen and (max-width: 768px) { /* Adjust breakpoint as needed for when menu collapses */
+        .nav__menu {
+            position: fixed;
+            top: 0; /* Or adjust based on header height, e.g., var(--header-height) */
+            right: -100%; /* Start hidden off-screen to the right */
+            width: 20%; /* Adjust width of the mobile menu */
+            height: 100vh; /* Full viewport height */
+            background-color: var(--container-color); /* White background for the menu */
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+            padding: 3rem 1.5rem 0; /* Padding for the menu content */
+            transition: right 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Smooth slide-in/out */
+            z-index: var(--z-tooltip); /* Ensure it's above content but below fixed header */
+            display: flex;
+            flex-direction: column; /* Stack items vertically */
+            row-gap: 1.5rem; /* Space between menu items */
+        }
+
+        .nav__list {
+            flex-direction: column; /* Stack navigation links vertically */
+            row-gap: 1.5rem; /* Space between vertical links */
+            padding-top: 1rem; /* Space from the top of the menu */
+        }
+
+        .nav__link {
+            font-size: var(--h3-font-size); /* Make links larger for touch */
+            color: var(--title-color1); /* Black color for links */
+           
+        }
+
+        /* Show menu */
+        .show-menu {
+            right: 0; /* Slide in from the right */
+        }
+
+        /* Hide the regular nav list on small screens */
+        .nav__list {
+            display: none; /* Hidden by default until show-menu is active */
+        }
+
+        /* Ensure .nav__toggle is visible on smaller screens */
+        .nav__toggle {
+            display: block; /* Make the hamburger icon visible */
+            margin-left: auto; /* Push it to the far right next to buttons */
+            order: 2; /* Adjust order if needed relative to buttons, 2 for after logo */
+        }
+
+        /* Adjust nav to accommodate the toggle and buttons */
+        .nav {
+            justify-content: space-between; /* Space out logo, toggle, and buttons */
+            padding: 0 1rem; /* Ensure consistent padding */
+        }
+
+        /* Place buttons correctly on mobile */
+        .nav__buttons {
+            order: 3; /* Place buttons after toggle */
+            margin-left: 1rem; /* Add some space between toggle and buttons */
+            gap: 8px;
+        }
+
+        .nav__logo {
+            order: 1; /* Keep logo first */
+        }
+
+        /* Adjust header padding for mobile to ensure toggle is visible */
+        .header {
+            padding: 0 1rem;
+        }
+
+        .button--header {
+            padding: 6px 10px; /* Bahagyang bawasan ang padding dito */
+            font-size: 0.8rem; /* Bahagyang paliitin ang font size dito */
+        }
+
+        .nav {
+            justify-content: space-between;
+            padding: 0 0.5rem; /* Bawasan ang padding ng nav kung masyadong masikip */
+        }
+    }
+
+    /* For very small screens, you might want to adjust the button size or stacking */
+    @media screen and (max-width: 480px) {
+        .nav__menu {
+            width: 85%; /* Make mobile menu wider on very small screens */
+        }
+
+        .button--header {
+            padding: 4px 8px; /* Smaller buttons */
+            font-size: 0.75rem;
+        }
+
+        .nav__buttons {
+            gap: 5px; /* Reduce gap between buttons */
+        }
+    }
+    .nav__link:before {
+        content: '';
+        position: absolute;
+        bottom: -0.2rem;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background-color: var(--first-color);
+        border-radius: 50%;
+        transition: width 0.4s ease;
+    }
+    .nav__link:hover:before,
+    .active-link:before {
+        width: 100%;
+    }
+    .active-link {
+        color: var(--first-color);
+    }
+
+
+
+    /* Mobile Close Button (X Icon) */
+    .nav__close {
+        display: none; /* Hidden by default */
+        font-size: 2rem; /* Larger for better tap target */
+        cursor: pointer;
+        color: var(--title-color1); /* Black color */
+    }
+
+    /* ADD these new rules for mobile navigation */
+    @media screen and (max-width: 768px) { /* Adjust breakpoint as needed for when menu collapses */
+        /* ... other mobile menu styles ... */
+        /* Mobile Close Button */
+        .nav__close {
+            display: block; /* Show close button */
+            position: absolute;
+            top: 1rem;
+            right: 1.5rem;
+            font-size: 2rem;
+            cursor: pointer;
+            color: var(--title-color1);
+        }
+    }
+
+
+
+
+
+
+    /*---------- scroll ----------*/
+    .scroll-header{
+        box-shadow: 0 1px 4px hsla(0, 0%, 15%, .1);
+    }
+    .scroll-header .nav{
+        height: var(--header-height);
+    }
+
+
+
+
+
+
+
+
+
+
+    /*---------- home section ----------*/
+    .home {
+        height: 100vh; /* Keep this for default full viewport height */
+        min-height: 500px; /* Add a minimum height to ensure content is always visible, adjust as needed */
+        background: url('Home_bg.jpg') no-repeat center center / cover;
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed; /* Idagdag ito para mag-scroll ang background kasama ng content, at mas magandang effect */
+        position: relative;
+        overflow: hidden; /* Add this to prevent content from overflowing if any issues */
+    }
+
+
+    .home::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+        background-color: rgba(0, 0, 0, 0.4); 
+        z-index: 1;
+    }
+
+    .home .content {
+        position: relative; 
+        z-index: 2;
+        color: white;
+        padding: 0 5%; 
+        position: absolute; 
+        bottom: 11%; 
+        left: 5%; 
+        text-align: left;
+        width: 100%; 
+        max-width: 700px;
+    }
+
+    .home .content h1 {
+        font-size: 2.5em; 
+        line-height: 1.2;  
+        margin: 0;        
+        padding: 0;      
+        font-weight: 800; 
+    }
+
+
+    .home .content .buttons .button {
+        background-color: var(--first-color);
+        color: var(--container-color); 
+        font-size: 1rem; 
+        font-weight: bold; 
+        padding: 15px 30px;
+        border: solid 1px var(--container-color); 
+        border-radius: 5px; 
+        cursor: pointer; 
+        
+        
+        transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+        
+        font-family: var(--body-font); 
+
+        box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.15); 
+    } 
+
+
+    .home .content .buttons .button:hover {
+        background-color: #A64200; 
+        color: var(--container-color); 
+        border-color: var(--container-color);
+        transform: translateY(-3px);
+        box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.25); 
+    }
+
+
+
+
+    /*---------- about section ----------*/
+    :root {
+        --first-color: #D35400; 
+        --container-color: #ffffff; 
+        --body-font: 'Gill Sans', sans-serif;
+        --h1-font-size: 2.5em; 
+        --h3-font-size: 1.25rem; 
+        --normal-font-size: 1rem; 
+        --title-color1: #000000; 
+        --text-color: #333333; 
+        --font-medium: 700; 
+        --font-semibold: 600; 
+        --body-color: #F8F8F8; 
+    }
+
+    /*---------- about section ----------*/
+    .about {
+        background-color: var(--container-color); 
+        position: relative; 
+        padding:  0.5rem 0 5rem 0; 
+    }
+
+
+    .about * {
+        position: relative;
+        z-index: 2; 
+    }
+
+
+    .about__container {
+        display: grid;
+        grid-template-columns: 1fr 1.2fr;
+        gap: 3rem; 
+        align-items: center; 
+        max-width: 1100px; 
+        margin: 0 auto; 
+        padding: 0 1rem; 
+    }
+
+
+    .about-text {
+        text-align: left; 
+        color: var(--text-color); 
+    
+    }
+
+    .about-text h3 {
+        font-size: 55; 
+        color: var(--title-color1); 
+        margin-bottom: 0.5rem; 
+        text-transform: uppercase; 
+        font-weight: var(--font-medium);
+    }
+
+    .about-text h2 {
+        font-size:  2em;
+        color: var(--title-color1); 
+        line-height: 1.2;
+        margin-bottom: 1.5rem; 
+        font-weight: 300; 
+    }
+
+    .about-text p {
+        font-size: var(--normal-font-size); 
+        margin-bottom: 1rem; 
+        text-align: left; 
+        color: var(--text-color);
+    }
+
+    .about-text p strong {
+        font-weight: var(--font-medium);
+    }
+
+
+    .about-text .about__quote { 
+        font-size: var(--h3-font-size); 
+        font-style: italic; 
+        color: var(--first-color); 
+        margin-top: 1rem; 
+        margin-bottom: 1.5rem; 
+        text-align: left; 
+    }
+
+
+    .about-img {
+        display: flex;
+        justify-content: center; 
+        align-items: center; 
+        padding-top: 2rem; 
+    }
+
+    .about-img img {
+        max-width: 90%; 
+        height: auto;
+        border-radius: .75rem; 
+        box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.1); 
+    }
+
+
+    .about__title{
+        padding-top: .25rem;
+        color: var(--border-color); 
+        font-weight: var(--font-medium);
+        margin-bottom:1rem;
+        font-size: 17px;
+        line-height: 1.6rem;
+        text-align: justify;
+    }
+
+
+
+
+
+    @media screen and (max-width: 992px) { 
+        .about__container {
+            grid-template-columns: 1fr; 
+            gap: 2rem; 
+        }
+
+        .about-img {
+            order: -1; 
+            margin-bottom: 1rem; 
+        }
+    }
+
+    @media screen and (max-width: 576px) { 
+        .about {
+            padding: 4rem 0; 
+        }
+
+        .about__container {
+            padding: 0 1rem; 
+        }
+
+        .about-text h2 {
+            font-size: 1.8rem; 
+        }
+        
+        .about-text h3 {
+            font-size: 1.1rem; 
+        }
+
+        .about-text p, .about-text .about__quote {
+            font-size: 0.9rem; 
+        }
+    }
+
+
+
+
+
+
+    .services-section {
+        width: 100%;
+        text-align: center;
+        padding: 30px 0; /* Binago mula 60px to 30px */
+        background-color: #F8F8F8;
+        border-radius: 0;
+        box-shadow: none;
+        margin: 0; /* Keep margin at 0, adjust padding instead */
+        box-sizing: border-box;
+
+        /* ----- FIX FOR FIXED HEADER SCROLLING ----- */
+        /* Re-evaluate these values based on your header's final height and desired offset */
+        /* If your header is 5rem (80px), and you want 20px space below it, use 100px */
+        padding-top: .3rem; /* Gawing mas maliit na fixed padding */
+        margin-top: 0;
+        scroll-margin-top: calc(var(--header-height) + 0px); 
+    }
+
+
+    .section-title {
+        font-family: Arial, sans-serif;
+        font-size: 2em;
+        color: #000000; /* Dark gray for good contrast on the light background */
+        margin-top: 27px;
+        margin-bottom: 27px;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+
+    /* Services Container (holds the service cards) */
+    .services-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 25px;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+        box-sizing: border-box;
+    }
+
+    /* Service Card */
+    .service-card {
+        background-color: #FFFFFF; /* Pure white background for the individual cards*/
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        padding: 30px;
+        width: calc(20% - 20px);
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: left;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        font-family: Arial, sans-serif;
+    }
+
+    .service-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Icon Box (the light blue square behind the icon) */
+    .service-card .icon-box {
+        background-color: #DDEBF9; /* Very light, pastel blue for icon backgrounds*/
+        border-radius: 12px;
+        padding: 10px;
+        margin-bottom: 25px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 90px;
+        height: 90px;
+        flex-shrink: 0;
+        overflow: hidden;
+    }
+
+    /* Image inside Icon Box */
+    .service-card .icon-box img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: block;
+    }
+
+    .service-card h3 {
+        font-size: 1.5em;
+        color: #333;
+        margin-bottom: 10px;
+        text-align: center;
+        font-weight: bold;
+    }
+
+    .service-card .subtitle {
+        font-size: 0.9em;
+        color: #666;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+
+    .service-card p {
+        font-size: 0.9em;
+        color: #555;
+        line-height: 1.6;
+        margin-bottom: 15px;
+        text-align: center;
+        flex-grow: 1;
+    }
+
+    /* Hanapin ang rule na ito sa iyong CSS at palitan */
+    .book-now-btn {
+        background-color: #D35400; /* White background */
+        color: rgb(255, 255, 255); /* Black text color - pwedeng gawing orange, pero nakikita ko sa login mo black */
+        border: 1px solid black; /* Black border */
+        border-radius: 20px; /* Rounded corners (katulad ng login button) */
+        padding: 10px 20px; /* Adjust padding as needed, katulad ng button--header */
+        font-size: 0.9rem; /* Match font size with header buttons */
+        font-weight: var(--font-medium); /* Match font weight */
+        cursor: pointer;
+        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        white-space: nowrap; /* Ensure text stays on one line */
+        box-sizing: border-box; /* Crucial for correct sizing */
+    }
+
+    /* Idagdag o baguhin ang hover state para maging orange ang background at puti ang text */
+    .book-now-btn:hover {
+        background-color: #A64200; /* Orange background on hover */
+        color: #ffffff; /* White text on hover */
+        border: 1px solid rgb(0, 0, 0); /* Black border */
+        border-color: #000000; /* Optional: Make border orange too on hover */
+    }
+
+
+
+
+    /* Responsive adjustments for service cards */
+    @media screen and (max-width: 1200px) { /* For screens smaller than 1200px, but still large enough for 4 columns */
+        .service-card {
+            width: calc(25% - 20px); /* Adjust to 4 columns (100% / 4 = 25%) */
+        }
+    }
+
+    @media screen and (max-width: 992px) { /* For medium screens, e.g., tablets in landscape, 3 columns */
+        .service-card {
+            width: calc(33.33% - 20px); /* Adjust to 3 columns (100% / 3 = 33.33%) */
+        }
+    }
+
+    @media screen and (max-width: 768px) { /* For smaller tablets and larger phones, 2 columns */
+        .service-card {
+            width: calc(50% - 20px); /* Adjust to 2 columns (100% / 2 = 50%) */
+        }
+    }
+
+    @media screen and (max-width: 480px) { /* For small phones, 1 column */
+        .service-card {
+            width: calc(100% - 20px); /* Adjust to 1 column (100%) */
+            /* Optionally, you can add more padding or adjust font sizes for very small screens */
+            padding: 20px;
+        }
+
+        /* Adjust font sizes within the card for smaller screens if needed */
+        .service-card h3 {
+            font-size: 1.3em;
+        }
+        .service-card .subtitle, .service-card p {
+            font-size: 0.85em;
+        }
+        .book-now-btn {
+            padding: 8px 15px;
+            font-size: 0.8rem;
+        }
+    }
+
+
+
+    /* ========== CONTACT SECTION ========== */
+
+    .contact.section {
+        background-color: #004a80;
+        padding: 5rem 1rem;
+        text-align: center;
+        font-family: 'Poppins', sans-serif;
+    }
+
+
+    .contact__title {
+        color: #ffffff;
+        font-size: 2.25rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+
+    .contact__description {
+        color: #ffffff;
+        max-width: 100%;
+        margin: 0 auto 3rem;
+        font-size: 1rem;
+        line-height: 1;
+        white-space: nowrap;
+        text-align: center;
+        display: flex;
+        justify-content: center;
+    }
+
+
+
+    /* Container */
+    .contact__container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.25rem;
+    }
+
+    /* Address Card */
+    .contact__card--location {
+        background-color: #ffffff;
+
+        padding: 2rem;
+        border-radius: 0.75rem;
+        text-align: center;
+        max-width: 600px;
+        width: 100%;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #004a80;
+        line-height: 1.6;
+    }
+
+    .contact__card--location i {
+        color: #f37321;
+        font-size: 1.25rem;
+        margin-right: 0.5rem;
+    }
+
+    /* Inline container (holds phone & email side-by-side) */
+    .contact__inline-box {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        max-width: 600px;
+        width: 100%;
+    }
+
+    /* Phone and Email Cards */
+    .contact__card--inline {
+        flex: 1; /* Equal width */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        background-color: #ffffff;
+        padding: 1.25rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        font-weight: 700;
+        color: #004a80;
+        font-size: 1.15rem;
+        text-align: center;
+    }
+
+    /* Icon */
+    .contact__card--inline i {
+        color: #f37321;
+        font-size: 1.2rem;
+    }
+
+    /* Responsive */
+    @media screen and (max-width: 480px) {
+        .contact__inline-box {
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .contact__card--inline {
+            width: 100%;
+        }
+    }
+
+/*==================== REVIEWS SECTION ====================*/
+.reviews.section {
+    background-color: #DDEBF9; /* Updated: Light blue background */
+    padding: 6rem 0 4rem; /* Adjust padding as needed */
+    text-align: center;
+}
+
+.reviews .section-title {
+    margin-bottom: 3rem; /* Space below the title */
+    color: #00487E; /* Updated: Darker blue for title text */
+    max-width: 1500px; /* Limit width for better readability */
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0 1rem; /* Add horizontal padding for smaller screens */
+    font-size: var(--h1-font-size); /* Assuming h1-font-size is appropriate */
+    margin-top: -1.9rem;
+}
+
+.reviews__container.swiper { /* Added .swiper to be more specific */
+    max-width: 1200px; /* Max width for the carousel container on large screens */
+    margin-left: auto;
+    margin-right: auto;
+    
+    /* ***** KEY CHANGE 1: ADD PADDING FOR SMALL SCREENS ***** */
+    padding: 0 1.5rem; /* This adds space on the left/right edges for cards */
+    
+    position: relative; /* Needed for Swiper navigation arrows */
+    overflow: hidden; /* Important for Swiper functionality */
+}
+
+/* Individual Review Card */
+.review-card {
+    background-color: var(--container-color); /* White background for cards */
+    padding: 2rem;
+    border-radius: 1rem; /* Rounded corners */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    
+    /* --- Height Equalization and Content Distribution --- */
+    display: flex; /* Make the card a flex container */
+    flex-direction: column; /* Stack items vertically */
+    justify-content: space-between; /* Distribute space between items, pushing top/bottom content */
+    align-items: stretch; /* Allows children to stretch to card's width */
+    height: auto; /* Allow height to adjust based on min-height */
+    min-height: 350px; /* <--- ADJUST THIS VALUE as needed for your tallest content */
+                       /* This ensures all cards are at least this height. */
+    position: relative; /* Useful for absolute positioning inside if needed */
+}
+
+/* Base style for all review cards (for center-focused effect) */
+.reviews__container .swiper-slide {
+    transform: scale(0.95); /* Slightly smaller by default for non-active slides */
+    transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease; /* Smooth transition for scaling */
+    opacity: 0.7; /* Slightly faded for non-active slides */
+    margin: 0; /* Override any default Swiper slide margins */
+}
+
+/* Style for the active (center) slide */
+.reviews__container .swiper-slide-active {
+    transform: scale(1); /* Full size for the active slide */
+    opacity: 1; /* Fully opaque for the active slide */
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2); /* More prominent shadow for active slide */
+}
+
+
+.review-card .stars {
+    color: var(--first-color); /* Orange color for stars */
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    margin-top: 0; /* Ensure no unwanted top margin from flexbox */
+}
+
+.review-card .review-text {
+    font-size: var(--normal-font-size); /* Standard text size */
+    color: var(--text-color); /* Dark grey text */
+    margin-bottom: 1rem;
+    line-height: 1.5;
+    font-style: italic; /* Matches the screenshot */
+    flex-grow: 1; /* CRUCIAL: Makes the text content take up all available vertical space */
+    display: flex; /* Make it a flex container to center text */
+    align-items: center; /* Vertically center the text within its flex-grow area */
+    justify-content: center; /* Horizontally center the text if it's not wide enough */
+}
+
+.review-card .reviewer-name {
+    font-weight: var(--font-semibold);
+    color: var(--title-color1);
+    margin-top: 0.5rem; /* Space above name */
+}
+
+.review-card .reviewer-role {
+    font-size: 0.9rem;
+    color: #666; /* Lighter grey for role */
+}
+
+/* Swiper Navigation Arrows (Prev/Next Buttons) */
+.reviews__container .swiper-button-next,
+.reviews__container .swiper-button-prev {
+    color: var(--first-color); /* Orange arrows */
+    font-size: 2rem; /* Size of the arrows */
+    top: 50%; /* Center vertically */
+    transform: translateY(-50%);
+    width: 40px; /* Size of the hit area */
+    height: 40px;
+    background-color: rgba(255, 255, 255, 0.8); /* Slightly transparent white background */
+    border-radius: 50%; /* Circular background */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease, color 0.3s ease;
+    z-index: 10; /* Ensure arrows are above cards */
+}
+
+.reviews__container .swiper-button-prev {
+    left: 10px; /* Position from left */
+}
+
+.reviews__container .swiper-button-next {
+    right: 10px; /* Position from right */
+}
+
+.reviews__container .swiper-button-next:hover,
+.reviews__container .swiper-button-prev:hover {
+    background-color: var(--first-color); /* Orange background on hover */
+    color: var(--container-color); /* White arrow on hover */
+}
+
+/* Swiper Pagination Dots */
+.reviews__container .swiper-pagination {
+    position: relative; /* Make it relative to its parent for positioning */
+    bottom: -2.5rem; /* Position below the cards */
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem; /* Space between cards and dots */
+}
+
+.reviews__container .swiper-pagination .swiper-pagination-bullet {
+    background-color: #ccc; /* Default grey for inactive dots */
+    opacity: 1;
+    width: 10px; /* Size of dots */
+    height: 10px;
+    margin: 0 5px; /* Space between dots */
+}
+
+.reviews__container .swiper-pagination .swiper-pagination-bullet-active {
+    background-color: var(--first-color); /* Active dot color */
+}
+
+/* Responsive adjustments for Reviews section */
+@media screen and (max-width: 768px) {
+    .reviews.section {
+        padding: 4rem 0 2rem;
+    }
+
+    .reviews .section-title {
+        font-size: 2rem; /* Smaller title on mobile */
+        margin-bottom: 2rem;
+    }
+
+    .reviews__container {
+        padding: 0 1rem; /* Less padding on smaller screens */
+    }
+
+    /* Hide arrows on smaller screens if they clutter the layout, or reposition */
+    .reviews__container .swiper-button-next,
+    .reviews__container .swiper-button-prev {
+        display: none; /* Hide arrows on mobile for cleaner look */
+    }
+
+    .review-card {
+        padding: 1.5rem;
+        min-height: 280px; /* Adjust min-height for mobile if needed, ensure content fits scaled */
+    }
+
+    .review-card .review-text {
+        font-size: 0.95rem; /* Smaller text for reviews */
+    }
+
+    .review-card .stars {
+        font-size: 1.1rem;
+    }
+
+    .reviews__container .swiper-pagination {
+        bottom: -1.5rem; /* Adjust position of dots */
+        margin-top: 1.5rem;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .reviews.section {
+        padding: 3rem 0 1rem;
+    }
+
+    .reviews .section-title {
+        font-size: 1.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .reviews__container {
+        padding: 0 0.5rem;
+    }
+
+    .review-card {
+        padding: 1.2rem;
+        min-height: 250px; /* Adjust min-height for very small screens */
+    }
+
+    .review-card .review-text {
+        font-size: 0.9rem;
+    }
+
+    .review-card .reviewer-name,
+    .review-card .reviewer-role {
+        font-size: 0.85rem;
+    }
+
+    .reviews__container .swiper-pagination {
+        bottom: -1rem;
+        margin-top: 1rem;
+    }
+}
+
+
+/*=============== FOOTER ===============*/
+.footer {
+    background-color: #0d3460; /* Dark blue background color */
+    padding: 2rem 0;
+    /* Remove text-align: center; from here if you are using flexbox to center content */
+
+    /* ADD THESE FLEXBOX PROPERTIES */
+    display: flex; /* Make the footer a flex container */
+    justify-content: center; /* Horizontally center content */
+    align-items: center; /* Vertically center content (if needed, though padding usually handles this for single line) */
+    min-height: 80px; /* Optional: Give it a minimum height to see vertical centering effect */
+}
+
+.footer__copyright {
+    color: #fff; /* White text color */
+    font-size: 0.9rem;
+    margin: 0;
+    /* No need for text-align: center; here if parent is flexbox and centering */
+}

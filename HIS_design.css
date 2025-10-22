@@ -1,0 +1,1791 @@
+/* --- Dito lang ilalagay ang History-specific styles na wala sa client_db.css --- */
+body {
+    background-color: #f0f2f5; 
+    /* BINAGO: TANGGALIN ANG HORIZONTAL SCROLLBAR SA BUONG PAGE */
+    overflow-x: hidden; 
+}
+
+/* Main Page Title */
+.main-title {
+    /* MODIFIED: Pinaliit ang font size ng main title */
+    font-size: 1.5em;
+    color: #333;
+    margin-bottom: 0; 
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 0; 
+    font-weight: 700;
+}
+
+/* Header Container Fix: ITO ANG BOX NG TITLE AT DESCRIPTION */
+.history-header-container {
+    background-color: #ffffff; /* Kulay Puti sa likod ng Header */
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); 
+    /* BINAGO: Inayos ang padding (12px -> 18px) para mas gumitna */
+    padding: 18px 30px; 
+    margin-bottom: 30px !important; /* <--- ESPASYO SA UNANG SERVICE BOX */
+    /* MODIFIED: Top margin (space above the box) */
+    margin-top: 10px !important; 
+    /* TINANGGAL ANG BLUE TOP BORDER */
+    /* border-top: 5px solid #4A90E2; */ 
+}
+
+.page-description {
+    color: #555;
+    /* Font size is kept at 0.9em (already small) */
+    font-size: 0.9em; 
+    margin-left: 0; 
+    margin-top: 5px; 
+    line-height: 1.4;
+    margin-bottom: 0; 
+}
+/* -- BINAGO ANG ICON SIZE DITO -- */
+.main-title i {
+    /* GINAWANG 1.5em */
+    font-size: 1.5em;
+    color: #007bff;
+}
+
+/* --- Service History Container (The Separate White Boxes) --- */
+.history-service-container {
+    background-color: #ffffff;
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); 
+    padding: 30px;
+    /* ITO ANG NAGPAPA-HIWALAY SA BAWAT SERVICE BOX */
+    margin-bottom: 30px !important; 
+    /* TINANGGAL ANG BLUE TOP BORDER */
+    /* border-top: 5px solid #4A90E2; */ 
+}
+.history-service-container:last-child {
+    margin-bottom: 0 !important; /* Walang espasyo sa huling box */
+}
+
+
+/* Section Header Styling */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #ddd;
+    /* NEW: Allow flexing if space is tight */
+    flex-wrap: wrap; 
+}
+
+/* Service Title Styling */
+.history-service-container h3 {
+    /* MODIFIED: Font size of service titles (e.g., Checkout Cleaning History) is already 1.2em */
+    font-size: 1.2em; 
+    color: #333333;
+    margin: 0;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+/* -- BINAGO ANG ICON SIZE DITO -- */
+.history-service-container h3 i {
+    color: #007bff; 
+    /* GINAWANG 1.5em */
+    font-size: 1.5em;
+}
+
+/* NEW: Container for Filter and Search */
+.filter-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+/* NEW: Date Filter Dropdown Style */
+.date-filter-dropdown {
+    padding: 10px 15px;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    background-color: #ffffff;
+    font-size: 0.9em;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    /* GINAWANG 150px ang lapad para magkasya ang "This Year" */
+    min-width: 130px; 
+}
+.date-filter-dropdown:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+
+/* Search Bar Styling */
+.search-container {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    padding: 5px 15px;
+    background-color: #f9f9f9;
+    /* MODIFIED: Pinaliit ang search bar width */
+    width: 250px;
+    transition: box-shadow 0.3s;
+}
+.search-container:focus-within {
+    /* GINAWANG #007bff */
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); 
+    /* GINAWANG #007bff */
+    border-color: #007bff;
+}
+.search-container i {
+    /* GINAWANG #007bff */
+    color: #007bff;
+    margin-right: 10px;
+}
+.search-container input {
+    border: none;
+    outline: none;
+    background: transparent;
+    padding: 8px 0;
+    flex-grow: 1;
+}
+
+/* Appointment List Item (History Specific) */
+.appointment-list-item {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    padding: 18px;
+    margin-bottom: 15px;
+    transition: transform 0.3s, box-shadow 0.3s;
+    border: 1px solid #ddd;
+    position: relative;
+    /* GINAWANG #007bff */
+    border-left: 8px solid #007bff; 
+}
+.appointment-list-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+}
+.appointment-list-item:last-child {
+    margin-bottom: 0;
+}
+
+/* --- ACTION BUTTONS & ELLIPSIS STYLES --- */
+.button-group-top {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.action-btn {
+    padding: 8px 12px;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 6px;
+    text-align: center;
+    transition: all 0.3s;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.9em;
+    background-color: transparent;
+    /* GINAWANG #007bff (View Details Style) */
+    border: 2px solid #007bff;
+    /* GINAWANG #007bff */
+    color: #007bff;
+}
+.action-btn:hover {
+    /* Solid fill on hover */
+    background-color: #007bff; 
+    color: white;
+}
+
+/* -- FINAL FEEDBACK BUTTON STYLE: Darker Blue (#0056b3) initially, and slight light (#0062cc) on hover -- */
+.feedback-btn {
+    /* Initial state: Mas Darker Blue */
+    background-color: #0056b3; 
+    border: 2px solid #0056b3;
+    color: white;
+}
+.feedback-btn:hover {
+    background-color: #0062cc; 
+    border-color: #0062cc; 
+    color: white;
+}
+
+/* === BAGONG DAGDAG: WHATSAPP/CHAT Button Style (para sa ONGOING) === */
+.whatsapp-chat-btn {
+    /* Kulay ng WhatsApp Green */
+    background-color: #25D366; 
+    border: 2px solid #25D366;
+    color: white;
+}
+.whatsapp-chat-btn:hover {
+    /* Darker Green on Hover */
+    background-color: #1DA851; 
+    border-color: #1DA851; 
+    color: white;
+}
+
+
+.dropdown-menu-container {
+    position: relative;
+}
+.more-options-btn {
+    background: #f1f1f1;
+    color: #333;
+    border: 1px solid #ddd;
+    padding: 8px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1.1em;
+    line-height: 1;
+    transition: background 0.2s;
+}
+.more-options-btn:hover {
+    background: #e0e0e0;
+}
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+    min-width: 150px;
+    padding: 5px 0;
+    display: none;
+    list-style: none;
+}
+.dropdown-menu.show {
+    display: block;
+}
+.dropdown-menu a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 15px;
+    text-decoration: none;
+    color: #333;
+    font-size: 0.9em;
+    transition: background-color 0.2s;
+    width: 100%;
+    box-sizing: border-box;
+    font-weight: 500;
+}
+.dropdown-menu a:hover {
+    background-color: #f7f7f7;
+}
+
+/* === UPDATED: WhatsApp Link Color and Icon (Dropdown) === */
+.dropdown-menu .whatsapp-link i {
+    color: #25D366; /* WhatsApp Green */
+}
+.dropdown-menu .report-link i {
+    color: #D84315;
+}
+
+
+/* --- Appointment Details & Status Tags --- */
+.appointment-details {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 5px 20px;
+    margin-bottom: 10px;
+}
+.appointment-details p {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    font-size: 0.95em;
+    color: #555;
+    word-break: break-word;
+}
+/* -- BINAGO ANG ICON SIZE DITO -- */
+/* !! IMPORTANT FIX: Ginawang 'inherit' ang color dito para makuha ng icon ang kulay ng parent element.
+    Ito ang dahilan kung bakit blue ang icon sa status tags dati.
+*/
+.appointment-details p i {
+    /* GINAWANG 1.1em para sumabay sa laki ng text */
+    font-size: 1.1em;
+    color: inherit; 
+}
+.appointment-details .full-width-detail {
+    grid-column: 1 / -1;
+}
+.appointment-details .price-detail {
+    grid-column: 2;
+    justify-self: end;
+    font-weight: bold;
+    color: #333;
+    font-size: 1.2em;
+}
+.appointment-details .price-detail span.aed-color {
+    color: #333;
+}
+.appointment-details .ref-no-value {
+    color: #B32133; 
+    font-weight: bold;
+}
+.appointment-list-item .divider {
+    border: 0;
+    height: 1px;
+    background-color: #ccc;
+    margin: 15px 0 10px 0;
+    width: 100%;
+}
+
+/* ================================================= */
+/* === UPDATED STATUS TAGS: 6 STATUSES (SEMANTIC COLORS) === */
+/* ================================================= */
+.status-tag {
+    /* Base styles, now includes icon */
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 0.9em;
+    margin-left: 5px;
+    white-space: nowrap;
+    border: 1px solid transparent;
+    color: inherit; 
+}
+
+/* FIX: Tiyakin na ang icon sa loob ng status tag ay mag-i-inherit ng kulay */
+.status-tag i {
+    color: inherit !important;
+}
+
+/* 1. PENDING (Updated Darker Gray/Neutral) - Waiting for Confirmation/Payment */
+.status-tag.pending {
+    /* NEW COLORS for better contrast */
+    background-color: #e0e5ea; /* Slightly Darker Light Gray */
+    color: #495057;           /* Darker Gray for readability */
+    border: 1px solid #c4ccd5; /* Clearer border */
+}
+
+/* 2. CONFIRMED (Blue/Primary) - Confirmed but not started */
+.status-tag.confirmed {
+    background-color: #cfe2ff; /* Light Blue */
+    color: #084298;           /* Dark Blue */
+    border: 1px solid #b6d4fe;
+}
+
+/* 3. ONGOING (Yellow/Orange) - In-Progress/Working */
+.status-tag.ongoing {
+    background-color: #fff3cd; /* Light Yellow/Orange */
+    color: #856404;           /* Dark Brownish-Yellow */
+    border: 1px solid #ffeeba;
+}
+
+/* 4. COMPLETED (Green/Success) - Tapos Na */
+.status-tag.completed {
+    background-color: #d4edda; /* Light Green */
+    color: #155724;           /* Dark Green */
+    border: 1px solid #c3e6cb;
+}
+
+/* 5. CANCELLED (Red/Danger) - Canceled by Client or Admin */
+.status-tag.cancelled {
+    background-color: #f8d7da; /* Light Red/Pink */
+    color: #721c24;           /* Dark Red */
+    border: 1px solid #f5c6cb;
+}
+
+/* 6. NO-SHOW (Updated Dark Orange/Caution) - Customer did not appear */
+.status-tag.no-show {
+    /* NEW COLORS for caution/distinct look */
+    background-color: #fae9d7; 
+    color: #9b5800; 
+    border: 1px solid #f5d3a5; 
+}
+
+/* No-Content Style for empty lists */
+.no-appointments-message {
+    text-align: center;
+    padding: 30px;
+    color: #777;
+    font-style: italic;
+    background-color: #f7f7f7;
+    border-radius: 8px;
+    margin-top: 10px;
+    /* DAGDAG: Default to display none, maliban sa talagang walang laman ang list */
+    display: none; 
+}
+
+/* NEW STYLE for the button inside the no-appointments-message */
+.no-appointments-message .book-btn-container {
+    margin-top: 15px;
+    font-style: normal;
+}
+.no-appointments-message .book-btn {
+    /* Gumamit ng primary blue color */
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: background-color 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1em;
+}
+.no-appointments-message .book-btn:hover {
+    background-color: #0056b3;
+}
+/* Siguraduhin na full width at walang limit ang main content */
+/* Siguraduhin na full width at walang limit ang main content */
+.dashboard__content .content__section {
+    display: block; 
+    width: 100%; 
+    
+    /* --- ANG AYOS: Palitan ang Margin-Left --- */
+    /* Gagamit tayo ng NEGATIVE MARGIN sa LEFT para itulak ang PUTING BOX palapit sa sidebar. */
+    margin: 0;
+    margin-left: -15px !important; /* Subukan ang -15px. Lalapit ito sa sidebar. */
+    margin-right: 0 !important; /* Tiyakin na hindi mag-a-overflow sa kanan */
+    
+    padding: 30x; /* Padding sa loob ng puting box */
+    
+    background-color: #FFFFFF !important; 
+    
+    border-radius: 15px; 
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* MODIFIED: Tiyakin na transparent din ang content wrapper at inayos ang padding *//* MODIFIED: Tiyakin na transparent din ang content wrapper at inayos ang padding */
+/* --- I-REPLACE ITO SA INYONG NAKARAANG .dashboard__content CSS --- */
+.dashboard__content {
+    /* Tanggalin ang position: relative at left: -10px, pati na ang margin-right. */
+    margin: 0 !important; 
+    
+    /* Bawasan ang LEFT Padding (e.g., 20px) para lumapit ang puting box sa Sidebar.
+       Panatilihin ang RIGHT Padding (e.g., 40px) para may space pa rin sa kanan.
+       
+       Format: Top (30px), Right (40px), Bottom (30px), Left (20px) */
+       padding: 15px 50px 30px 25px !important;
+    
+    background-color: transparent !important;
+}
+
+/* BAGONG DAGDAG: Tiyakin na transparent ang wrapper na nasa loob ng body */
+.dashboard__wrapper {
+    background-color: transparent !important;
+}
+
+/* --- MODAL STYLES (New/Updated for Custom Range and Details) --- */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: none; /* Default: Nakatago */
+    justify-content: center;
+    align-items: center;
+    /* MAXIMUM Z-INDEX: Tiyakin na lumulutang sa lahat ng element */
+    z-index: 9999999 !important; 
+}
+
+/* AGGRESSIVE FIX: I-guarantee na magdi-display ang modal, kahit ano pa ang makaharang */
+/* Ginamit ang ID at ginawang 'visible' at 'flex' with !important */
+#detailsModal.is-visible-now,
+#datePickerModal.is-visible-now {
+    display: flex !important; 
+    visibility: visible !important; 
+    opacity: 1 !important;
+}
+
+
+    .modal-content {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        max-width: 850px; /* Slightly wider for details */
+        width: 90%;
+        max-height: 90vh; /* Limit height */
+        overflow-y: auto; /* Allow scrolling if content is long */
+    }
+    .modal-content h3 {
+        margin-top: 0;
+        color: #333;
+        font-size: 1.4em;
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .modal-content label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #555;
+    }
+    .modal-content input[type="date"] {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 20px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        box-sizing: border-box;
+        font-size: 1em;
+    }
+    .modal-content button {
+        padding: 10px 15px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        margin-right: 10px;
+        transition: background-color 0.3s;
+    }
+    .modal-content .primary-btn { 
+        background-color: #007bff;
+        color: white;
+    }
+    .modal-content .primary-btn:hover {
+        background-color: #0056b3;
+    }
+    .modal-content .secondary-btn { 
+        background-color: #f1f1f1;
+        color: #333;
+    }
+    .modal-content .secondary-btn:hover {
+        background-color: #e0e0e0;
+    }
+
+    /* Details Modal Specific Styles (Modified to support new layout) */
+    .details-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center; /* Ensure items are vertically centered */
+        padding: 8px 0;
+        /* Removed default dashed border to use HR separators */
+        border-bottom: 1px solid transparent; 
+    }
+    .details-row:last-of-type {
+        border-bottom: none;
+    }
+    .details-row strong {
+        color: #333;
+        font-weight: 700;
+        font-size: 0.95em;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .details-row span {
+        color: #555;
+        font-size: 0.95em;
+        text-align: right;
+        word-break: break-word; /* Allow long text to wrap */
+        max-width: 65%; /* Limited width of value for better alignment */
+    }
+    #detailsModal .status-tag {
+        /* Override margin-left for modal context */
+        margin-left: 0; 
+    }
+
+
+    /* --- Back to Top button with smooth transition and better look --- */
+    #backToTopBtn {
+        display: none; /* Ito ang default: nakatago */
+        position: fixed;
+        bottom: 25px; /* Layo sa ilalim */
+        right: 25px; /* Layo sa kanan */
+        z-index: 99;
+        border: none;
+        outline: none;
+        background-color: #3f51b5; /* Kulay ng button (Default Blue/Violet) */
+        color: white;
+        cursor: pointer;
+        padding: 12px 18px;
+        border-radius: 50px;
+        font-size: 1rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+        transition: background-color 0.3s, transform 0.2s, opacity 0.3s;
+        opacity: 0; /* Default opacity para sa smooth show/hide */
+        text-decoration: none;
+        align-items: center;
+        justify-content: center;
+    }
+    #backToTopBtn:hover {
+        background-color: #5363b9; /* Kulay kapag hinover */
+        transform: translateY(-3px);
+    }
+    #backToTopBtn i {
+        margin-right: 8px;
+        font-size: 1.2em;
+    }
+
+
+    .modal-content {
+        position: relative; 
+    }
+    
+    /* 2. Style at Posisyon ng Close Button (Upper Right) */
+    .close-btn {
+        position: absolute; 
+        top: 10px;          
+        right: 20px;        
+        font-size: 30px;    
+        font-weight: bold;
+        color: #999;
+        cursor: pointer;
+        z-index: 1000;      
+        transition: color 0.2s;
+    }
+    
+    .close-btn:hover,
+    .close-btn:focus {
+        color: #333;
+        text-decoration: none;
+    }
+    
+    /* ========================================================= */
+    /* === UPDATED: STYLE PARA SA AED COLOR VALUE (#B32133) === */
+    /* ========================================================= */
+    .aed-color {
+        color: #B32133 !important; /* Ang inyong brand color */
+        font-weight: bold;
+    }
+    /* ========================================================= */
+    
+    
+    /* ========================================================= */
+    /* === FIX: SCROLL JUMP ISSUE CSS === */
+    /* ========================================================= */
+    
+    .modal.is-visible-now {
+        /* Tiyakin na naka-block ang display */
+        display: block !important; 
+    }
+    
+    /* Bagong Rule: Panatilihin ang scroll position sa background */
+    .modal-open-body-no-scroll {
+        overflow: hidden !important; 
+        /* Ito ang importanteng bahagi: Gumawa ng padding para tapatan ang width ng scrollbar */
+        padding-right: 17px !important; 
+    }
+    
+    /* ========================================================= */
+    /* === END FIX: SCROLL JUMP ISSUE CSS === */
+    /* ========================================================= */
+    
+    
+    /* NEW/UPDATED: Style for the Status Tag in the Modal */
+    .modal-status-tag {
+        /* Pinalitan ang font size para mag-match sa Ref No. title */
+        font-size: 0.9em; 
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        /* Minimum width for consistency */
+        min-width: 100px;
+        justify-content: center; 
+        text-align: center; 
+    }
+    
+    /* Ginamit ang .modal-content sa unahan at !important sa bawat property 
+       upang tiyakin na ito ang gagamitin ng browser. */
+    
+    /* GREEN: Completed */
+    .modal-content .modal-status-tag.completed { 
+        background-color: #d4edda !important; 
+        color: #155724 !important; 
+        border: 1px solid #c3e6cb !important;
+    }
+    
+    /* LIGHT GRAY: PENDING */
+    .modal-content .modal-status-tag.pending { 
+        background-color: #e0e5ea !important; 
+        color: #495057 !important; 
+        border: 1px solid #c4ccd5 !important; 
+    }
+    
+    /* TAN/ORANGE: NO SHOW */
+    .modal-content .modal-status-tag.no-show { 
+        background-color: #fae9d7 !important; 
+        color: #9b5800 !important; 
+        border: 1px solid #f5d3a5 !important; 
+    }
+    
+    /* STANDARD YELLOW/ORANGE: Confirmed, Ongoing */
+    .modal-content .modal-status-tag.confirmed, 
+    .modal-content .modal-status-tag.ongoing { 
+        background-color: #fff3cd !important; 
+        color: #856404 !important; 
+        border: 1px solid #ffeeba !important; 
+    }
+    
+    /* RED/PINK: Cancelled */
+    .modal-content .modal-status-tag.cancelled { 
+        background-color: #f8d7da !important; 
+        color: #721c24 !important; 
+        border: 1px solid #f5c6cb !important; 
+    }
+    
+    /* ========================================================= */
+    /* === UPDATED: HORIZONTAL TAB NAVIGATION STYLES (Contained Tabs Design) === */
+    /* ========================================================= */
+    .horizontal-tabs-container {
+        /* Walang background color para ang buong container ay transparent */
+        background-color: transparent; 
+        padding: 0; /* Walang padding sa container */
+        width: 100%; 
+        border-bottom: none; 
+    }
+    
+    .service-tabs-bar {
+        display: flex; 
+        
+        /* DEFAULT (Desktop/Malaking Screen): Walang scroll */
+        overflow-x: hidden; 
+        overflow-y: hidden; /* Para sigurado (STRICTLY) */
+        
+        white-space: nowrap; 
+        padding: 0;
+        margin: 0;
+        /* Tanggalin ang gap para magkadikit ang inactive tabs */
+        gap: 0; 
+        /* Magdagdag ng bottom border para may linya sa ilalim ng bar */
+        border-bottom: 1px solid #ccc;
+        margin-bottom: 0; /* Tanggalin ang default margin bottom */
+    }
+
+    /* BAGONG DAGDAG: Media Query para sa Mobile/Maliit na Screen */
+    @media (max-width: 768px) {
+        .service-tabs-bar {
+            /* PAGBABAGO: Kapag maliit ang screen, ibalik ang horizontal scroll */
+            overflow-x: auto; 
+            
+            /* Tiyakin na ang white-space: nowrap; ay nananatili para mag-scroll horizontal */
+        }
+    }
+    .tab-button {
+        /* Default style for INACTIVE buttons */
+        background-color: #f0f0f0; /* Light gray background */
+        color: #555; /* Dark gray text */
+        
+        /* Magdagdag ng border sa kaliwa, kanan at itaas */
+        border: 1px solid #ccc; 
+        border-bottom: none; /* Tanggalin ang border sa ilalim */
+        
+        /* Adjusted padding and rounded corners */
+        padding: 10px 18px; 
+        border-radius: 6px 6px 0 0; /* Rounded corners sa taas lang */
+        cursor: pointer;
+        transition: background-color 0.2s, color 0.2s;
+        font-size: 0.95em; 
+        font-weight: 500;
+        
+        display: flex; 
+        align-items: center; 
+        gap: 8px; 
+        flex-shrink: 0; 
+        
+        user-select: none; 
+        /* Para hindi lumipat ang tabs kapag nag-hover */
+        z-index: 1; 
+        position: relative;
+        margin-right: -1px; /* Para magkadikit ang borders */
+    }
+    
+    .tab-button:hover:not(.active) {
+        /* Slight change on hover for inactive tabs */
+        background-color: #e5e5e5;
+        color: #333;
+    }
+    
+    /* Active tab style (White background and prominent separation) */
+    .tab-button.active {
+        color: rgb(0, 123, 255);; /* Brand primary color for active text */
+        font-weight: 600; 
+        background-color: #ffffff; /* White background */
+        
+        /* Puti ang border color para mag-blend sa content background (kung puti ang content bg) */
+        border-color: #ccc; 
+        
+        /* Itaas ang Z-index para makita na nakapatong siya sa bottom border ng tab bar */
+        z-index: 2;
+        /* Magbigay ng negative margin sa ilalim para patungan ang border ng tab bar */
+        margin-bottom: -1px; 
+    }
+    
+    /* Tab Content Styling: Ito na ang mismong content area. */
+    .tab-content {
+        /* Default: May padding sa gilid. */
+        padding: 0; /* Inalis ang padding dito, nilipat sa appointment-list-container */
+        /* Default: Puti ang background ng content area */
+        background-color: #ffffff; 
+        /* Magdagdag ng border sa buong content area para mag-match sa tab separation */
+        border: 1px solid #ccc;
+        /* Alisin ang border sa itaas dahil tatabunan ito ng Active Tab */
+        border-top: none; 
+        /* Rounded corners sa ibaba */
+        border-radius: 0 0 8px 8px;
+        /* Magdagdag ng space sa ibaba */
+        margin-bottom: 25px;
+    }
+    /* ========================================================= */
+    /* === UPDATED: FILTER CONTROLS ALIGNMENT (Fixed Width for Dropdown, Flex for Search) === */
+    /* ========================================================= */
+    .filter-controls-tab {
+        display: flex;
+    /* Binago mula sa space-between: Gagamitin ang flex-start para magtabi sila */
+    justify-content: flex-start; 
+    align-items: center; 
+    margin-bottom: 20px;
+    width: 100%; 
+    /* Padding para ang filter ay hindi nakadikit sa gilid ng tab-content box */
+    padding: 20px 20px 0 20px; /* Dagdag padding sa taas, 0 sa baba */
+    gap: 15px; /* Ang spacing sa pagitan ng dropdown at search bar */
+    }
+
+
+    .search-container {
+        /* Ang search bar ay nasa loob ng .search-container. 
+           Dahil ang .filter-controls-tab ay gumagamit ng flex, 
+           ito ay dapat mag-adapt sa content nito. */
+        max-width: 300px; /* Halimbawa lang ng sukat. Kung wala nito, kukunin niya ang lahat ng natitirang espasyo. */
+        width: 100%; /* Para maging responsive */
+    }
+    
+    /* Dropdown element style (FIXED WIDTH) */
+    .date-filter-dropdown {
+        padding: 8px 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 1em;
+        cursor: pointer;
+        background-color: #fff;
+        /* REVISED: Fixed width for dropdown */
+        width: 170px; 
+        height: 40px; 
+        flex-shrink: 0; /* Huwag mong paliitin ang dropdown */
+    }
+    
+    
+    /* Style for the main list container */
+    .appointment-list-container {
+        /* Padding para ang list items ay hindi nakadikit sa gilid ng tab-content box */
+        padding: 0 20px 20px 20px; 
+    }
+
+
+
+    /* Custom fix for the sidebar to ensure it spans the full viewport height */
+.dashboard__sidebar {
+    /* Pilitin ang sidebar na umabot hanggang 100% ng taas ng screen */
+    min-height: 100vh;
+}
+
+/* Modal Structure */
+.report-modal {
+    display: none; 
+    position: fixed; 
+    z-index: 1000; 
+    left: 0;
+    top: 0;
+    width: 100%; 
+    height: 100%; 
+    overflow: auto; 
+    background-color: rgba(0,0,0,0.6); 
+}
+
+.report-modal-content {
+    background-color: #fefefe;
+    margin: 3% auto; 
+    padding: 25px;
+    border-radius: 10px;
+    width: 90%; 
+    max-width: 500px; 
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    animation: fadeIn 0.3s;
+    position: relative; 
+}
+
+/* START OF MODIFICATION FOR CENTERING SUCCESS MODAL */
+#reportSuccessModal .report-modal-content {
+    /* Centralize modal content horizontally and vertically */
+    margin: 15% auto; /* Adjusted margin for better vertical centering */
+    text-align: center; /* Centered text */
+    max-width: 400px; /* Kept max-width from original inline style */
+}
+/* END OF MODIFICATION FOR CENTERING SUCCESS MODAL */
+
+/* START: CSS FOR the original requiredFieldsModal (kept for completeness but logic is removed) */
+#requiredFieldsModal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1001; /* Higher than report-modal */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.6); /* Black w/ opacity */
+    /* Use flex for easy centering */
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+}
+
+#requiredFieldsModal .modal__content {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    width: 90%;
+    max-width: 350px;
+    text-align: center;
+}
+
+#requiredFieldsModal .modal__title {
+    margin-top: 0;
+    color: #B32133; /* Use a prominent color for alerts */
+    font-size: 1.2em;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+#requiredFieldsModal .modal__actions {
+    text-align: center;
+}
+
+#requiredFieldsModal .btn--primary {
+    background-color: #E87722; 
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: background-color 0.3s;
+    width: 100%;
+}
+
+#requiredFieldsModal .btn--primary:hover {
+    background-color: #D66C1E;
+}
+/* END: CSS FOR the original requiredFieldsModal */
+
+/* START: NEW CSS for individual error messages */
+.error-message {
+    color: red;
+    font-size: 0.9em;
+    margin-top: -5px; /* Pull the message closer to the field */
+    margin-bottom: 10px;
+    display: none; /* Hidden by default */
+    /* NEW: Background and Padding for the error message itself */
+    background-color: #ffe0e0; /* Light red/pink background */
+    padding: 3px 8px; /* Added padding for better visibility */
+    border-radius: 4px; /* Slightly rounded corners */
+    display: inline-block; /* Use inline-block so it only takes up the necessary width */
+}
+/* END: NEW CSS for individual error messages */
+
+
+@keyframes fadeIn {
+    from {opacity: 0; transform: translateY(-20px);}
+    to {opacity: 1; transform: translateY(0);}
+}
+
+.report-modal-content h3 {
+    margin-top: 0;
+    color: #333; 
+    font-size: 1.5em; 
+    font-weight: 700;
+    border-bottom: 2px solid #007bff; 
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.report-close-btn {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: normal; 
+    cursor: pointer;
+    line-height: 1;
+    position: absolute; 
+    top: 25px; 
+    right: 25px; 
+}
+
+.report-close-btn:hover,
+.report-close-btn:focus {
+    color: #333;
+    text-decoration: none;
+}
+
+/* Form Styles */
+.report-form label {
+    display: block;
+    margin: 15px 0 5px;
+    font-weight: 600;
+    color: #333;
+}
+
+.report-form input[type="text"], 
+.report-form textarea,
+.report-form select,
+.report-form input[type="date"], 
+.report-form input[type="time"] { 
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box; 
+    transition: border-color 0.3s, background-color 0.3s; /* ADDED background-color transition */
+}
+
+/* KEY CHANGE 1: Override default required pop-up for issueType and issueDetails */
+#issueType:invalid,
+#issueDetails:invalid {
+    box-shadow: none !important; /* Remove any default focus/error glow */
+    border-color: #ccc; /* Ensure initial appearance is normal until JS validation runs */
+}
+
+/* KEY CHANGE 2: Manually defined red border and NEW BACKGROUND color for the input/select box */
+.report-form .error-red-border {
+    border-color: red !important;
+    background-color: #fff0f0 !important; /* Light background for the INPUT/SELECT */
+}
+
+.report-modal-content .report-form input:focus,
+.report-modal-content .report-form select:focus,
+.report-modal-content .report-form textarea:focus {
+    /* Keep the focus style for all inputs, but only if it's not the red error state */
+    border-color: #E87722;
+    box-shadow: 0 0 5px rgba(232, 119, 34, .5);
+    outline: none;
+    background-color: #fff; /* Ensure it reverts to white when focused */
+}
+
+/* Date/Time container for side-by-side display */
+.report-date-time-group {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 15px;
+}
+
+.report-date-time-group > div {
+    flex: 1;
+}
+
+.report-form textarea {
+    resize: vertical;
+    min-height: 100px;
+    font-family: Arial, sans-serif; 
+}
+
+.report-form button[type="submit"] {
+    background-color: #E87722; 
+    color: #fff; 
+    padding: .5rem 1.5rem; 
+    box-shadow: 0 2px 5px rgba(0, 0, 0, .2); 
+    
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 15px; 
+    transition: background-color 0.3s;
+    
+    float: right; 
+    width: auto; 
+    display: block;
+}
+
+.report-form button[type="submit"]:hover {
+    background-color: #D66C1E; 
+}
+
+/* START: NEW CSS FOR 'GOT IT' BUTTON */
+.report-confirm-btn {
+    /* Aesthetics from the main submit button */
+    background-color: #E87722; 
+    color: #fff; 
+    padding: .5rem 1.5rem; 
+    box-shadow: 0 2px 5px rgba(0, 0, 0, .2); 
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: background-color 0.3s;
+    
+    /* Layout/Override styles specific to the 'Got It' button */
+    float: none !important; /* Ensure it doesn't float right */
+    width: 100% !important; /* Ensure it stays full width */
+    display: block !important;
+    margin-top: 20px !important; /* Ensure margin is preserved */
+}
+
+.report-confirm-btn:hover {
+    background-color: #D66C1E; 
+}
+/* END: NEW CSS FOR 'GOT IT' BUTTON */
+
+.report-ref-display {
+    font-size: 1.1em;
+    font-weight: 700; 
+    color: #333; 
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee; 
+    display: block;
+}
+
+.report-ref-display strong {
+    font-weight: 700;
+}
+
+.report-ref-value {
+    color: #B32133; 
+    font-weight: 700;
+    margin-left: 5px;
+}
+
+.attachment-group {
+    gap: 10px;
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+.custom-file-input-wrapper {
+    position: relative;
+    overflow: hidden;
+    display: block; 
+    width: 100%;
+    border: 1px solid #ccc; 
+    border-radius: 5px;
+    height: 40px; 
+    margin-bottom: 10px; 
+}
+
+.custom-file-input-wrapper input[type="file"] {
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+}
+
+.custom-file-button {
+    background-color: #f7f7f7;
+    color: #333;
+    padding: 10px 5px;
+    border-right: 1px solid #ccc;
+    cursor: pointer;
+    float: left;
+    height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    width: 100px; 
+}
+
+.custom-file-text {
+    padding: 10px;
+    float: left;
+    color: #888;
+    font-size: 12px;
+    line-height: 20px; 
+    box-sizing: border-box;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    width: calc(100% - 100px); 
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    color: #333; 
+    font-size: 1.5em; 
+    font-weight: 700;
+    border-bottom: 2px solid #007bff; 
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.modal-content .close-btn {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: normal; 
+    cursor: pointer;
+    line-height: 1;
+    position: absolute;
+    top: 25px; 
+    right: 25px; 
+}
+
+/* Generic Rule: Ito ang magiging 850px para sa Details Modal at iba pa. */
+.modal-content {
+    /* ... other styles ... */
+    max-width: 850px; /* Mas malapad para sa Details Modal */
+    width: 90%;
+    /* ... other styles ... */
+}
+
+/* Specific Rule: Ito ang mag-o-override sa max-width para lang sa Date Picker. */
+.modal-content.date-picker-content {
+    /* Liitan ang width para maging compact (400px will override 850px). */
+    max-width: 400px; 
+    
+    /* Siguraduhin na ang width ay 90% pa rin para sa responsiveness */
+    width: 90%;
+    
+    /* Maaari mo ring liitan ang padding dito para mas compact */
+    /* padding: 20px; */ 
+}
+
+/* I-apply ang focus style sa Date Inputs ng Custom Date Range Picker */
+.modal-content.date-picker-content input[type="date"]:focus {
+    /* Ang focus style mo na ibinigay */
+    border-color: #E87722;
+    box-shadow: 0 0 5px rgba(232, 119, 34, .5);
+    outline: none;
+    background-color: #fff; /* Siguraduhin na white ang background */
+}
+
+.modal-content .close-btn:hover,
+.modal-content .close-btn:focus {
+    color: #333;
+    text-decoration: none;
+}
+
+/* KEY CHANGE FOR REPORT ISSUE VISIBILITY */
+.report-link {
+    display: none !important;
+}
+
+.appointment-list-item[data-status="COMPLETED"] .report-link {
+    display: block !important; 
+}
+
+
+
+/* Custom fix for the sidebar to ensure it spans the full viewport height */
+.dashboard__sidebar {
+    /* Pilitin ang sidebar na umabot hanggang 100% ng taas ng screen */
+    min-height: 100vh;
+}
+
+/* Modal Structure */
+.report-modal {
+    display: none; 
+    position: fixed; 
+    z-index: 1000; 
+    left: 0;
+    top: 0;
+    width: 100%; 
+    height: 100%; 
+    overflow: auto; 
+    background-color: rgba(0,0,0,0.6); 
+}
+
+.report-modal-content {
+    background-color: #fefefe;
+    margin: 3% auto; 
+    padding: 25px;
+    border-radius: 10px;
+    width: 90%; 
+    max-width: 500px; 
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    animation: fadeIn 0.3s;
+    position: relative; 
+}
+
+/* START OF MODIFICATION FOR CENTERING SUCCESS MODAL */
+#reportSuccessModal .report-modal-content {
+    /* Centralize modal content horizontally and vertically */
+    margin: 15% auto; /* Adjusted margin for better vertical centering */
+    text-align: center; /* Centered text */
+    max-width: 400px; /* Kept max-width from original inline style */
+}
+/* END OF MODIFICATION FOR CENTERING SUCCESS MODAL */
+
+/* START: CSS FOR the original requiredFieldsModal (kept for completeness but logic is removed) */
+#requiredFieldsModal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1001; /* Higher than report-modal */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.6); /* Black w/ opacity */
+    /* Use flex for easy centering */
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+}
+
+#requiredFieldsModal .modal__content {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    width: 90%;
+    max-width: 350px;
+    text-align: center;
+}
+
+#requiredFieldsModal .modal__title {
+    margin-top: 0;
+    color: #B32133; /* Use a prominent color for alerts */
+    font-size: 1.2em;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+#requiredFieldsModal .modal__actions {
+    text-align: center;
+}
+
+#requiredFieldsModal .btn--primary {
+    background-color: #E87722; 
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: background-color 0.3s;
+    width: 100%;
+}
+
+#requiredFieldsModal .btn--primary:hover {
+    background-color: #D66C1E;
+}
+/* END: CSS FOR the original requiredFieldsModal */
+
+/* START: NEW CSS for individual error messages */
+.error-message {
+    color: red;
+    font-size: 0.9em;
+    margin-top: -5px;
+    margin-bottom: 10px;
+    /* ✅ ETO ANG TAMA: Default na nakatago */
+    display: none; 
+    background-color: #ffe0e0;
+    padding: 3px 8px;
+    border-radius: 4px;
+}
+/* END: NEW CSS for individual error messages */
+
+
+@keyframes fadeIn {
+    from {opacity: 0; transform: translateY(-20px);}
+    to {opacity: 1; transform: translateY(0);}
+}
+
+.report-modal-content h3 {
+    margin-top: 0;
+    color: #333; 
+    font-size: 1.5em; 
+    font-weight: 700;
+    border-bottom: 2px solid #007bff; 
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.report-close-btn {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: normal; 
+    cursor: pointer;
+    line-height: 1;
+    position: absolute; 
+    top: 25px; 
+    right: 25px; 
+}
+
+.report-close-btn:hover,
+.report-close-btn:focus {
+    color: #333;
+    text-decoration: none;
+}
+
+/* Form Styles */
+.report-form label {
+    display: block;
+    margin: 15px 0 5px;
+    font-weight: 600;
+    color: #333;
+}
+
+.report-form input[type="text"], 
+.report-form textarea,
+.report-form select,
+.report-form input[type="date"], 
+.report-form input[type="time"] { 
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box; 
+    transition: border-color 0.3s, background-color 0.3s; /* ADDED background-color transition */
+}
+
+/* KEY CHANGE 1: Override default required pop-up for issueType and issueDetails */
+#issueType:invalid,
+#issueDetails:invalid {
+    box-shadow: none !important; /* Remove any default focus/error glow */
+    border-color: #ccc; /* Ensure initial appearance is normal until JS validation runs */
+}
+
+/* KEY CHANGE 2: Manually defined red border and NEW BACKGROUND color for the input/select box */
+.report-form .error-red-border {
+    border-color: red !important;
+    background-color: #fff0f0 !important; /* Light background for the INPUT/SELECT */
+}
+
+.report-modal-content .report-form input:focus,
+.report-modal-content .report-form select:focus,
+.report-modal-content .report-form textarea:focus {
+    /* Keep the focus style for all inputs, but only if it's not the red error state */
+    border-color: #E87722;
+    box-shadow: 0 0 5px rgba(232, 119, 34, .5);
+    outline: none;
+    background-color: #fff; /* Ensure it reverts to white when focused */
+}
+
+/* Date/Time container for side-by-side display */
+.report-date-time-group {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 15px;
+}
+
+.report-date-time-group > div {
+    flex: 1;
+}
+
+.report-form textarea {
+    resize: vertical;
+    min-height: 100px;
+    font-family: Arial, sans-serif; 
+}
+
+.report-form button[type="submit"] {
+    background-color: #E87722; 
+    color: #fff; 
+    padding: .5rem 1.5rem; 
+    box-shadow: 0 2px 5px rgba(0, 0, 0, .2); 
+    
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 15px; 
+    transition: background-color 0.3s;
+    
+    float: right; 
+    width: auto; 
+    display: block;
+}
+
+.report-form button[type="submit"]:hover {
+    background-color: #D66C1E; 
+}
+
+/* START: NEW CSS FOR 'GOT IT' BUTTON */
+.report-confirm-btn {
+    /* Aesthetics from the main submit button */
+    background-color: #E87722; 
+    color: #fff; 
+    padding: .5rem 1.5rem; 
+    box-shadow: 0 2px 5px rgba(0, 0, 0, .2); 
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: background-color 0.3s;
+    
+    /* Layout/Override styles specific to the 'Got It' button */
+    float: none !important; /* Ensure it doesn't float right */
+    width: 100% !important; /* Ensure it stays full width */
+    display: block !important;
+    margin-top: 20px !important; /* Ensure margin is preserved */
+}
+
+.report-confirm-btn:hover {
+    background-color: #D66C1E; 
+}
+/* END: NEW CSS FOR 'GOT IT' BUTTON */
+
+.report-ref-display {
+    font-size: 1.1em;
+    font-weight: 700; 
+    color: #333; 
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee; 
+    display: block;
+}
+
+.report-ref-display strong {
+    font-weight: 700;
+}
+
+.report-ref-value {
+    color: #B32133; 
+    font-weight: 700;
+    margin-left: 5px;
+}
+
+.attachment-group {
+    gap: 10px;
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+.custom-file-input-wrapper {
+    position: relative;
+    overflow: hidden;
+    display: block; 
+    width: 100%;
+    border: 1px solid #ccc; 
+    border-radius: 5px;
+    height: 40px; 
+    margin-bottom: 10px; 
+}
+
+.custom-file-input-wrapper input[type="file"] {
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+}
+
+.custom-file-button {
+    background-color: #f7f7f7;
+    color: #333;
+    padding: 10px 5px;
+    border-right: 1px solid #ccc;
+    cursor: pointer;
+    float: left;
+    height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    width: 100px; 
+}
+
+.custom-file-text {
+    padding: 10px;
+    float: left;
+    color: #888;
+    font-size: 12px;
+    line-height: 20px; 
+    box-sizing: border-box;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    width: calc(100% - 100px); 
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    color: #333; 
+    font-size: 1.5em; 
+    font-weight: 700;
+    border-bottom: 2px solid #007bff; 
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.modal-content .close-btn {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: normal; 
+    cursor: pointer;
+    line-height: 1;
+    position: absolute;
+    top: 25px; 
+    right: 25px; 
+}
+
+.modal-content .close-btn:hover,
+.modal-content .close-btn:focus {
+    color: #333;
+    text-decoration: none;
+}
+
+/* KEY CHANGE FOR REPORT ISSUE VISIBILITY */
+.report-link {
+    display: none !important;
+}
+
+.appointment-list-item[data-status="COMPLETED"] .report-link {
+    display: block !important; 
+}
+
+/* START: NEW CSS FOR PROGRESS BAR */
+/* REMOVED CSS FOR PROGRESS BAR */
+/* END: NEW CSS FOR PROGRESS BAR */
+
+
+
+
+.cancel-appointment-modal {
+    display: none; /* Default state: hidden */
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.6); /* Dark overlay */
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+}
+
+.cancel-modal-content {
+    background-color: #fefefe;
+    padding: 30px 40px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    max-width: 450px; /* Sukat batay sa screenshot */
+    width: 90%;
+    text-align: center;
+    position: relative;
+}
+
+.cancel-modal-content .close-btn-x {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    cursor: pointer;
+}
+
+.cancel-modal-content .close-btn-x:hover,
+.cancel-modal-content .close-btn-x:focus {
+    color: #333;
+    text-decoration: none;
+}
+
+.cancel-modal-content .cancel-icon {
+    font-size: 5em; 
+    color: #B32133; /* Red color (Default for the Cancel confirmation) */
+    margin-bottom: 5px;
+}
+
+.cancel-modal-content h3 {
+    font-size: 1.5em;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 10px;
+    border-bottom: none; /* Inalis ang border para tumugma sa image */
+}
+
+.cancel-modal-content p {
+    font-size: 1em;
+    color: #555;
+    margin-bottom: 25px;
+    line-height: 1.5;
+}
+
+.cancel-modal-content strong#cancel-ref-number,
+.cancel-modal-content strong#cancelled-ref-number { /* Idinagdag ang #cancelled-ref-number */
+    color: #B32133;
+    font-weight: 700;
+    display: block; 
+    margin: 5px 0 15px 0;
+    font-size: 1.1em;
+}
+
+.cancel-modal-content .modal__actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    width: 100%;
+}
+
+.cancel-modal-content .modal__actions button {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s, opacity 0.3s;
+    flex-grow: 1; 
+}
+
+/* Red button (Yes, Cancel) */
+.cancel-modal-content .primary-cancel-btn {
+    background-color: #B32133;
+    color: white;
+    border: 2px solid #B32133;
+    box-shadow: none; /* Para mas mukhang flat batay sa image */
+}
+.cancel-modal-content .primary-cancel-btn:hover {
+    background-color: #9c1d2d;
+    border-color: #9c1d2d;
+}
+
+/* White button (Keep) */
+.cancel-modal-content .secondary-keep-btn {
+    background-color: #fff;
+    color: #555;
+    border: 2px solid #ccc;
+    box-shadow: none; /* Para mas mukhang flat batay sa image */
+}
+.cancel-modal-content .secondary-keep-btn:hover {
+    background-color: #f4f4f4;
+    border-color: #bbb;
+}
+
+
+
+
+
