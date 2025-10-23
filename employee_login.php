@@ -81,7 +81,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['
                 unset($_SESSION['employee_login_errors']); // Clear any pending employee login errors
 
                 // --- MODIFICATION HERE: Redirect to dummy_client.html ---
-                header("Location: dummy_client.html"); // Redirect to dummy_client.html
+                header("Location: employee_dashboard.php"); // Redirect to dummy_client.html
                 exit; // Crucial to exit after a header redirect
             } else {
                 // Password incorrect

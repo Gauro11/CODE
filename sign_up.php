@@ -1,46 +1,37 @@
 <?php
-// error_reporting(E_ALL); // Uncomment for debugging during development
-// ini_set('display_errors', 1); // Uncomment for debugging during development
+session_start();
 
-// Initialize variables for form fields and errors
-$firstName = '';
-$lastName = '';
-$birthday = '';
-$contactNumber = '+971'; // Default value for contact number
-$email = '';
-
-$errors = []; // Array to store all validation errors
-
-// 1. Database Configuration (Same as before)
+// --- 1. Connect to the database ---
 $servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "alazima"; // Your database name
+$username = "u665838367_alazimaa";
+$password = '6$HvZ#Vd'; // safer
 
-// 2. Create database connection
+$dbname = "u665838367_alazima";
+
 $conn = new mysqli($servername, $username, $password, $dbname);
-
-// Check connection
 if ($conn->connect_error) {
-    die("Database connection failed: " . $conn->connect_error);
+    die("Connection failed: " . $conn->connect_error);
 }
 
-// 3. Process form submission (only if it's a POST request)
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Retrieve form data
+// --- 2. Initialize error array ---
+$errors = [];
+
+// --- 3. Process form submission ---
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    // Retrieve and sanitize form data
     $firstName = trim($_POST['firstName'] ?? '');
     $lastName = trim($_POST['lastName'] ?? '');
     $birthday = trim($_POST['birthday'] ?? '');
     $contactNumber = trim($_POST['contactNumber'] ?? '');
     $email = trim($_POST['email'] ?? '');
-    $rawPassword = $_POST['password'] ?? ''; // Get raw password
+    $rawPassword = $_POST['password'] ?? '';
     $confirmPassword = $_POST['confirmPassword'] ?? '';
 
-    // 4. Server-Side Validation
+    // --- 4. Validation ---
     if (empty($firstName)) {
         $errors['firstName'] = "First name is required.";
     } elseif (!preg_match("/^[a-zA-Z\s\-]+$/", $firstName)) {
-         $errors['firstName'] = "First name can only contain letters, spaces, and hyphens.";
+        $errors['firstName'] = "First name can only contain letters, spaces, and hyphens.";
     }
 
     if (empty($lastName)) {
@@ -51,51 +42,43 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if (empty($birthday)) {
         $errors['birthday'] = "Birthday is required.";
+    } elseif (!preg_match("/^\d{4}-\d{2}-\d{2}$/", $birthday)) {
+        $errors['birthday'] = "Invalid date format. Use YYYY-MM-DD.";
     }
 
     if (empty($contactNumber) || $contactNumber === '+971') {
         $errors['contactNumber'] = "Contact number is required.";
-    } elseif (!preg_match("/^\+971[0-9]{9}$/", $contactNumber)) { // This regex enforces no spaces
-        $errors['contactNumber'] = "Please enter a valid UAE phone number in the format +971XXXXXXXXX (e.g., +971501234567)."; // Updated error message
+    } elseif (!preg_match("/^\+971[0-9]{9}$/", $contactNumber)) {
+        $errors['contactNumber'] = "Please enter a valid UAE phone number (+971XXXXXXXXX).";
     } else {
-        // Check if contact number already exists in DB
-        $check_contact_sql = "SELECT id FROM clients WHERE contact_number = ?";
-        $stmt_check_contact = $conn->prepare($check_contact_sql);
-        if ($stmt_check_contact === false) {
-             die("Error preparing contact number check statement: " . $conn->error);
+        // Check duplicate contact number
+        $stmt = $conn->prepare("SELECT id FROM clients WHERE contact_number = ?");
+        $stmt->bind_param("s", $contactNumber);
+        $stmt->execute();
+        $stmt->store_result();
+        if ($stmt->num_rows > 0) {
+            $errors['contactNumber'] = "This contact number is already registered.";
         }
-        $stmt_check_contact->bind_param("s", $contactNumber);
-        $stmt_check_contact->execute();
-        $stmt_check_contact->store_result();
-
-        if ($stmt_check_contact->num_rows > 0) {
-            $errors['contactNumber'] = "This contact number is already registered. Please use a different number or log in.";
-        }
-        $stmt_check_contact->close();
+        $stmt->close();
     }
 
     if (empty($email)) {
-        $errors['email'] = "Email address is required.";
+        $errors['email'] = "Email is required.";
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $errors['email'] = "Invalid email format.";
     } else {
-        // Check if email already exists in DB
-        $check_email_sql = "SELECT id FROM clients WHERE email = ?";
-        $stmt_check_email = $conn->prepare($check_email_sql);
-        if ($stmt_check_email === false) {
-             die("Error preparing email check statement: " . $conn->error);
+        // Check duplicate email
+        $stmt = $conn->prepare("SELECT id FROM clients WHERE email = ?");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $stmt->store_result();
+        if ($stmt->num_rows > 0) {
+            $errors['email'] = "This email is already registered.";
         }
-        $stmt_check_email->bind_param("s", $email);
-        $stmt_check_email->execute();
-        $stmt_check_email->store_result();
-
-        if ($stmt_check_email->num_rows > 0) {
-            $errors['email'] = "Email already registered. Please use a different email or log in.";
-        }
-        $stmt_check_email->close();
+        $stmt->close();
     }
 
-    // Password validation (client-side JS also handles this, but server-side is crucial)
+    // Password validation
     if (empty($rawPassword)) {
         $errors['password'] = "Password is required.";
     } elseif (strlen($rawPassword) < 8) {
@@ -110,39 +93,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $errors['password'] = "Password must contain at least one symbol.";
     }
 
-
     if (empty($confirmPassword)) {
         $errors['confirmPassword'] = "Confirm password is required.";
     } elseif ($rawPassword !== $confirmPassword) {
         $errors['confirmPassword'] = "Passwords do not match.";
     }
 
-
-    // If no validation errors, proceed with database insertion
+    // --- 5. Insert into database if no errors ---
     if (empty($errors)) {
-        // --- IMPORTANT: FOR PRODUCTION, UNCOMMENT THIS LINE AND REMOVE THE ONE BELOW ---
-        $hashed_password = password_hash($rawPassword, PASSWORD_DEFAULT);
-        // --- TEMPORARY: FOR INITIAL TESTING WITHOUT PHP PASSWORD HASHING EXTENSION (NOT SECURE FOR PROD) ---
-        // $hashed_password = $rawPassword; // USE THIS ONLY FOR QUICK TESTING IF PASSWORD_HASH FAILS
-        // --- END TEMPORARY ---
-
-
-        // Prepare and execute the SQL INSERT statement
-        $sql = "INSERT INTO clients (first_name, last_name, birthday, contact_number, email, password) VALUES (?, ?, ?, ?, ?, ?)";
-        $stmt = $conn->prepare($sql);
-
-        if ($stmt === false) {
-            die("Error preparing statement: " . $conn->error);
-        }
-
-        $stmt->bind_param("ssssss", $firstName, $lastName, $birthday, $contactNumber, $email, $hashed_password); // Use $hashed_password here
+        $hashedPassword = password_hash($rawPassword, PASSWORD_DEFAULT);
+        $stmt = $conn->prepare("INSERT INTO clients (first_name, last_name, birthday, contact_number, email, password) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("ssssss", $firstName, $lastName, $birthday, $contactNumber, $email, $hashedPassword);
 
         if ($stmt->execute()) {
-            // Success: Redirect to the client login page
+            // Registration success: redirect to login
             header("Location: client_login.php");
-            exit(); // Always exit after a header redirect
+            exit();
         } else {
-            // Database insertion failed
             $errors['db'] = "Registration failed: " . $stmt->error;
         }
 
@@ -150,11 +117,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 
-// Close database connection if it was opened
-if (isset($conn) && $conn) {
-    $conn->close();
-}
+$conn->close();
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>

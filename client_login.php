@@ -75,7 +75,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['
                 // Unset old_email if login is successful
                 unset($_SESSION['old_email']);
                 unset($_SESSION['login_errors']); // Clear any pending login errors
-                header("Location: dashboardclient.php"); // Redirect to the actual client dashboard
+                header("Location: client_dashboard.php"); // Redirect to the actual client dashboard
                 exit;
             } else {
                 // Password incorrect
