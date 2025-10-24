@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- MODAL HANDLING (Hindi Binago) ---
-    if (confirmLogoutBtn) confirmLogoutBtn.addEventListener('click', () => window.location.href = 'client_login.php');
+    if (confirmLogoutBtn) confirmLogoutBtn.addEventListener('click', () => window.location.href = 'landing_page2.html');
     if (cancelLogoutBtn) cancelLogoutBtn.addEventListener('click', () => { if (logoutModal) logoutModal.classList.remove('show'); });
     if (confirmProfileSaveBtn) confirmProfileSaveBtn.addEventListener('click', () => { if (profileSaveModal) profileSaveModal.classList.remove('show'); revertToDefaultProfileState(); });
     if (confirmRequiredFieldsBtn) confirmRequiredFieldsBtn.addEventListener('click', () => { if (requiredFieldsModal) requiredFieldsModal.classList.remove('show'); });

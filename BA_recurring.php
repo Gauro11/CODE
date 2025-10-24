@@ -142,7 +142,8 @@
             <h2 class="section__title">Book Recurring Service</h2>
             <div class="booking__form">
 
-                <form id="recurringBookingForm" action="#" method="POST">
+              <form action="my_savebookings.php" method="POST" enctype="multipart/form-data">
+
                     
                     <div id="bookingFormSectionRecurring">
                         <div class="form-row">

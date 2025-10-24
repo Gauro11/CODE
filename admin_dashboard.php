@@ -1182,7 +1182,7 @@ margin-bottom: 20px;
         confirmLogoutBtn.addEventListener('click', function() {
             // CHANGE: Ang 'logout' link natin ay may 'href' na 'javascript:void(0)', kaya palitan na lang natin ang window location
             // window.location.href = logoutLink.href; // O kaya gawin na lang nating redirect sa home o login page
-            window.location.href = "admin_login.php"; // I-redirect sa login page/home page
+            window.location.href = "landing_page2.html"; // I-redirect sa login page/home page
         });
     }
     

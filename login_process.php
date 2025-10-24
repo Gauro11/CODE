@@ -2,6 +2,7 @@
 session_start();
 require 'connection.php';
 
+
 // Get the root URL dynamically
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://";
 $host = $_SERVER['HTTP_HOST'];
@@ -30,6 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (password_verify($password, $user['password'])) {
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['user_type'] = $table; // store table name as type
+                 $_SESSION['email'] = $user['email']; // <-- add this line
 
                 // Redirect to dashboard
                 header("Location: " . $base_url . $redirectPage);

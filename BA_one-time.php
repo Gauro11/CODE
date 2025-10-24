@@ -115,7 +115,8 @@
                 <h2 class="section__title">Book One-Time Service</h2>
                 <div class="booking__form">
                     
-                    <form id="oneTimeBookingForm" action="#" method="POST" enctype="multipart/form-data">
+                    <form action="my_savebookings.php" method="POST" enctype="multipart/form-data">
+
                         <div class="form-row">
                             <div class="form-group full-width">
                                 <label for="serviceType">Service Type</label>

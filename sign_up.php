@@ -2,16 +2,23 @@
 session_start();
 
 // --- 1. Connect to the database ---
-$servername = "localhost";
-$username = "u665838367_alazimaa";
-$password = '6$HvZ#Vd'; // safer
+// $servername = "localhost";
+// $username = "u665838367_alazimaa";
+// $password = '6$HvZ#Vd'; // safer
 
-$dbname = "u665838367_alazima";
+// $dbname = "u665838367_alazima";
+
+// $conn = new mysqli($servername, $username, $password, $dbname);
+// if ($conn->connect_error) {
+//     die("Connection failed: " . $conn->connect_error);
+// }
+$servername = "localhost";
+$username = "root";
+$password = ""; // empty
+$dbname = "alazima";
 
 $conn = new mysqli($servername, $username, $password, $dbname);
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+
 
 // --- 2. Initialize error array ---
 $errors = [];
@@ -107,8 +114,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         if ($stmt->execute()) {
             // Registration success: redirect to login
-            header("Location: client_login.php");
-            exit();
+           // Registration success: go back to landing page
+echo "<script>
+    window.location.href = 'landing_page2.html';
+</script>";
+exit();
+
+
         } else {
             $errors['db'] = "Registration failed: " . $stmt->error;
         }
