@@ -1,12 +1,12 @@
 <?php
-$host = 'localhost';
-$db = 'alazima';     // ito na ang actual database name mo
-$user = 'root';
-$pass = '';          // default XAMPP password is blank
 
-$conn = new mysqli($host, $user, $pass, $db);
+$servername = "localhost";
+$username = "u665838367_alazimaa";
+$password = '6$HvZ#Vd'; // safer
 
+$dbname = "u665838367_alazima";
+
+$conn = new mysqli($servername, $username, $password, $dbname);
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
-?>
