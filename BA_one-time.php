@@ -115,7 +115,8 @@
                 <h2 class="section__title">Book One-Time Service</h2>
                 <div class="booking__form">
                     
-                    <form action="my_savebookings.php" method="POST" enctype="multipart/form-data">
+                   <form id="oneTimeBookingForm" action="save_booking.php" method="POST" enctype="multipart/form-data">
+
 
                         <div class="form-row">
                             <div class="form-group full-width">
@@ -309,6 +310,7 @@
 
     <script src="client_db.js"></script>
     <script>
+        
         document.addEventListener("DOMContentLoaded", () => {
             // BAGONG JS PARA SA CLEANING MATERIALS
             const materialsNeededContainer = document.querySelector('.hidden-materials-input');
