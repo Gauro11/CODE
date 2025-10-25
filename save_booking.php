@@ -69,14 +69,23 @@ if (!empty($_FILES['mediaUpload']['name'][0])) {
     }
 }
 
-// ✅ Correct query (no total_cost)
+// ✅ Set default values for NOT NULL fields
+$booking_type     = 'One-Time';
+$frequency        = '';
+$preferred_day    = '';
+$start_date       = '';
+$end_date         = '';
+$materials_needed = '';
+$status           = 'Pending'; // ✅ Default booking status
+
+// ✅ Prepare query
 $query = "INSERT INTO bookings (
-    full_name, email, phone, service_type, client_type, service_date, service_time, 
-    duration, property_type, materials_provided, address, comments, 
-    media1, media2, media3, booking_type, frequency, preferred_day, start_date, 
-    end_date, materials_needed
+    full_name, email, phone, service_type, client_type, service_date, service_time,
+    duration, property_type, materials_provided, address, comments,
+    media1, media2, media3, booking_type, frequency, preferred_day, start_date,
+    end_date, materials_needed, status
 ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 )";
 
 $stmt = $conn->prepare($query);
@@ -84,16 +93,9 @@ if (!$stmt) {
     die('SQL Prepare Error: ' . $conn->error);
 }
 
-$booking_type     = 'One-Time';
-$frequency        = null;
-$preferred_day    = null;
-$start_date       = null;
-$end_date         = null;
-$materials_needed = null;
-
-// ✅ Bind parameters (21 total)
+// ✅ Bind parameters (22)
 $stmt->bind_param(
-    "sssssssssssssssssssss",
+    "ssssssssssssssssssssss",
     $fullName,
     $email,
     $phone,
@@ -114,10 +116,11 @@ $stmt->bind_param(
     $preferred_day,
     $start_date,
     $end_date,
-    $materials_needed
+    $materials_needed,
+    $status
 );
 
-// ✅ Execute and confirm
+// ✅ Execute
 if ($stmt->execute()) {
     echo "<script>alert('✅ Booking saved successfully! Total: AED $total_cost'); window.location.href='client_dashboard.php?content=dashboard';</script>";
 } else {

@@ -27,18 +27,18 @@ $email = $client['email'];
 $phone = $client['contact_number'];
 
 // ✅ Get form fields safely
-$serviceType = $_POST['serviceType'] ?? '';
-$clientType = $_POST['clientType'] ?? '';
-$frequency = $_POST['frequency'] ?? '';
-$preferredDay = $_POST['preferredDay'] ?? '';
-$startDate = $_POST['startDate'] ?? '';
-$endDate = $_POST['endDate'] ?? '';
-$bookingTime = $_POST['bookingTime'] ?? '';
-$duration = $_POST['duration'] ?? '';
-$address = $_POST['address'] ?? '';
-$propertyLayout = $_POST['propertyLayout'] ?? '';
+$serviceType       = $_POST['serviceType'] ?? '';
+$clientType        = $_POST['clientType'] ?? '';
+$frequency         = $_POST['frequency'] ?? '';
+$preferredDay      = $_POST['preferredDay'] ?? '';
+$startDate         = $_POST['startDate'] ?? '';
+$endDate           = $_POST['endDate'] ?? '';
+$bookingTime       = $_POST['bookingTime'] ?? '';
+$duration          = $_POST['duration'] ?? '';
+$address           = $_POST['address'] ?? '';
+$propertyLayout    = $_POST['propertyLayout'] ?? '';
 $cleaningMaterials = $_POST['cleaningMaterials'] ?? '';
-$materialsNeeded = $_POST['materialsNeeded'] ?? '';
+$materialsNeeded   = $_POST['materialsNeeded'] ?? '';
 $additionalRequest = $_POST['additionalRequest'] ?? '';
 
 // ✅ Format cleaning materials field
@@ -69,28 +69,33 @@ if (!empty($_FILES['mediaUpload']['name'][0])) {
     }
 }
 
-// ✅ Insert into DB (no “price” column)
+// ✅ Default values
+$booking_type = 'Recurring';
+$status       = 'Pending'; // ✅ Default status
+
+// ✅ Insert into DB
 $query = "INSERT INTO bookings 
     (full_name, email, phone, service_type, client_type, frequency, preferred_day, start_date, end_date, 
      service_time, duration, property_type, materials_provided, materials_needed, address, comments, 
-     media1, media2, media3, booking_type)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Recurring')";
+     media1, media2, media3, booking_type, status)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 $stmt = $conn->prepare($query);
 $stmt->bind_param(
-    "sssssssssssssssssss",
+    "sssssssssssssssssssss",
     $fullName, $email, $phone,
     $serviceType, $clientType, $frequency, $preferredDay,
     $startDate, $endDate, $bookingTime, $duration,
     $propertyLayout, $cleaningMaterials, $materialsNeeded,
     $address, $additionalRequest,
-    $mediaPaths[0], $mediaPaths[1], $mediaPaths[2]
+    $mediaPaths[0], $mediaPaths[1], $mediaPaths[2],
+    $booking_type, $status
 );
 
 if ($stmt->execute()) {
     echo "<script>alert('✅ Recurring booking saved successfully, $fullName!'); window.location.href='client_dashboard.php?content=dashboard';</script>";
 } else {
-    echo "❌ Error saving booking: " . $stmt->error;
+    echo "❌ Error saving booking: " . htmlspecialchars($stmt->error);
 }
 
 $stmt->close();

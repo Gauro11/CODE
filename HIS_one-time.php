@@ -1,10 +1,16 @@
 <?php
-session_start(); // Make sure session is started
+session_start();
 require 'connection.php';
 
-// Get logged-in user's email
-$user_email = $_SESSION['email'] ?? ''; // fallback empty if not set
+// ✅ Make sure the client is logged in
+if (!isset($_SESSION['email'])) {
+    echo "<script>alert('Please log in first.'); window.location.href='login.php';</script>";
+    exit;
+}
 
+$user_email = $_SESSION['email'];
+
+// ✅ Define service categories for organizing bookings
 $serviceTypes = [
     'Checkout Cleaning' => [],
     'In-House Cleaning' => [],
@@ -12,36 +18,42 @@ $serviceTypes = [
     'Deep Cleaning' => []
 ];
 
-// Only fetch bookings for this user
-$sql = "SELECT * FROM bookings WHERE booking_type='One-Time' AND email=? ORDER BY service_date DESC";
+// ✅ Fetch only this client's One-Time bookings
+$sql = "SELECT * FROM bookings WHERE booking_type = 'One-Time' AND email = ? ORDER BY service_date DESC";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("s", $user_email);
 $stmt->execute();
 $result = $stmt->get_result();
 
+// ✅ Build the result array
 if ($result && $result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
+        // Safely handle missing or invalid service_type
         $service_type = $row['service_type'] ?? 'Checkout Cleaning';
-        if (!isset($serviceTypes[$service_type])) $service_type = 'Checkout Cleaning';
+        if (!isset($serviceTypes[$service_type])) {
+            $service_type = 'Checkout Cleaning';
+        }
 
-        // Calculate estimated price
+        // ✅ Compute estimated price based on duration and materials_provided
         $estimated_price = 0;
         $materials_provided = $row['materials_provided'] ?? '';
         $duration = floatval($row['duration'] ?? 0);
+
         if (preg_match('/(\d+(?:\.\d+)?)\s*AED\s*\/\s*hr/i', $materials_provided, $matches)) {
             $hourly_rate = floatval($matches[1]);
             $estimated_price = $hourly_rate * $duration;
         }
 
+        // ✅ Push the booking into its respective service type array
         $serviceTypes[$service_type][] = [
             'booking_id' => $row['id'],
             'reference_no' => 'ALZ-' . str_pad($row['id'], 6, '0', STR_PAD_LEFT),
-            'booking_date' => $row['service_date'],
-            'booking_time' => $row['service_time'],
+            'booking_date' => $row['service_date'] ?? '',
+            'booking_time' => $row['service_time'] ?? '',
             'duration' => $row['duration'] ?? '0',
             'address' => $row['address'] ?? '',
             'client_type' => $row['client_type'] ?? 'N/A',
-            'status' => $row['status'] ?? 'PENDING',
+            'status' => strtoupper($row['status'] ?? 'PENDING'),
             'service_type' => $row['booking_type'] ?? 'One-Time',
             'property_layout' => $row['property_type'] ?? '',
             'materials_required' => $row['materials_needed'] ?? 'No',
@@ -56,10 +68,14 @@ if ($result && $result->num_rows > 0) {
             'cleaners_names' => $row['cleaners_names'] ?? ''
         ];
     }
+} else {
+    echo "<p style='text-align:center;color:gray;'>No One-Time bookings found.</p>";
 }
 
+$stmt->close();
 $conn->close();
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -249,6 +265,16 @@ $conn->close();
     text-align: left;
 }
 
+.action-btn.edit-plan-btn{
+    padding: 8px 12px; font-weight: bold; cursor: pointer; border-radius: 6px; text-align: center; transition: all 0.3s; text-decoration: none; display: flex; align-items: center; gap: 5px; font-size: 0.9em; background-color: #0056b3; border: 2px solid #0056b3; color: white;
+}
+.action-btn.edit-plan-btn:hover { background-color: #0062cc; border-color: #0062cc; }
+.action-btn.sessions-btn {
+    padding: 8px 12px; font-weight: bold; cursor: pointer; border-radius: 6px; text-align: center; transition: all 0.3s; text-decoration: none; display: flex; align-items: center; gap: 5px; font-size: 0.9em; background-color: #008080; border: 2px solid #008080; color: white;
+}
+.action-btn.sessions-btn:hover { background-color: #009999; border-color: #009999; }
+.dropdown-menu .whatsapp-chat-link i { color: #25D366; }
+.appointment-details .ref-no-detail { margin-bottom: 15px; }
 .info-tooltip-content h3 {
     font-size: 1.5em;
     font-weight: 700;
@@ -498,41 +524,117 @@ $conn->close();
             $status_icon = $status_icons[$booking['status']] ?? '';
             
             // Generate buttons based on status
-            $buttons = '';
-            if ($booking['status'] === 'PENDING') {
-                $buttons = '
-                    <a href="javascript:void(0)" class="action-btn view-details-btn" onclick="showDetailsModal(this.closest(\'.appointment-list-item\'))"><i class=\'bx bx-show\'></i> View Details</a>
-                    <a href="EDIT_one-time.php?booking_id='.$booking['booking_id'].'" class="action-btn feedback-btn"><i class=\'bx bx-edit\'></i> Edit</a>
-                    <div class="dropdown-menu-container">
-                        <button class="more-options-btn" onclick="toggleDropdown(this)"><i class=\'bx bx-dots-vertical-rounded\'></i></button>
-                        <ul class="dropdown-menu">
-                            <li><a href="https://wa.me/971529009188" target="_blank" class="whatsapp-link"><i class=\'bx bxl-whatsapp\'></i> Chat on WhatsApp</a></li>
-                            <li><a href="javascript:void(0)" class="cancel-link" onclick="showCancelModal(\''.$booking['reference_no'].'\')"><i class=\'bx bx-x-circle\' style="color: #B32133;"></i> Cancel</a></li>
-                        </ul>
-                    </div>
-                ';
-            } elseif ($booking['status'] === 'CONFIRMED' || $booking['status'] === 'ONGOING') {
-                $buttons = '
-                    <a href="javascript:void(0)" class="action-btn view-details-btn" onclick="showDetailsModal(this.closest(\'.appointment-list-item\'))"><i class=\'bx bx-show\'></i> View Details</a>
-                    <a href="https://wa.me/971529009188" target="_blank" class="action-btn whatsapp-chat-btn"><i class=\'bx bxl-whatsapp\'></i> Chat on WhatsApp</a>
-                ';
-            } elseif ($booking['status'] === 'COMPLETED') {
-                $buttons = '
-                    <a href="javascript:void(0)" class="action-btn view-details-btn" onclick="showDetailsModal(this.closest(\'.appointment-list-item\'))"><i class=\'bx bx-show\'></i> View Details</a>
-                    <a href="FR_one-time.php" class="action-btn feedback-btn"><i class=\'bx bx-star\'></i> Leave Feedback</a>
-                    <div class="dropdown-menu-container">
-                        <button class="more-options-btn" onclick="toggleDropdown(this)"><i class=\'bx bx-dots-vertical-rounded\'></i></button>
-                        <ul class="dropdown-menu">
-                            <li><a href="https://wa.me/971529009188" target="_blank" class="whatsapp-link"><i class=\'bx bxl-whatsapp\'></i> Chat on WhatsApp</a></li>
-                            <li><a href="javascript:void(0)" class="report-link" onclick="showReportModal(this)"><i class=\'bx bx-error-alt\'></i> Report Issue</a></li>
-                        </ul>
-                    </div>
-                ';
-            } else {
-                $buttons = '
-                    <a href="javascript:void(0)" class="action-btn view-details-btn" onclick="showDetailsModal(this.closest(\'.appointment-list-item\'))"><i class=\'bx bx-show\'></i> View Details</a>
-                ';
-            }
+           $buttons = '';
+
+switch ($booking['status']) {
+    case 'PENDING':
+        $buttons = '
+            <a href="javascript:void(0)" class="action-btn view-details-btn" 
+               onclick="showDetailsModal(this.closest(\'.appointment-list-item\'))">
+               <i class="bx bx-show"></i> View Details</a>
+
+            <a href="EDIT_one-time.php?booking_id=' . $booking['booking_id'] . '" 
+               class="action-btn feedback-btn">
+               <i class="bx bx-edit"></i> Edit</a>
+
+            <div class="dropdown-menu-container">
+                <button class="more-options-btn" onclick="toggleDropdown(this)">
+                    <i class="bx bx-dots-vertical-rounded"></i>
+                </button>
+                <ul class="dropdown-menu">
+                    <li>
+                        <a href="https://wa.me/971529009188" target="_blank" class="whatsapp-link">
+                            <i class="bx bxl-whatsapp"></i> Chat on WhatsApp
+                        </a>
+                    </li>
+                    <li>
+                        <a href="javascript:void(0)" class="cancel-link" 
+                           onclick="showCancelModal(\'' . $booking['reference_no'] . '\')">
+                           <i class="bx bx-x-circle" style="color: #B32133;"></i> Cancel
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        ';
+        break;
+
+    case 'CONFIRMED':
+    case 'ONGOING':
+        $buttons = '
+            <a href="javascript:void(0)" class="action-btn view-details-btn" 
+               onclick="showDetailsModal(this.closest(\'.appointment-list-item\'))">
+               <i class="bx bx-show"></i> View Details</a>
+
+            <a href="https://wa.me/971529009188" target="_blank" 
+               class="action-btn whatsapp-chat-btn">
+               <i class="bx bxl-whatsapp"></i> Chat on WhatsApp
+            </a>
+        ';
+        break;
+
+    case 'COMPLETED':
+        $buttons = '
+            <a href="javascript:void(0)" class="action-btn view-details-btn" 
+               onclick="showDetailsModal(this.closest(\'.appointment-list-item\'))">
+               <i class="bx bx-show"></i> View Details</a>
+
+            <a href="FR_one-time.php?booking_id=' . $booking['booking_id'] . '" 
+               class="action-btn feedback-btn">
+               <i class="bx bx-star"></i> Leave Feedback</a>
+
+            <div class="dropdown-menu-container">
+                <button class="more-options-btn" onclick="toggleDropdown(this)">
+                    <i class="bx bx-dots-vertical-rounded"></i>
+                </button>
+                <ul class="dropdown-menu">
+                    <li>
+                        <a href="https://wa.me/971529009188" target="_blank" class="whatsapp-link">
+                            <i class="bx bxl-whatsapp"></i> Chat on WhatsApp
+                        </a>
+                    </li>
+                    <li>
+                        <a href="javascript:void(0)" class="report-link" 
+                           onclick="showReportModal(this)">
+                           <i class="bx bx-error-alt"></i> Report Issue
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        ';
+        break;
+
+    default:
+        $buttons = '
+            <a href="javascript:void(0)" class="action-btn view-details-btn" 
+               onclick="showDetailsModal(this.closest(\'.appointment-list-item\'))">
+               <i class="bx bx-show"></i> View Details</a>
+
+            <a href="EDIT_one-time.php?booking_id=' . $booking['booking_id'] . '" 
+               class="action-btn feedback-btn">
+               <i class="bx bx-edit"></i> Edit</a>
+
+            <div class="dropdown-menu-container">
+                <button class="more-options-btn" onclick="toggleDropdown(this)">
+                    <i class="bx bx-dots-vertical-rounded"></i>
+                </button>
+                <ul class="dropdown-menu">
+                    <li>
+                        <a href="https://wa.me/971529009188" target="_blank" class="whatsapp-chat-link">
+                            <i class="bx bxl-whatsapp"></i> Chat on WhatsApp
+                        </a>
+                    </li>
+                    <li>
+                        <a href="javascript:void(0)" class="report-link" 
+                           onclick="showReportModal(this)">
+                           <i class="bx bx-error-alt"></i> Report Issue
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        ';
+        break;
+}
+
             
             // Staff details (if available)
             $staff_details = '';
@@ -841,37 +943,34 @@ function sortAppointmentsByStatus(containerId, filterStatus = 'default') {
     const noAppointmentsMessage = container.querySelector('.no-appointments-message');
 
     let visibleCount = 0;
+    const filter = filterStatus.toUpperCase(); // normalize filter
+
     items.forEach(item => {
-        const itemStatus = item.getAttribute('data-status');
-        const isVisible = (filterStatus === 'default' || filterStatus === itemStatus);
+        const itemStatus = (item.getAttribute('data-status') || '').toUpperCase(); // normalize item status
+        const isVisible = (filter === 'DEFAULT' || filter === itemStatus);
         item.style.display = isVisible ? 'grid' : 'none';
         if (isVisible) visibleCount++;
     });
-    
-    if (filterStatus === 'default') {
+
+    if (filter === 'DEFAULT') {
         const itemsToSort = items.filter(item => item.style.display !== 'none');
         itemsToSort.sort((a, b) => {
-            const statusA = a.getAttribute('data-status');
-            const statusB = b.getAttribute('data-status');
+            const statusA = (a.getAttribute('data-status') || '').toUpperCase();
+            const statusB = (b.getAttribute('data-status') || '').toUpperCase();
             const orderA = statusOrder[statusA] || 999;
             const orderB = statusOrder[statusB] || 999;
             return orderA - orderB;
         });
-
-        if (noAppointmentsMessage) {
-            container.appendChild(noAppointmentsMessage);
-        }
-        itemsToSort.forEach(item => {
-            container.appendChild(item);
-        });
+        if (noAppointmentsMessage) container.appendChild(noAppointmentsMessage);
+        itemsToSort.forEach(item => container.appendChild(item));
     }
 
     if (noAppointmentsMessage) {
         if (visibleCount === 0) {
             noAppointmentsMessage.style.display = 'block';
             const serviceName = noAppointmentsMessage.getAttribute('data-service-name');
-            if (filterStatus !== 'default') {
-                noAppointmentsMessage.innerHTML = `No ${filterStatus} appointments found for ${serviceName}.`;
+            if (filter !== 'DEFAULT') {
+                noAppointmentsMessage.innerHTML = `No ${filter.charAt(0) + filter.slice(1).toLowerCase()} appointments found for ${serviceName}.`;
             } else {
                 noAppointmentsMessage.innerHTML = `You have no appointments on record for ${serviceName}.`;
             }
@@ -880,6 +979,7 @@ function sortAppointmentsByStatus(containerId, filterStatus = 'default') {
         }
     }
 }
+
 
 function initializeStatusSortingOnLoad() {
     const containerIds = [

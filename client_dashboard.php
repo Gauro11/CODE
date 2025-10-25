@@ -1,7 +1,36 @@
+
 <?php
-// PHP code for HIS_one-time.php would typically start here if it were a real dynamic file.
-// Since this is a static representation, we start with the HTML/CSS/JS.
+session_start();
+require 'connection.php'; // your DB connection file
+
+// Fetch logged-in client info
+$client_email = $_SESSION['email'] ?? null;
+$client_name = $_SESSION['full_name'] ?? 'Client';
+
+// Fetch One-Time bookings
+$one_time_query = "SELECT * FROM bookings WHERE booking_type = 'One-Time' ";
+if ($client_email) {
+    $one_time_query .= "AND email = '$client_email' ";
+}
+$one_time_query .= "ORDER BY service_date DESC";
+$one_time_result = $conn->query($one_time_query);
+$one_time_count = $one_time_result ? $one_time_result->num_rows : 0;
+
+// Fetch Recurring bookings for summary
+$recurring_query = "SELECT COUNT(*) as recurring_count FROM bookings WHERE booking_type = 'Recurring' ";
+if ($client_email) {
+    $recurring_query .= "AND email = '$client_email' ";
+}
+$recurring_result = $conn->query($recurring_query);
+$recurring_count = $recurring_result->fetch_assoc()['recurring_count'] ?? 0;
+
+// Count total services
+$total_services = $one_time_result->num_rows + $recurring_count;
+
+// Since your table has no feedback/status, we can remove pending feedback completely
+$pending_feedback_count = 0; // default
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,7 +42,7 @@
 <link rel="stylesheet" href="client_db.css"> <link rel="stylesheet" href="HIS_design.css">
 
 <style>
-<style>
+
 
 /* --- Core Layout & Global Helpers --- */
 .view-all-container {
@@ -730,7 +759,7 @@ margin-bottom: 20px;
 /* --- END Staff Details CSS --- */
 
 </style>
-</style>
+
 </head>
     
 <body>
@@ -781,316 +810,150 @@ margin-bottom: 20px;
 
  
         
-    <main class="dashboard__content">
+  <main class="dashboard__content">
 <section id="dashboard" class="content__section active">
-<h2 class="section__title">Welcome back, Client Name!!</h2>
+<h2 class="section__title">Welcome back, <?php echo htmlspecialchars($client_name); ?>!!</h2>
 <p class="welcome__message">Here's a quick overview of your services and upcoming appointments. You can book new services, view your history, or update your profile from the menu.</p>
+
 <div class="summary-cards-container">
-<div class="summary-card service-summary">
-<div class="card-content">
-<h3>Service Summary</h3>
-<table>
-<tr>
-<td>Total Services Booked:</td>
-<td class="count">3</td>
-</tr>
-<tr>
-<td>Recurring Services:</td>
-<td class="count">1</td>
-</tr>
-<tr>
-<td>One-Time Services:</td>
-<td class="count">2</td>
-</tr>
-</table>
-</div>
-<i class='bx bx-notepad card-icon'></i>
-</div>
-<div class="summary-card pending-feedback">
-<div class="card-content">
-<h3>Pending Feedback</h3>
-<p>You have 1 pending feedback for a recent service.</p>
-<a href="#" class="feedback-link"><i class='bx bx-edit-alt'></i> Leave Feedback</a>
-</div>
-<i class='bx bx-message-dots card-icon'></i>
-</div>
-<div class="summary-card quick-actions">
-<div class="card-content">
-<h3>Quick Actions</h3>
-<ul>
-<li><a href="BA_one-time.php"><i class='bx bx-calendar-plus'></i> Book One-Time Service</a></li>
-<li><a href="BA_recurring.php"><i class='bx bx-history'></i> Book Recurring Service</a></li>
-<li><a href="?content=profile"><i class='bx bx-edit'></i> Update Profile</a></li>
-</ul>
-</div>
-<i class='bx bx-cog card-icon'></i>
-</div>
-</div>
 
-
-<div>
-
-    
-    <div class="dashboard__container upcoming-container">
-        <h2 class="container-title">
-            <i class='bx bx-calendar'></i> Upcoming <strong>One-Time</strong> Appointments
-        </h2>
-        
-        <div class="appointment-list-container" id="one-time-appointments-list">
-            <div class="no-appointments-message" data-service-name="One-Time Appointments"></div> 
-            
-            <div class="appointment-list-item" 
-                data-date="2024-10-05" 
-                data-time="09:00"
-                data-status="PENDING"
-                data-search-terms="ALZ-CC-2410-0016 October 05, 2024 9:00 AM 707 Downtown, Dubai Apartment PENDING"
-                data-property-layout="1 Bedroom, 1 Bathroom"
-                data-materials-required="Yes"
-                data-materials-description="All-purpose cleaner, glass cleaner, floor mop/bucket."
-                data-additional-request="Focus on cleaning the windows in the living area."
-                data-image-1="https://alazima.com/files/ALZ-CC-2410-0016_img1.jpg"
-                data-image-2=""
-                data-image-3=""
-                data-driver-name=""
-                data-cleaners-name=""
-            >
-                <div class="button-group-top">
-                    <a href="javascript:void(0)" class="action-btn view-details-btn" onclick="showDetailsModal(this.closest('.appointment-list-item'))"><i class='bx bx-show'></i> View Details</a>
-                    <a href="EDIT_one-time.php?booking_id=1" class="action-btn edit-btn">
-                        <i class='bx bx-edit'></i> Edit
-                    </a>
-                    <div class="dropdown-menu-container">
-                        <button class="more-options-btn" onclick="toggleDropdown(this)"><i class='bx bx-dots-vertical-rounded'></i></button>
-                        <ul class="dropdown-menu">
-                            <li><a href="https://wa.me/971529009188" target="_blank" class="whatsapp-link"><i class='bx bxl-whatsapp'></i> Chat on WhatsApp</a></li>
-                            <li><a href="javascript:void(0)" class="cancel-link" onclick="showCancelModal('ALZ-CC-2410-0016')"><i class='bx bx-x-circle' style="color: #B32133;"></i> Cancel</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="appointment-details">
-                    <p class="full-width-detail ref-no-detail"><strong>Reference No:</strong> <span class="ref-no-value">ALZ-CC-2410-0016</span></p>
-                    <p class="full-width-detail"><i class='bx bx-calendar-check'></i> <strong>Date:</strong> October 05, 2024</p>
-                    <p><i class='bx bx-time'></i> <strong>Time:</strong> 9:00 AM</p>
-                    <p class="duration-detail"><i class='bx bx-stopwatch'></i> <strong>Duration:</strong> 4 hours</p>
-                    <p class="full-width-detail"><i class='bx bx-map-alt'></i> <strong>Address:</strong> 707 Downtown, Dubai</p>
-                    <hr class="divider full-width-detail">
-                    <p><i class='bx bx-building-house'></i> <strong>Client Type:</strong> Apartment</p>
-                    <p class="service-type-detail"><i class='bx bx-wrench'></i> <strong>Service Type:</strong> Checkout Cleaning</p>
-                    <p class="full-width-detail status-detail">
-                        <strong>Status:</strong>
-                        <span class="status-tag pending"><i class='bx bx-hourglass'></i> PENDING</span>
-                    </p>
-                    <p class="price-detail">Estimated Price: <span class="aed-color">AED 400</span></p>
-                </div>
-            </div>
-   
-            <div class="appointment-list-item" 
-                data-date="2024-09-29" 
-                data-time="13:00"
-                data-status="ONGOING"
-                data-driver-name="Mohamed A."
-                data-cleaners-name="Jenny Ramos, Sarah Kim, Mia Laoag, Chloe Jasmine Cruz, Ella Buenaflor, Rhea Generics, Joy Mae Tindugan, Anne Paraseo Santos"
-                data-search-terms="ALZ-IH-2409-0014 September 29, 2024 1:00 PM 501 The Greens, Dubai Apartment ONGOING"
-                data-property-layout="3 Bedrooms, 4 Bathrooms, Maid's Room"
-                data-materials-required="No"
-                data-materials-description="N/A"
-                data-additional-request="Deep cleaning of carpets is needed in the living room."
-                data-image-1="https://alazima.com/files/ALZ-IH-2409-0014_img1.jpg"
-                data-image-2=""
-                data-image-3=""
-            >
-                <div class="button-group-top">
-                    <a href="javascript:void(0)" class="action-btn view-details-btn" onclick="showDetailsModal(this.closest('.appointment-list-item'))"><i class='bx bx-show'></i> View Details</a>
-                    <a href="https://wa.me/971529009188" target="_blank" class="action-btn whatsapp-chat-btn"><i class='bx bxl-whatsapp'></i> Chat on WhatsApp</a>
-                </div>
-                <div class="appointment-details">
-                    <p class="full-width-detail ref-no-detail"><strong>Reference No:</strong> <span class="ref-no-value">ALZ-IH-2409-0014</span></p>
-                    <p class="full-width-detail"><i class='bx bx-calendar-check'></i> <strong>Date:</strong> September 29, 2024</p>
-                    <p><i class='bx bx-time'></i> <strong>Time:</strong> 1:00 PM</p>
-                    <p class="duration-detail"><i class='bx bx-stopwatch'></i> <strong>Duration:</strong> 3 hours</p>
-                    <p class="full-width-detail"><i class='bx bx-map-alt'></i> <strong>Address:</strong> 501 The Greens, Dubai</p>
-                    <hr class="divider full-width-detail">
-                    <p><i class='bx bx-building-house'></i> <strong>Client Type:</strong> Apartment</p>
-                    <p class="service-type-detail"><i class='bx bx-wrench'></i> <strong>Service Type:</strong> In-House Cleaning</p>
-                    <p class="full-width-detail status-detail">
-                        <strong>Status:</strong>
-                        <span class="status-tag ongoing"><i class='bx bx-loader-circle'></i> ONGOING</span>
-                    </p>
-                    
-                    <div class="staff-details-container full-width-detail">
-                        <h4><i class='bx bx-id-card'></i> Assigned Team</h4>
-                        <p><i class='bx bx-car'></i> <strong>Driver:</strong> Mohamed A.</p>
-                        <p><i class='bx bx-group'></i> <strong>Cleaners:</strong> Jenny Ramos, Sarah Kim, Mia Laoag, Chloe Jasmine Cruz, Ella Buenaflor, Rhea Generics, Joy Mae Tindugan, Anne Paraseo Santos</p>
-                        </div>
-                    <p class="price-detail">Estimated Price: <span class="aed-color">AED 300</span></p>
-                </div>
-            </div>
-            <div class="appointment-list-item" 
-                data-date="2024-10-10" 
-                data-time="13:00"
-                data-status="CONFIRMED"
-                data-driver-name="Ahmed S."
-                data-cleaners-name="Lisa Manaoag"
-                data-search-terms="ALZ-RC-2410-0017 October 10, 2024 1:00 PM 808 Downtown, Dubai Apartment CONFIRMED"
-                data-property-layout="1 Bedroom, 1 Bathroom"
-                data-materials-required="Yes"
-                data-materials-description="Dusting spray, paper towels, and window squeegee."
-                data-additional-request="Quick wipe down of surfaces, very urgent for guest arrival."
-                data-image-1=""
-                data-image-2=""
-                data-image-3=""
-            >
-                <div class="button-group-top">
-                    <a href="javascript:void(0)" class="action-btn view-details-btn" onclick="showDetailsModal(this.closest('.appointment-list-item'))"><i class='bx bx-show'></i> View Details</a>
-                    <a href="https://wa.me/971529009188" target="_blank" class="action-btn whatsapp-chat-btn"><i class='bx bxl-whatsapp'></i> Chat on WhatsApp</a>
-                </div>
-                <div class="appointment-details">
-                    <p class="full-width-detail ref-no-detail"><strong>Reference No:</strong> <span class="ref-no-value">ALZ-RC-2410-0017</span></p>
-                    <p class="full-width-detail"><i class='bx bx-calendar-check'></i> <strong>Date:</strong> October 10, 2024</p>
-                    <p><i class='bx bx-time'></i> <strong>Time:</strong> 1:00 PM</p>
-                    <p class="duration-detail"><i class='bx bx-stopwatch'></i> <strong>Duration:</strong> 2 hours</p>
-                    <p class="full-width-detail"><i class='bx bx-map-alt'></i> <strong>Address:</strong> 808 Downtown, Dubai</p>
-                    <hr class="divider full-width-detail">
-                    <p><i class='bx bx-building-house'></i> <strong>Client Type:</strong> Apartment</p>
-                    <p class="service-type-detail"><i class='bx bx-wrench'></i> <strong>Service Type:</strong> Refresh Cleaning</p>
-                    <p class="full-width-detail status-detail">
-                        <strong>Status:</strong>
-                        <span class="status-tag confirmed"><i class='bx bx-calendar-check'></i> CONFIRMED</span>
-                    </p>
-                    
-                    <div class="staff-details-container full-width-detail">
-                        <h4><i class='bx bx-id-card'></i> Assigned Team</h4>
-                        <p><i class='bx bx-car'></i> <strong>Driver:</strong> Ahmed S.</p>
-                        <p><i class='bx bx-group'></i> <strong>Cleaners:</strong> Lisa Manaoag</p>
-                    </div>
-                    <p class="price-detail">Estimated Price: <span class="aed-color">AED 200</span></p>
-                </div>
-            </div>
-            
+    <!-- Service Summary -->
+    <div class="summary-card service-summary">
+        <div class="card-content">
+            <h3>Service Summary</h3>
+            <table>
+                <tr>
+                    <td>Total Services Booked:</td>
+                    <td class="count"><?php echo $total_services; ?></td>
+                </tr>
+                <tr>
+                    <td>Recurring Services:</td>
+                    <td class="count"><?php echo $recurring_count; ?></td>
+                </tr>
+                <tr>
+                    <td>One-Time Services:</td>
+                    <td class="count"><?php echo $one_time_count; ?></td>
+                </tr>
+            </table>
         </div>
-        
-        <div class="view-all-container">
-            <a href="HIS_one-time.php" class="view-all-link">See More...</a>
-        </div>
-        </div>
-    <div class="dashboard__container recurring-container">
-        <h2 class="container-title">
-            <i class='bx bx-repeat'></i> Upcoming <strong>Recurring</strong> Plans
-        </h2>
-        
-        <div class="appointment-list-container" id="recurring-plans-list">
-            <div class="no-appointments-message" data-service-name="Recurring Plans"></div> 
-            
-            <div class="appointment-list-item" 
-                data-date="2024-11-01" 
-                data-end-date="2025-12-31" 
-                data-time="15:00"
-                data-plan-status="PENDING"
-                data-search-terms="ALZ-MTH-2411-0021 November 01, 2024 3:00 PM 505 JVC, Dubai Residential PENDING (New)"
-                data-property-layout="2 Bedrooms, 2 Bathrooms"
-                data-materials-required="No"
-                data-materials-description="N/A"
-                data-additional-request="First monthly clean for the client. Standard cleaning instructions."
-                data-image-1=""
-                data-image-2=""
-                data-image-3=""
-                data-driver-name=""
-                data-cleaners-name=""
-            >
-                <div class="button-group-top">
-                    <a href="javascript:void(0)" class="action-btn view-details-btn" onclick="showRecurringDetailsModal(this.closest('.appointment-list-item'))"><i class='bx bx-show'></i> View Details</a>
-                        
-                    <a href="BA_recurring.php?edit=ALZ-MTH-2411-0021" class="action-btn edit-plan-btn">
-                        <i class='bx bx-edit'></i> Edit
-                    </a>
-                    <div class="dropdown-menu-container">
-                        <button class="more-options-btn" onclick="toggleDropdown(this)"><i class='bx bx-dots-vertical-rounded'></i></button>
-                        <ul class="dropdown-menu">
-                            <li><a href="https://wa.me/971529009188" target="_blank" class="whatsapp-chat-link"><i class='bx bxl-whatsapp'></i> Chat on WhatsApp</a></li>
-                            <li><a href="javascript:void(0)" class="cancel-link" onclick="showCancelModal('ALZ-MTH-2411-0021')"><i class='bx bx-x-circle' style="color: #B32133;"></i> Cancel</a></li>
-                            </ul>
-                    </div>
-                </div>
-                <div class="appointment-details">
-                    <p class="full-width-detail ref-no-detail"><strong>Reference No:</strong> <span class="ref-no-value">ALZ-MTH-2411-0021</span></p>
-                    <p><i class='bx bx-calendar-check'></i> <strong>Start Date:</strong> November 01, 2024</p> <p class="end-date-detail"><i class='bx bx-calendar-check'></i> <strong>End Date:</strong> N/A (Pending)</p>
-                    <p><i class='bx bx-time'></i> <strong>Time:</strong> 3:00 PM</p> <p class="duration-detail"><i class='bx bx-stopwatch'></i> <strong>Duration:</strong> 3 hours</p>
-                    <p class="frequency-detail"><i class='bx bx-sync'></i> <strong>Frequency:</strong> Monthly</p> <p class="sessions-detail"><i class='bx bx-list-ol'></i> <strong>No. of Sessions:</strong> <span class="sessions-count">0 of 5</span></p>
-                    
-                    <p class="full-width-detail"><i class='bx bx-map-alt'></i> <strong>Address:</strong> 505 JVC, Dubai</p>
-                    <hr class="divider full-width-detail">
-                    <p><i class='bx bx-home-heart'></i> <strong>Client Type:</strong> Residential</p>
-                    <p class="service-type-detail"><i class='bx bx-wrench'></i> <strong>Service Type:</strong> General Cleaning</p>
+        <i class='bx bx-notepad card-icon'></i>
+    </div>
 
-                    <p class="full-width-detail status-detail">
-                        <strong>Plan Status:</strong>
-                        <span class="overall-plan-tag overall-pending"><i class='bx bx-time-five'></i> PENDING</span>
-                    </p>
-                    <p class="price-detail">Estimated Price: <span class="aed-color">AED 300</span></p>
+    <!-- Pending Feedback -->
+    <div class="summary-card pending-feedback">
+        <div class="card-content">
+            <h3>Pending Feedback</h3>
+            <p>You have <?php echo $pending_feedback_count; ?> pending feedback for a recent service.</p>
+            <a href="#" class="feedback-link"><i class='bx bx-edit-alt'></i> Leave Feedback</a>
+        </div>
+        <i class='bx bx-message-dots card-icon'></i>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="summary-card quick-actions">
+        <div class="card-content">
+            <h3>Quick Actions</h3>
+            <ul>
+                <li><a href="BA_one-time.php"><i class='bx bx-calendar-plus'></i> Book One-Time Service</a></li>
+                <li><a href="BA_recurring.php"><i class='bx bx-history'></i> Book Recurring Service</a></li>
+                <li><a href="?content=profile"><i class='bx bx-edit'></i> Update Profile</a></li>
+            </ul>
+        </div>
+        <i class='bx bx-cog card-icon'></i>
+    </div>
+
+</div>
+
+
+                    
+
+<div class="dashboard__container upcoming-container">
+<h2 class="container-title">
+    <i class='bx bx-calendar'></i> Upcoming <strong>One-Time</strong> Appointments
+</h2>
+
+<div class="appointment-list-container" id="one-time-appointments-list">
+<?php
+$one_time_result->data_seek(0); // Reset pointer
+
+if ($one_time_result->num_rows > 0) {
+    while ($row = $one_time_result->fetch_assoc()) {
+
+        // Generate reference number for display
+        $ref_number = "ALZ-OT-" . date("ymd") . "-" . str_pad($row['id'], 4, "0", STR_PAD_LEFT);
+
+        $service_date = date("F d, Y", strtotime($row['service_date']));
+        $service_time = date("g:i A", strtotime($row['service_time']));
+        $duration = $row['duration'] ?? "N/A";
+        $status = $row['status'] ?? "Pending"; // Use actual status
+        $service_type = $row['service_type'] ?? "Service";
+        $client_type = $row['client_type'] ?? "N/A";
+        $address = $row['address'] ?? "";
+        $materials_needed = $row['materials_needed'] ?? "No";
+        $comments = $row['comments'] ?? "";
+        $media1 = $row['media1'] ?? "";
+        $media2 = $row['media2'] ?? "";
+        $media3 = $row['media3'] ?? "";
+
+        echo '<div class="appointment-list-item" 
+            data-date="'.htmlspecialchars($row['service_date']).'" 
+            data-time="'.htmlspecialchars($row['service_time']).'"
+            data-status="'.htmlspecialchars($status).'"
+            data-search-terms="'.htmlspecialchars("$ref_number $service_date $service_time $address $client_type $status").'"
+            data-property-layout="'.htmlspecialchars($client_type).'"
+            data-materials-required="'.htmlspecialchars($materials_needed).'"
+            data-materials-description="'.htmlspecialchars($comments).'"
+            data-additional-request="'.htmlspecialchars($comments).'"
+            data-image-1="'.htmlspecialchars($media1).'"
+            data-image-2="'.htmlspecialchars($media2).'"
+            data-image-3="'.htmlspecialchars($media3).'"
+        >
+            <div class="button-group-top">
+                <a href="javascript:void(0)" class="action-btn view-details-btn" onclick="showDetailsModal(this.closest(\'.appointment-list-item\'))"><i class="bx bx-show"></i> View Details</a>
+                <a href="EDIT_one-time.php?booking_id='.$row['id'].'" class="action-btn edit-btn"><i class="bx bx-edit"></i> Edit</a>
+                <div class="dropdown-menu-container">
+                    <button class="more-options-btn" onclick="toggleDropdown(this)"><i class="bx bx-dots-vertical-rounded"></i></button>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a href="javascript:void(0)" class="cancel-link" 
+                               onclick="showCancelModal('.$row['id'].', \''.$ref_number.'\')">
+                               <i class="bx bx-x-circle" style="color: #B32133;"></i> Cancel
+                            </a>
+                        </li>
+                    </ul>
                 </div>
             </div>
-
-            <div class="appointment-list-item" 
-                data-date="2024-10-05" 
-                data-end-date="2025-12-31" 
-                data-time="09:00"
-                data-plan-status="ACTIVE"
-                data-driver-name="Mohamed A."
-                data-cleaners-name="Jenny Ramos, Sarah Kim, Mia Laoag, Chloe Jasmine Cruz, Ella Buenaflor, Rhea Generics, Joy Mae Tindugan, Anne Paraseo Santos"
-                data-search-terms="ALZ-WK-2410-0016 October 05, 2024 9:00 AM 707 Downtown, Dubai Residential ACTIVE"
-                data-property-layout="1 Bedroom, 1 Bathroom"
-                data-materials-required="Yes"
-                data-materials-description="All-purpose cleaner, glass cleaner, floor mop/bucket."
-                data-additional-request="Focus on cleaning the windows in the living area."
-                data-image-1="https://alazima.com/files/ALZ-CC-2410-0016_img1.jpg"
-                data-image-2=""
-                data-image-3=""
-            >
-                <div class="button-group-top">
-                    <a href="javascript:void(0)" class="action-btn view-details-btn" onclick="showRecurringDetailsModal(this.closest('.appointment-list-item'))"><i class='bx bx-show'></i> View Details</a>
-                    <a href="HIS_sessions.php?ref=ALZ-WK-2410-0016" class="action-btn sessions-btn">
-                        <i class='bx bx-list-ul'></i> Sessions
-                    </a>
-                    <div class="dropdown-menu-container">
-                        <button class="more-options-btn" onclick="toggleDropdown(this)"><i class='bx bx-dots-vertical-rounded'></i></button>
-                        <ul class="dropdown-menu">
-                            <li><a href="https://wa.me/971529009188" target="_blank" class="whatsapp-chat-link"><i class='bx bxl-whatsapp'></i> Chat on WhatsApp</a></li>
-                            <li><a href="javascript:void(0)" class="report-link" onclick="showReportModal(this)"><i class='bx bx-error-alt'></i> Report Issue</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="appointment-details">
-                    <p class="full-width-detail ref-no-detail"><strong>Reference No:</strong> <span class="ref-no-value">ALZ-WK-2410-0016</span></p>
-                    <p><i class='bx bx-calendar-check'></i> <strong>Start Date:</strong> October 05, 2024</p> <p class="end-date-detail"><i class='bx bx-calendar-check'></i> <strong>End Date:</strong> 2025-12-31</p>
-                    <p><i class='bx bx-time'></i> <strong>Time:</strong> 9:00 AM</p> <p class="duration-detail"><i class='bx bx-stopwatch'></i> <strong>Duration:</strong> 4 hours</p>
-                    <p class="frequency-detail"><i class='bx bx-sync'></i> <strong>Frequency:</strong> Weekly</p> <p class="sessions-detail"><i class='bx bx-list-ol'></i> <strong>No. of Sessions:</strong> <span class="sessions-count">4 of 12</span></p>
-                    
-                    <p class="full-width-detail"><i class='bx bx-map-alt'></i> <strong>Address:</strong> 707 Downtown, Dubai</p>
-                    <hr class="divider full-width-detail">
-                    <p><i class='bx bx-home-heart'></i> <strong>Client Type:</strong> Residential</p>
-                    <p class="service-type-detail"><i class='bx bx-wrench'></i> <strong>Service Type:</strong> General Cleaning</p>
-
-                    <p class="full-width-detail status-detail">
-                        <strong>Plan Status:</strong>
-                        <span class="overall-plan-tag overall-active"><i class='bx bx-play-circle'></i> ACTIVE</span>
-                    </p>
-                    
-                    <div class="staff-details-container full-width-detail">
-                        <h4><i class='bx bx-id-card'></i> Current Team</h4>
-                        <p><i class='bx bx-car'></i> <strong>Driver:</strong> Mohamed A.</p>
-                        <p><i class='bx bx-group'></i> <strong>Cleaners:</strong> Jenny Ramos, Sarah Kim, Mia Laoag, Chloe Jasmine Cruz, Ella Buenaflor, Rhea Generics, Joy Mae Tindugan, Anne Paraseo Santos</p>
-                        </div>
-                    <p class="price-detail">Estimated Price: <span class="aed-color">AED 400</span></p>
-                </div>
+            <div class="appointment-details">
+                <p class="full-width-detail ref-no-detail"><strong>Reference No:</strong> <span class="ref-no-value">'.$ref_number.'</span></p>
+                <p class="full-width-detail"><i class="bx bx-calendar-check"></i> <strong>Date:</strong> '.$service_date.'</p>
+                <p><i class="bx bx-time"></i> <strong>Time:</strong> '.$service_time.'</p>
+                <p class="duration-detail"><i class="bx bx-stopwatch"></i> <strong>Duration:</strong> '.$duration.'</p>
+                <p class="full-width-detail"><i class="bx bx-map-alt"></i> <strong>Address:</strong> '.$address.'</p>
+                <hr class="divider full-width-detail">
+                <p><i class="bx bx-building-house"></i> <strong>Client Type:</strong> '.$client_type.'</p>
+                <p class="service-type-detail"><i class="bx bx-wrench"></i> <strong>Service Type:</strong> '.$service_type.'</p>
+                <p class="full-width-detail status-detail">
+                    <strong>Status:</strong>
+                    <span class="status-tag '.strtolower($status).'"><i class="bx bx-hourglass"></i> '.$status.'</span>
+                </p>
             </div>
-        
-            </div>
-        
-        <div class="view-all-container">
-            <a href="HIS_recurring.php" class="view-all-link">See More...</a>
-        </div>
-        </div>
-    </main>
+        </div>';
+    }
+} else {
+    echo '<p class="no-appointments-message">No upcoming one-time appointments found.</p>';
+}
+?>
+
+
+</div>
+<div class="view-all-container">
+    <a href="HIS_recurring.php" class="view-all-link">See More...</a>
+</div>
+</div>
+</section>
+</main>
+
+
 </div> 
 <a href="#header" id="backToTopBtn" title="Back to Top"><i class='bx bx-up-arrow-alt'></i> Back to Top</a>
 
@@ -1254,32 +1117,102 @@ margin-bottom: 20px;
  * It sets the reference number in the modal content.
  * @param {string} refNo - The reference number of the appointment to cancel.
  */
-function showCancelModal(refNo) {
-    document.getElementById('cancel-ref-number').innerText = refNo;
-    const confirmCancelBtn = document.getElementById('confirmCancel');
-    
-    // Temporarily remove any previous click listener to prevent multiple submissions
-    confirmCancelBtn.onclick = null;
-    
-    // Add new click listener that performs the cancellation (e.g., redirect or AJAX call)
-    confirmCancelBtn.onclick = function() {
-        console.log("Cancelling appointment: " + refNo);
-        
-        // 1. Close the initial confirmation modal
+function showCancelModal(bookingId, refNo) {
+    const cancelRefEl = document.getElementById('cancel-ref-number');
+    const confirmBtn = document.getElementById('confirmCancel');
+    const successModal = document.getElementById('cancelSuccessModal');
+    const cancelledRefEl = document.getElementById('cancelled-ref-number');
+
+    // Set the reference number in the modal
+    cancelRefEl.innerText = refNo;
+    confirmBtn.onclick = null;
+
+    // Confirm cancellation
+    confirmBtn.onclick = async function() {
         closeModal('cancelModal');
-        
-        // 2. Display the custom success modal instead of the default alert()
-        document.getElementById('cancelled-ref-number').innerText = refNo;
-        // Tiyakin na ang tamang style ang gamit:
-        document.getElementById('cancelSuccessModal').style.display = 'flex';
-        
-        // In a real application, you would perform an AJAX call here,
-        // and only show the success modal if the server confirms cancellation.
+
+        try {
+            const response = await fetch('cancel_appointment.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'id=' + encodeURIComponent(bookingId)
+            });
+
+            const text = await response.text();
+            console.log('Raw server response:', text);
+
+            let data;
+            try { 
+                data = JSON.parse(text); 
+            } catch (err) {
+                console.error('Invalid JSON from server:', text);
+                alert('Server returned invalid response. Check console.');
+                return;
+            }
+
+            if (data.success) {
+                // Show success modal
+                cancelledRefEl.innerText = refNo;
+                successModal.style.display = 'flex';
+
+                // Update status in the appointment list
+                const item = document.querySelector(`.appointment-list-item[data-search-terms*="${refNo}"]`);
+                if (item) {
+                    item.setAttribute('data-status', 'Cancelled');
+                    const statusSpan = item.querySelector('.status-tag, .overall-plan-tag');
+                    if (statusSpan) {
+                        statusSpan.className = 'status-tag cancelled';
+                        statusSpan.innerHTML = `<i class="bx bx-x-circle"></i> Cancelled`;
+                    }
+                }
+            } else {
+                alert('Failed: ' + (data.message || 'Unknown error'));
+            }
+        } catch (err) {
+            console.error('Fetch error:', err);
+            alert('Error connecting to server. Check console.');
+        }
     };
 
-    // Set display to 'flex' to make the modal visible
-    document.getElementById('cancelModal').style.display = 'flex'; 
+    // Show the cancel modal
+    document.getElementById('cancelModal').style.display = 'flex';
 }
+
+
+
+
+// Close modal function
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) modal.style.display = 'none';
+}
+
+// Close modal helper
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) modal.style.display = 'none';
+}
+
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) modal.style.display = 'none';
+}
+
+// Close modal function
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) modal.style.display = 'none';
+}
+
+
+// Close modal function
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) modal.style.display = 'none';
+}
+
+
 
 
 /**

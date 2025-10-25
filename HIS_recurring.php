@@ -52,7 +52,7 @@ if ($result && $result->num_rows > 0) {
             'total_sessions' => $row['total_sessions'] ?? 0,
             'address' => $row['address'] ?? '',
             'client_type' => $row['client_type'] ?? 'N/A',
-            'plan_status' => $row['plan_status'] ?? 'PENDING',
+            'status' => $row['status'] ?? 'Pending', // ✅ Include DB status
             'service_type' => $row['service_type'] ?? 'General Cleaning',
             'property_layout' => $row['property_type'] ?? '',
             'materials_required' => $row['materials_needed'] ?? 'No',
@@ -66,6 +66,7 @@ if ($result && $result->num_rows > 0) {
         ];
     }
 }
+
 
 $conn->close();
 ?>
@@ -494,121 +495,123 @@ $conn->close();
         
         <?php
         // Function to render recurring appointment item
-        function renderRecurringAppointmentItem($booking) {
-            $formatted_start_date = date('F d, Y', strtotime($booking['start_date']));
-            $formatted_time = date('g:i A', strtotime($booking['booking_time']));
-            
-            // Format end date
-            $end_date_display = 'N/A';
-            if ($booking['end_date']) {
-                $end_date_display = date('F d, Y', strtotime($booking['end_date']));
-            } else {
-                $plan_status = $booking['plan_status'];
-                if ($plan_status === 'ACTIVE') {
-                    $end_date_display = 'N/A (Active)';
-                } elseif ($plan_status === 'PENDING') {
-                    $end_date_display = 'N/A (Pending)';
-                } elseif ($plan_status === 'PAUSED') {
-                    $end_date_display = 'N/A (Paused)';
-                }
-            }
-            
-            $search_terms = implode(' ', [
-                $booking['reference_no'],
-                $formatted_start_date,
-                $formatted_time,
-                $booking['address'],
-                $booking['client_type'],
-                $booking['plan_status']
-            ]);
-            
-            // Status icons and classes
-            $plan_status = $booking['plan_status'];
-            $status_class = 'overall-' . strtolower(str_replace(' ', '-', $plan_status));
-            
-            $status_icons = [
-                'PENDING' => '<i class="bx bx-time-five"></i>',
-                'ACTIVE' => '<i class="bx bx-play-circle"></i>',
-                'PAUSED' => '<i class="bx bx-pause-circle"></i>',
-                'COMPLETED' => '<i class="bx bx-check-double"></i>',
-                'CANCELLED' => '<i class="bx bx-x-circle"></i>'
-            ];
-            
-            $status_icon = $status_icons[$plan_status] ?? '';
-            
-            // Generate buttons based on plan status
-            $buttons = '';
-            if ($plan_status === 'PENDING') {
-                $buttons = '
-                    <a href="javascript:void(0)" class="action-btn view-details-btn" onclick="showRecurringDetailsModal(this.closest(\'.appointment-list-item\'))"><i class=\'bx bx-show\'></i> View Details</a>
-                    <a href="BA_recurring.php?edit='.$booking['reference_no'].'" class="action-btn edit-plan-btn"><i class=\'bx bx-edit\'></i> Edit</a>
-                    <div class="dropdown-menu-container">
-                        <button class="more-options-btn" onclick="toggleDropdown(this)"><i class=\'bx bx-dots-vertical-rounded\'></i></button>
-                        <ul class="dropdown-menu">
-                            <li><a href="https://wa.me/971529009188" target="_blank" class="whatsapp-chat-link"><i class=\'bx bxl-whatsapp\'></i> Chat on WhatsApp</a></li>
-                            <li><a href="javascript:void(0)" class="cancel-link" onclick="showCancelModal(\''.$booking['reference_no'].'\')"><i class="bx bx-x-circle" style="color: #B32133;"></i> Cancel</a></li>
-                        </ul>
-                    </div>
-                ';
-            } else {
-                $buttons = '
-                    <a href="javascript:void(0)" class="action-btn view-details-btn" onclick="showRecurringDetailsModal(this.closest(\'.appointment-list-item\'))"><i class=\'bx bx-show\'></i> View Details</a>
-                    <a href="javascript:void(0)" class="action-btn sessions-btn"><i class=\'bx bx-list-ul\'></i> Sessions</a>
-                    <div class="dropdown-menu-container">
-                        <button class="more-options-btn" onclick="toggleDropdown(this)"><i class=\'bx bx-dots-vertical-rounded\'></i></button>
-                        <ul class="dropdown-menu">
-                            <li><a href="https://wa.me/971529009188" target="_blank" class="whatsapp-chat-link"><i class=\'bx bxl-whatsapp\'></i> Chat on WhatsApp</a></li>
-                            <li><a href="javascript:void(0)" class="report-link" onclick="showReportModal(this)"><i class=\'bx bx-error-alt\'></i> Report Issue</a></li>
-                        </ul>
-                    </div>
-                ';
-            }
-            
-            // Price display
-            $price_label = $plan_status === 'COMPLETED' ? 'Final Price' : 'Estimated Price';
-            $price = $plan_status === 'COMPLETED' && $booking['final_price'] ? $booking['final_price'] : $booking['estimated_price'];
-            
-            echo '
-            <div class="appointment-list-item" 
-                data-date="'.$booking['start_date'].'" 
-                data-end-date="'.($booking['end_date'] ?? '2025-12-31').'" 
-                data-time="'.$booking['booking_time'].'"
-                data-plan-status="'.$plan_status.'"
-                data-search-terms="'.$search_terms.'"
-                data-property-layout="'.htmlspecialchars($booking['property_layout']).'"
-                data-materials-required="'.$booking['materials_required'].'"
-                data-materials-description="'.htmlspecialchars($booking['materials_description']).'"
-                data-additional-request="'.htmlspecialchars($booking['additional_request']).'"
-                data-image-1="'.($booking['image_1'] ?? '').'"
-                data-image-2="'.($booking['image_2'] ?? '').'"
-                data-image-3="'.($booking['image_3'] ?? '').'">
-                
-                <div class="button-group-top">
-                    '.$buttons.'
-                </div>
-                
-                <div class="appointment-details">
-                    <p class="full-width-detail ref-no-detail"><strong>Reference No:</strong> <span class="ref-no-value">'.$booking['reference_no'].'</span></p>
-                    <p><i class=\'bx bx-calendar-check\'></i> <strong>Start Date:</strong> '.$formatted_start_date.'</p>
-                    <p class="end-date-detail"><i class=\'bx bx-calendar-check\'></i> <strong>End Date:</strong> '.$end_date_display.'</p>
-                    <p><i class=\'bx bx-time\'></i> <strong>Time:</strong> '.$formatted_time.'</p>
-                    <p class="duration-detail"><i class=\'bx bx-stopwatch\'></i> <strong>Duration:</strong> '.$booking['duration'].' hours</p>
-                    <p class="frequency-detail"><i class=\'bx bx-sync\'></i> <strong>Frequency:</strong> '.$booking['frequency'].'</p>
-                    <p class="sessions-detail"><i class=\'bx bx-list-ol\'></i> <strong>No. of Sessions:</strong> <span class="sessions-count">'.$booking['sessions_completed'].' of '.$booking['total_sessions'].'</span></p>
-                    
-                    <p class="full-width-detail"><i class=\'bx bx-map-alt\'></i> <strong>Address:</strong> '.$booking['address'].'</p>
-                    <hr class="divider full-width-detail">
-                    <p><i class=\'bx bx-building-house\'></i> <strong>Client Type:</strong> '.$booking['client_type'].'</p>
-                    <p class="service-type-detail"><i class=\'bx bx-wrench\'></i> <strong>Service Type:</strong> '.$booking['service_type'].'</p>
+       function renderRecurringAppointmentItem($booking) {
+    // Use status from DB with fallback
+    $plan_status = $booking['status'] ?? 'PENDING';
 
-                    <p class="full-width-detail status-detail">
-                        <strong>Plan Status:</strong>
-                        <span class="overall-plan-tag '.$status_class.'">'.$status_icon.' '.$plan_status.'</span>
-                    </p>
-                    <p class="price-detail">'.$price_label.': <span class="aed-color">AED '.$price.'</span></p>
-                </div>
-            </div>';
+    // Format start date and time
+    $formatted_start_date = date('F d, Y', strtotime($booking['start_date']));
+    $formatted_time = date('g:i A', strtotime($booking['booking_time']));
+
+    // Format end date display
+    $end_date_display = 'N/A';
+    if (!empty($booking['end_date'])) {
+        $end_date_display = date('F d, Y', strtotime($booking['end_date']));
+    } else {
+        if ($plan_status === 'ACTIVE') {
+            $end_date_display = 'N/A (Active)';
+        } elseif ($plan_status === 'Pending') {
+            $end_date_display = 'N/A (Pending)';
+        } elseif ($plan_status === 'PAUSED') {
+            $end_date_display = 'N/A (Paused)';
         }
+    }
+
+    // Search terms
+    $search_terms = implode(' ', [
+        $booking['reference_no'] ?? '',
+        $formatted_start_date,
+        $formatted_time,
+        $booking['address'] ?? '',
+        $booking['client_type'] ?? '',
+        $plan_status
+    ]);
+
+    // Status class and icon
+    $status_class = 'overall-' . strtolower(str_replace(' ', '-', $plan_status));
+    $status_icons = [
+        'Pending' => '<i class="bx bx-time-five"></i>',
+        'ACTIVE' => '<i class="bx bx-play-circle"></i>',
+        'PAUSED' => '<i class="bx bx-pause-circle"></i>',
+        'COMPLETED' => '<i class="bx bx-check-double"></i>',
+        'CANCELLED' => '<i class="bx bx-x-circle"></i>'
+    ];
+    $status_icon = $status_icons[$plan_status] ?? '';
+
+    // Generate action buttons based on status
+    $buttons = '';
+    if ($plan_status === 'Pending') {
+        $buttons = '
+            <a href="javascript:void(0)" class="action-btn view-details-btn" onclick="showRecurringDetailsModal(this.closest(\'.appointment-list-item\'))"><i class="bx bx-show"></i> View Details</a>
+            <a href="BA_recurring.php?edit='.$booking['reference_no'].'" class="action-btn edit-plan-btn"><i class="bx bx-edit"></i> Edit</a>
+            <div class="dropdown-menu-container">
+                <button class="more-options-btn" onclick="toggleDropdown(this)"><i class="bx bx-dots-vertical-rounded"></i></button>
+                <ul class="dropdown-menu">
+                    <li><a href="https://wa.me/971529009188" target="_blank" class="whatsapp-chat-link"><i class="bx bxl-whatsapp"></i> Chat on WhatsApp</a></li>
+                    <li><a href="javascript:void(0)" class="cancel-link" onclick="showCancelModal(\''.$booking['reference_no'].'\')"><i class="bx bx-x-circle" style="color: #B32133;"></i> Cancel</a></li>
+                </ul>
+            </div>
+        ';
+    } else {
+        $buttons = '
+            <a href="javascript:void(0)" class="action-btn view-details-btn" onclick="showRecurringDetailsModal(this.closest(\'.appointment-list-item\'))"><i class="bx bx-show"></i> View Details</a>
+            <a href="javascript:void(0)" class="action-btn sessions-btn"><i class="bx bx-list-ul"></i> Sessions</a>
+            <div class="dropdown-menu-container">
+                <button class="more-options-btn" onclick="toggleDropdown(this)"><i class="bx bx-dots-vertical-rounded"></i></button>
+                <ul class="dropdown-menu">
+                    <li><a href="https://wa.me/971529009188" target="_blank" class="whatsapp-chat-link"><i class="bx bxl-whatsapp"></i> Chat on WhatsApp</a></li>
+                    <li><a href="javascript:void(0)" class="report-link" onclick="showReportModal(this)"><i class="bx bx-error-alt"></i> Report Issue</a></li>
+                </ul>
+            </div>
+        ';
+    }
+
+    // Price display
+    $price_label = ($plan_status === 'COMPLETED') ? 'Final Price' : 'Estimated Price';
+    $price = ($plan_status === 'COMPLETED' && !empty($booking['final_price'])) ? $booking['final_price'] : $booking['estimated_price'];
+
+    echo '
+    <div class="appointment-list-item" 
+        data-date="'.$booking['start_date'].'" 
+        data-end-date="'.($booking['end_date'] ?? '2025-12-31').'" 
+        data-time="'.$booking['booking_time'].'"
+        data-plan-status="'.$plan_status.'"
+        data-search-terms="'.$search_terms.'"
+        data-property-layout="'.htmlspecialchars($booking['property_layout'] ?? '').'"
+        data-materials-required="'.($booking['materials_required'] ?? '').'"
+        data-materials-description="'.htmlspecialchars($booking['materials_description'] ?? '').'"
+        data-additional-request="'.htmlspecialchars($booking['additional_request'] ?? '').'"
+        data-image-1="'.($booking['image_1'] ?? '').'"
+        data-image-2="'.($booking['image_2'] ?? '').'"
+        data-image-3="'.($booking['image_3'] ?? '').'">
+        
+        <div class="button-group-top">
+            '.$buttons.'
+        </div>
+        
+        <div class="appointment-details">
+            <p class="full-width-detail ref-no-detail"><strong>Reference No:</strong> <span class="ref-no-value">'.($booking['reference_no'] ?? '').'</span></p>
+            <p><i class="bx bx-calendar-check"></i> <strong>Start Date:</strong> '.$formatted_start_date.'</p>
+            <p class="end-date-detail"><i class="bx bx-calendar-check"></i> <strong>End Date:</strong> '.$end_date_display.'</p>
+            <p><i class="bx bx-time"></i> <strong>Time:</strong> '.$formatted_time.'</p>
+            <p class="duration-detail"><i class="bx bx-stopwatch"></i> <strong>Duration:</strong> '.($booking['duration'] ?? '0').' hours</p>
+            <p class="frequency-detail"><i class="bx bx-sync"></i> <strong>Frequency:</strong> '.($booking['frequency'] ?? '').'</p>
+            <p class="sessions-detail"><i class="bx bx-list-ol"></i> <strong>No. of Sessions:</strong> <span class="sessions-count">'.($booking['sessions_completed'] ?? 0).' of '.($booking['total_sessions'] ?? 0).'</span></p>
+            
+            <p class="full-width-detail"><i class="bx bx-map-alt"></i> <strong>Address:</strong> '.($booking['address'] ?? '').'</p>
+            <hr class="divider full-width-detail">
+            <p><i class="bx bx-building-house"></i> <strong>Client Type:</strong> '.($booking['client_type'] ?? '').'</p>
+            <p class="service-type-detail"><i class="bx bx-wrench"></i> <strong>Service Type:</strong> '.($booking['service_type'] ?? '').'</p>
+
+            <p class="full-width-detail status-detail">
+                <strong>Plan Status:</strong>
+                <span class="overall-plan-tag '.$status_class.'">'.$status_icon.' '.$plan_status.'</span>
+            </p>
+            <p class="price-detail">'.$price_label.': <span class="aed-color">AED '.$price.'</span></p>
+        </div>
+    </div>';
+}
+
         
         // Render each frequency tab
         $tab_ids = [
@@ -848,15 +851,7 @@ function sortAppointmentsByStatus(containerId, filterValue = 'default') {
         'ACTIVE': 2,
         'PAUSED': 3,
         'COMPLETED': 4,
-        'CANCELLED': 5 
-    };
-    
-    const filterMapping = {
-        'PENDING': ['PENDING'],
-        'ACTIVE': ['ACTIVE'], 
-        'PAUSED': ['PAUSED'],
-        'COMPLETED': ['COMPLETED'],
-        'CANCELLED': ['CANCELLED'] 
+        'CANCELLED': 5
     };
 
     const items = Array.from(container.querySelectorAll('.appointment-list-item'));
@@ -864,53 +859,38 @@ function sortAppointmentsByStatus(containerId, filterValue = 'default') {
     const serviceName = noAppointmentsMessage ? noAppointmentsMessage.getAttribute('data-service-name') : 'appointments';
 
     let visibleCount = 0;
-    
+    const filter = filterValue.toUpperCase();
+
     items.forEach(item => {
-        const itemPlanStatus = item.getAttribute('data-plan-status'); 
+        const itemPlanStatus = (item.getAttribute('data-plan-status') || '').toUpperCase();
         let isVisible = false;
-        
-        if (filterValue === 'default') {
+
+        if (filter === 'DEFAULT') {
             isVisible = true;
-        } else {
-            const targetStatuses = filterMapping[filterValue] || [];
-            if (targetStatuses.includes(itemPlanStatus)) {
-                isVisible = true;
-            }
+        } else if (itemPlanStatus === filter) {
+            isVisible = true;
         }
-        
-        item.style.display = isVisible ? 'flex' : 'none'; 
-        
-        if (isVisible) {
-            visibleCount++;
-        }
+
+        item.style.display = isVisible ? 'flex' : 'none';
+        if (isVisible) visibleCount++;
     });
-    
-    if (filterValue === 'default') {
+
+    if (filter === 'DEFAULT') {
         const itemsToSort = items.filter(item => item.style.display !== 'none');
-        
         itemsToSort.sort((a, b) => {
-            const statusA = a.getAttribute('data-plan-status');
-            const statusB = b.getAttribute('data-plan-status');
-    
-            const orderA = statusSortOrder[statusA] || 999;
-            const orderB = statusSortOrder[statusB] || 999; 
-    
+            const orderA = statusSortOrder[(a.getAttribute('data-plan-status') || '').toUpperCase()] || 999;
+            const orderB = statusSortOrder[(b.getAttribute('data-plan-status') || '').toUpperCase()] || 999;
             return orderA - orderB;
         });
-
-        if (noAppointmentsMessage) {
-            container.prepend(noAppointmentsMessage);
-        }
-        itemsToSort.forEach(item => {
-            container.appendChild(item);
-        });
+        if (noAppointmentsMessage) container.prepend(noAppointmentsMessage);
+        itemsToSort.forEach(item => container.appendChild(item));
     }
 
     if (noAppointmentsMessage) {
         if (visibleCount === 0) {
             noAppointmentsMessage.style.display = 'block';
-            if (filterValue !== 'default') {
-                let displayName = filterValue.charAt(0).toUpperCase() + filterValue.slice(1).toLowerCase();
+            if (filter !== 'DEFAULT') {
+                let displayName = filter.charAt(0) + filter.slice(1).toLowerCase();
                 noAppointmentsMessage.innerHTML = `No ${displayName} ${serviceName} plans found.`;
             } else {
                 noAppointmentsMessage.innerHTML = `You have no ${serviceName} plans on record.`;
@@ -920,6 +900,7 @@ function sortAppointmentsByStatus(containerId, filterValue = 'default') {
         }
     }
 }
+
 
 function initializeStatusSortingOnLoad() {
     const containerIds = [

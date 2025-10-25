@@ -1,69 +1,184 @@
 <?php
-// =======================================================================
-// PHP SCRIPT START: FETCHING AND HANDLING BOOKING DATA
-// ******************* PALITAN ANG MOCK DATA NG IYONG ACTUAL DATABASE QUERY *******************
-// =======================================================================
+session_start();
+require 'connection.php';
 
-// 1. Check if a booking ID is provided in the URL
+// ✅ Ensure client is logged in
+if (!isset($_SESSION['email'])) {
+    echo "<script>alert('Please log in first.'); window.location.href='login.php';</script>";
+    exit;
+}
+
+$user_email = trim($_SESSION['email']);
+
+// ===================================================================
+// HANDLE FORM SUBMISSION (UPDATE)
+// ===================================================================
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['booking_id'])) {
+    $booking_id = intval($_POST['booking_id']);
+
+    // Form data
+    $serviceType = $_POST['serviceType'] ?? '';
+    $clientType = $_POST['clientType'] ?? '';
+    $bookingDate = $_POST['bookingDate'] ?? '';
+    $bookingTime = $_POST['bookingTime'] ?? '';
+    $duration = $_POST['duration'] ?? '';
+    $address = $_POST['address'] ?? '';
+    $propertyLayout = $_POST['propertyLayout'] ?? '';
+    $cleaningMaterials = $_POST['cleaningMaterials'] ?? '';
+    $materialsNeeded = $_POST['materialsNeeded'] ?? '';
+    $additionalRequest = $_POST['additionalRequest'] ?? '';
+
+    // Handle file uploads
+    $media1 = $_POST['existing_media1'] ?? '';
+    $media2 = $_POST['existing_media2'] ?? '';
+    $media3 = $_POST['existing_media3'] ?? '';
+
+    if (isset($_FILES['mediaUpload']) && is_array($_FILES['mediaUpload']['name'])) {
+        $upload_dir = 'uploads/';
+        for ($i = 0; $i < 3; $i++) {
+            if (!empty($_FILES['mediaUpload']['name'][$i]) && $_FILES['mediaUpload']['error'][$i] === UPLOAD_ERR_OK) {
+                $tmp_name = $_FILES['mediaUpload']['tmp_name'][$i];
+                $file_name = time() . '_' . basename($_FILES['mediaUpload']['name'][$i]);
+                $target_path = $upload_dir . $file_name;
+                if (move_uploaded_file($tmp_name, $target_path)) {
+                    if ($i === 0) $media1 = $target_path;
+                    if ($i === 1) $media2 = $target_path;
+                    if ($i === 2) $media3 = $target_path;
+                }
+            }
+        }
+    }
+
+    // ✅ Update booking
+ // ✅ Update booking - Use 'comments' column instead of 'additional_request'
+$sql = "UPDATE bookings SET 
+    service_type = ?,
+    client_type = ?,
+    service_date = ?,
+    service_time = ?,
+    duration = ?,
+    address = ?,
+    property_type = ?,
+    materials_provided = ?,
+    materials_needed = ?,
+    comments = ?,
+    media1 = ?,
+    media2 = ?,
+    media3 = ?
+    WHERE id = ? AND email = ?";
+
+$stmt = $conn->prepare($sql);
+
+if (!$stmt) {
+    die("SQL Error: " . $conn->error);
+}
+
+// ✅ 15 parameters total (13 data fields + id + email)
+$stmt->bind_param(
+    "sssssssssssssis",
+    $serviceType,
+    $clientType,
+    $bookingDate,
+    $bookingTime,
+    $duration,
+    $address,
+    $propertyLayout,
+    $cleaningMaterials,
+    $materialsNeeded,
+    $additionalRequest,  // This will go to 'comments' column
+    $media1,
+    $media2,
+    $media3,
+    $booking_id,
+    $user_email
+);
+
+if ($stmt->execute()) {
+    $stmt->close();
+    $conn->close();
+    echo "<script>alert('Booking updated successfully!'); window.location.href='HIS_one-time.php';</script>";
+    exit; // ✅ Stop script execution here
+} else {
+    echo "<script>alert('Error updating booking: " . $stmt->error . "');</script>";
+}
+
+$stmt->close();
+
+}
+
+// ===================================================================
+// FETCH BOOKING DATA FOR EDITING
+// ===================================================================
 if (!isset($_GET['booking_id']) || empty($_GET['booking_id'])) {
-    // Kung walang ID, ibalik sa history page
     header('Location: HIS_one-time.php');
     exit;
 }
 
-$booking_id = (int)$_GET['booking_id'];
-$booking_data = []; // Array na maglalaman ng na-fetch na data
+$booking_id = intval($_GET['booking_id']);
+$booking_data = [];
 
-// 2. MOCK Database Query (PALITAN ITO NG IYONG ACTUAL DB CODE)
-// require_once 'db_config.php'; // Halimbawa ng pag-include ng config
+$sql = "SELECT * FROM bookings WHERE id = ? AND TRIM(email) = ? AND booking_type = 'One-Time'";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("is", $booking_id, $user_email);
+$stmt->execute();
+$result = $stmt->get_result();
 
-// *** SIMULASYON: Fetch Data mula sa Database ***
-// Kunwari nahanap natin ang data para sa booking ID
-if ($booking_id > 0) { // Assume booking ID exists for demonstration
-    // Ito ang data na lalabas sa form. Tiyakin na ang keys ay tugma sa iyong form names/values.
+if ($result && $result->num_rows > 0) {
+    $row = $result->fetch_assoc();
     $booking_data = [
-        'serviceType' => 'Deep Cleaning',
-        'clientType' => 'Residential',
-        'bookingDate' => '2025-10-15',
-        'bookingTime' => '10:00',
-        'duration' => '4', // 4 hours
-        'address' => 'Unit 1001, Jumeirah Lakes Towers, Dubai',
-        'propertyLayout' => "Residential Apartment\n2 Floors: 2 Bedrooms, 2 Bathrooms, 1 Kitchen, 1 Balcony",
-        // Tiyakin na ang value ay tugma sa radio button value
-        'cleaningMaterials' => 'No - 35 AED / hr', 
-        'materialsNeeded' => '', // Empty dahil 'No' ang materials
-        'additionalRequest' => 'Please avoid using harsh chemicals in the main bedroom.',
+        'booking_id' => $row['id'],
+        'serviceType' => $row['service_type'] ?? '',
+        'clientType' => $row['client_type'] ?? '',
+        'bookingDate' => $row['service_date'] ?? '',
+        'bookingTime' => $row['service_time'] ?? '',
+        'duration' => $row['duration'] ?? '',
+        'address' => $row['address'] ?? '',
+        'propertyLayout' => $row['property_type'] ?? '',
+        'cleaningMaterials' => $row['materials_provided'] ?? '',
+        'materialsNeeded' => $row['materials_needed'] ?? '',
+        'additionalRequest' => $row['comments'] ?? '',  // ✅ Changed from 'additional_request'
+        'media1' => $row['media1'] ?? '',
+        'media2' => $row['media2'] ?? '',
+        'media3' => $row['media3'] ?? '',
     ];
+
 } else {
-    // DITO KA MAGLAGAY NG REDIRECT O ERROR HANDLING KUNG WALANG NAFECH NA DATA
-    // header('Location: HIS_one-time.php?error=notfound');
-    // exit;
+    echo "<script>alert('Booking not found.'); window.location.href='HIS_one-time.php';</script>";
+    exit;
 }
 
-// 3. Helper function para i-display ang data nang ligtas
+$stmt->close();
+$conn->close();
+
 function e($key) {
     global $booking_data;
-    echo htmlspecialchars($booking_data[$key] ?? '');
+    return htmlspecialchars($booking_data[$key] ?? '');
 }
-
-// =======================================================================
-// PHP SCRIPT END: FETCHING AND HANDLING BOOKING DATA
-// =======================================================================
+function isSelected($key, $value) {
+    global $booking_data;
+    return isset($booking_data[$key]) && $booking_data[$key] === $value ? 'selected' : '';
+}
+function isChecked($key, $value) {
+    global $booking_data;
+    return isset($booking_data[$key]) && $booking_data[$key] === $value ? 'checked' : '';
+}
 ?>
+
+
 <!DOCTYPE html>
 <html lang="en">
-<head> <meta charset="UTF-8">
+<head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ALAZIMA - Client Dashboard</title>
+    <title>ALAZIMA - Edit Booking</title>
     <link rel="icon" href="site_icon.png" type="image/png">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="client_db.css">
     <style>
-        /* Pinaliit ang padding at font-size para lumiit ang buttons at text */
         .btn {
             display: inline-block;
-            padding: 0.5rem 1.5rem; /* Niliitan na ang height */
-            font-size: 0.9rem; /* Pinaliit ang font size */
+            padding: 0.5rem 1.5rem;
+            font-size: 0.9rem;
             font-weight: 600;
             text-align: center;
             border-radius: 6px;
@@ -73,19 +188,18 @@ function e($key) {
             text-decoration: none;
         }
 
-        /* Cancel hover animation */
         .btn--secondary {
-            background-color: #e0e0e0; /* Light grey */
-            color: #333; /* Dark text for contrast */
+            background-color: #e0e0e0;
+            color: #333;
             transition: background-color 0.3s ease, color 0.3s ease;
-            text-decoration: none; /* Inalis ang underline */
+            text-decoration: none;
         }
         .btn--secondary:hover {
-            background-color: #b0b0b0; /* Darker grey on hover */
+            background-color: #b0b0b0;
             color: #333;
-            text-decoration: none; /* Tiyakin na walang underline */
+            text-decoration: none;
         }
-        /* Modal general styling */
+
         .modal {
             display: none;
             position: fixed;
@@ -106,14 +220,12 @@ function e($key) {
             text-align: center;
         }
 
-        /* New CSS for the materials input */
         .hidden-materials-input {
-            display: none; /* This will be toggled by JS */
+            display: none;
             flex-direction: column;
             margin-top: 1rem;
         }
 
-        /* Added for visual validation */
         .is-invalid {
             border-color: red !important;
         }
@@ -123,12 +235,10 @@ function e($key) {
             padding: 10px;
         }
 
-        /* Style for selected service card */
         .service-card.selected {
-            border-color: #007bff; /* Example highlight color */
+            border-color: #007bff;
             background-color: #e7f3ff;
         }
-        
     </style>
 </head>
 <body>
@@ -152,7 +262,7 @@ function e($key) {
                 <li class="menu__item has-dropdown open">
                     <a href="#" class="menu__link active-parent" data-content="book-appointment-parent"><i class='bx bx-calendar'></i> Book Appointment <i class='bx bx-chevron-down arrow-icon'></i></a>
                     <ul class="dropdown__menu">
-                        <li class="menu__item"><a href="BA_one-time.php" class="menu__link active">One-Time Service</a></li>
+                        <li class="menu__item"><a href="BA_one-time.php" class="menu__link">One-Time Service</a></li>
                         <li class="menu__item"><a href="BA_recurring.php" class="menu__link">Recurring Service</a></li>
                     </ul>
                 </li>
@@ -160,7 +270,7 @@ function e($key) {
                 <li class="menu__item has-dropdown">
                     <a href="#" class="menu__link" data-content="history-parent"><i class='bx bx-history'></i> History <i class='bx bx-chevron-down arrow-icon'></i></a>
                     <ul class="dropdown__menu">
-                        <li class="menu__item"><a href="HIS_one-time.php" class="menu__link">One-Time Service</a></li>
+                        <li class="menu__item"><a href="HIS_one-time.php" class="menu__link active">One-Time Service</a></li>
                         <li class="menu__item"><a href="HIS_recurring.php" class="menu__link">Recurring Service</a></li>
                     </ul>
                 </li>
@@ -180,64 +290,73 @@ function e($key) {
 
         <main class="dashboard__content">
             <section id="one-time-service-content" class="content__section active">
-                <h2 class="section__title">Book One-Time Service</h2>
+                <h2 class="section__title">Edit One-Time Booking</h2>
                 <div class="booking__form">
                     
-                    <form id="oneTimeBookingForm" action="#" method="POST" enctype="multipart/form-data">
+                    <form id="oneTimeBookingForm" action="" method="POST" enctype="multipart/form-data">
+                       <input type="hidden" name="booking_id" value="<?php echo e('booking_id'); ?>">
+                        <input type="hidden" name="existing_media1" value="<?php e('media1'); ?>">
+                        <input type="hidden" name="existing_media2" value="<?php e('media2'); ?>">
+                        <input type="hidden" name="existing_media3" value="<?php e('media3'); ?>">
+                        
                         <div class="form-row">
                             <div class="form-group full-width">
                                 <label for="serviceType">Service Type</label>
                                 <div class="service-options">
-                                    <button type="button" class="service-card" data-service-type="Checkout Cleaning">
+                                    <button type="button" class="service-card <?php echo $booking_data['serviceType'] === 'Checkout Cleaning' ? 'selected' : ''; ?>" data-service-type="Checkout Cleaning">
                                         <i class='bx bx-check-shield'></i>
                                         <h4>Checkout Cleaning</h4>
                                         <p>Preparing a unit for a new occupant. The focus is on making it ready for a new guest.</p>
                                     </button>
-                                    <button type="button" class="service-card" data-service-type="In-House Cleaning">
+                                    <button type="button" class="service-card <?php echo $booking_data['serviceType'] === 'In-House Cleaning' ? 'selected' : ''; ?>" data-service-type="In-House Cleaning">
                                         <i class='bx bx-home-heart'></i>
                                         <h4>In-House Cleaning</h4>
                                         <p>Providing an additional clean for a client who is currently staying in the unit.</p>
                                     </button>
-                                    <button type="button" class="service-card" data-service-type="Refresh Cleaning">
+                                    <button type="button" class="service-card <?php echo $booking_data['serviceType'] === 'Refresh Cleaning' ? 'selected' : ''; ?>" data-service-type="Refresh Cleaning">
                                         <i class='bx bx-wind'></i>
                                         <h4>Refresh Cleaning</h4>
                                         <p>A light touch-up for a unit that has been vacant for a period of time.</p>
                                     </button>
-                                    <button type="button" class="service-card" data-service-type="Deep Cleaning">
+                                    <button type="button" class="service-card <?php echo $booking_data['serviceType'] === 'Deep Cleaning' ? 'selected' : ''; ?>" data-service-type="Deep Cleaning">
                                         <i class='bx bx-water'></i>
                                         <h4>Deep Cleaning</h4>
                                         <p>An intensive and thorough clean for units that are in "disaster" or very dirty conditions.</p>
                                     </button>
                                 </div>
-                                <input type="hidden" id="serviceTypeHidden" name="serviceType" required>
+                                <input type="hidden" id="serviceTypeHidden" name="serviceType" value="<?php e('serviceType'); ?>" required>
                             </div>
                         </div>
+                        
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="clientType">Client Type</label>
-                                <select id="clientType" name="clientType" required disabled>
-                                    <option value="">Select a service type first...</option>
+                                <select id="clientType" name="clientType" required>
+                                    <option value="">Select Client Type...</option>
+                                    <option value="Holiday Apartment" <?php echo isSelected('clientType', 'Holiday Apartment'); ?>>Holiday Apartment</option>
+                                    <option value="Residential" <?php echo isSelected('clientType', 'Residential'); ?>>Residential</option>
+                                    <option value="Offices" <?php echo isSelected('clientType', 'Offices'); ?>>Offices</option>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <label for="bookingDate">Date</label>
-                                <input type="date" id="bookingDate" name="bookingDate" required>
+                                <input type="date" id="bookingDate" name="bookingDate" value="<?php e('bookingDate'); ?>" required>
                             </div>
                             <div class="form-group">
                                 <label for="bookingTime">Time</label>
-                                <input type="time" id="bookingTime" name="bookingTime" required>
+                                <input type="time" id="bookingTime" name="bookingTime" value="<?php e('bookingTime'); ?>" required>
                             </div>
                             <div class="form-group">
                                 <label for="duration">Duration (Hours)</label>
-                                <select id="duration" name="duration" required disabled>
-                                    <option value="">Select a time first...</option>
-                                    <option value="2">2 hrs</option>
-                                    <option value="3">3 hrs</option>
-                                    <option value="4">4 hrs</option>
-                                    <option value="5">5 hrs</option>
-                                    <option value="6">6 hrs</option>
-                                    <option value="7">7 hrs</option>
-                                    <option value="8">8 hrs</option>
+                                <select id="duration" name="duration" required>
+                                    <option value="">Select duration...</option>
+                                    <option value="2" <?php echo isSelected('duration', '2'); ?>>2 hrs</option>
+                                    <option value="3" <?php echo isSelected('duration', '3'); ?>>3 hrs</option>
+                                    <option value="4" <?php echo isSelected('duration', '4'); ?>>4 hrs</option>
+                                    <option value="5" <?php echo isSelected('duration', '5'); ?>>5 hrs</option>
+                                    <option value="6" <?php echo isSelected('duration', '6'); ?>>6 hrs</option>
+                                    <option value="7" <?php echo isSelected('duration', '7'); ?>>7 hrs</option>
+                                    <option value="8" <?php echo isSelected('duration', '8'); ?>>8 hrs</option>
                                 </select>
                                 <p id="estimatedTimeDisplay" class="form-text" style="display: none; color: #555; margin-top: 0.5rem;"></p>
                             </div>
@@ -245,7 +364,7 @@ function e($key) {
                         
                         <div class="form-group full-width">
                             <label for="address">Address</label>
-                            <input type="text" id="address" name="address" placeholder="Enter full address" required>
+                            <input type="text" id="address" name="address" value="<?php e('address'); ?>" placeholder="Enter full address" required>
                         </div>
                         
                         <div class="form-row form-section-gap">
@@ -254,20 +373,29 @@ function e($key) {
                                 <small class="form-text text-muted">Please specify the unit size/type, number of floors, and room breakdown per floor, and upload up to 3 images/videos to help us understand the actual layout.</small>
                                 
                                 <div class="side-by-side-container">
-                                    <textarea id="propertyLayout" name="propertyLayout" rows="8" placeholder="Ex. Studio Type – 1 Floor: 1 Room, 1 Bathroom" required></textarea>
+                                    <textarea id="propertyLayout" name="propertyLayout" rows="8" placeholder="Ex. Studio Type – 1 Floor: 1 Room, 1 Bathroom" required><?php e('propertyLayout'); ?></textarea>
                                     
                                     <div class="media-upload-container">
                                         <div class="upload-field">
                                             <label for="mediaUpload1">Image/Video 1</label>
                                             <input type="file" id="mediaUpload1" name="mediaUpload[]" accept="image/*,video/*">
+                                            <?php if (!empty($booking_data['media1'])): ?>
+                                                <small>Current: <?php echo basename($booking_data['media1']); ?></small>
+                                            <?php endif; ?>
                                         </div>
                                         <div class="upload-field">
                                             <label for="mediaUpload2">Image/Video 2</label>
                                             <input type="file" id="mediaUpload2" name="mediaUpload[]" accept="image/*,video/*">
+                                            <?php if (!empty($booking_data['media2'])): ?>
+                                                <small>Current: <?php echo basename($booking_data['media2']); ?></small>
+                                            <?php endif; ?>
                                         </div>
                                         <div class="upload-field">
                                             <label for="mediaUpload3">Image/Video 3</label>
                                             <input type="file" id="mediaUpload3" name="mediaUpload[]" accept="image/*,video/*">
+                                            <?php if (!empty($booking_data['media3'])): ?>
+                                                <small>Current: <?php echo basename($booking_data['media3']); ?></small>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                 </div>
@@ -278,25 +406,25 @@ function e($key) {
                             <div class="form-group full-width">
                                 <label>Does the client require cleaning materials?</label>
                                 <div class="radio-group" id="cleaningMaterialsGroup">
-                                    <input type="radio" id="materialsYes" name="cleaningMaterials" value="Yes - 40 AED / hr" required>
+                                    <input type="radio" id="materialsYes" name="cleaningMaterials" value="Yes - 40 AED / hr" <?php echo isChecked('cleaningMaterials', 'Yes - 40 AED / hr'); ?> required>
                                     <label for="materialsYes">Yes - 40 AED / hr</label>
-                                    <input type="radio" id="materialsNo" name="cleaningMaterials" value="No - 35 AED / hr" required>
+                                    <input type="radio" id="materialsNo" name="cleaningMaterials" value="No - 35 AED / hr" <?php echo isChecked('cleaningMaterials', 'No - 35 AED / hr'); ?> required>
                                     <label for="materialsNo">No - 35 AED / hr</label>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="form-row hidden-materials-input">
+                        <div class="form-row hidden-materials-input" style="<?php echo strpos($booking_data['cleaningMaterials'] ?? '', 'Yes') !== false ? 'display: flex;' : ''; ?>">
                             <div class="form-group full-width">
                                 <label for="materialsNeeded">If yes, what materials are needed?</label>
-                                <input type="text" id="materialsNeeded" name="materialsNeeded" placeholder="e.g., mop, disinfectant, vacuum cleaner">
+                                <input type="text" id="materialsNeeded" name="materialsNeeded" value="<?php e('materialsNeeded'); ?>" placeholder="e.g., mop, disinfectant, vacuum cleaner">
                             </div>
                         </div>
 
                         <div class="form-row">
                             <div class="form-group full-width">
-                                <label for="additionalRequest" id="additionalRequestLabel">Additional Request (Optional)</label>
-                                <textarea id="additionalRequest" name="additionalRequest" rows="4" placeholder="e.g., Use organic products, focus on kitchen"></textarea>
+                                <label for="additionalRequest">Additional Request (Optional)</label>
+                                <textarea id="additionalRequest" name="additionalRequest" rows="4" placeholder="e.g., Use organic products, focus on kitchen"><?php e('additionalRequest'); ?></textarea>
                             </div>
                         </div>
 
@@ -307,33 +435,15 @@ function e($key) {
                         
                         <div class="form__actions">
                             <a href="HIS_one-time.php" class="btn btn--secondary">Cancel</a>
-                            <button type="submit" class="btn btn--success" id="finalSubmitBtn">Update</button>
+                            <button type="submit" class="btn btn--success" id="finalSubmitBtn">Update Booking</button>
                         </div>
                     </form>
                     
-                    </div>
+                </div>
             </section>
         </main>
     </div>
 
-    <div id="logoutModal" class="modal">
-        <div class="modal__content">
-            <h3 class="modal__title">Are you sure you want to log out?</h3>
-            <div class="modal__actions">
-                <button id="cancelLogout" class="btn btn--secondary">Cancel</button>
-                <button id="confirmLogout" class="btn btn--primary">Log Out</button>
-            </div>
-        </div>
-    </div>
-    <div class="modal" id="profileSaveModal">
-        <div class="modal__content">
-            <h3 class="modal__title">Profile Saved</h3>
-            <p>Your profile has been updated successfully!</p>
-            <div class="modal__actions">
-                <button class="btn btn--primary" id="confirmProfileSave">OK</button>
-            </div>
-        </div>
-    </div>
     <div id="requiredFieldsModal" class="modal">
         <div class="modal__content">
             <h3 class="modal__title">Please fill out all required fields.</h3>
@@ -342,28 +452,26 @@ function e($key) {
             </div>
         </div>
     </div>
+    
     <script>
         document.addEventListener("DOMContentLoaded", () => {
-            // BAGONG JS PARA SA CLEANING MATERIALS
             const materialsNeededContainer = document.querySelector('.hidden-materials-input');
             const materialsYes = document.getElementById('materialsYes');
             const materialsNo = document.getElementById('materialsNo');
-            const cleaningMaterialsGroup = document.getElementById('cleaningMaterialsGroup'); // Added to group the radio buttons for validation
+            const cleaningMaterialsGroup = document.getElementById('cleaningMaterialsGroup');
 
             if (materialsYes && materialsNo && materialsNeededContainer) {
                 materialsYes.addEventListener('change', () => {
                     materialsNeededContainer.style.display = 'flex';
-                    // Ensure 'materialsNeeded' is marked as required if 'Yes' is selected
-                    document.getElementById('materialsNeeded').setAttribute('required', ''); 
+                    document.getElementById('materialsNeeded').setAttribute('required', '');
                 });
                 materialsNo.addEventListener('change', () => {
                     materialsNeededContainer.style.display = 'none';
-                    // Clear the value if "No" is selected and remove 'required' attribute
                     const materialsNeededInput = document.getElementById('materialsNeeded');
                     if (materialsNeededInput) {
                         materialsNeededInput.value = '';
-                        materialsNeededInput.removeAttribute('required'); // Remove required attribute
-                        materialsNeededInput.classList.remove('is-invalid'); // Remove validation if cleared
+                        materialsNeededInput.removeAttribute('required');
+                        materialsNeededInput.classList.remove('is-invalid');
                     }
                 });
             }
@@ -371,24 +479,21 @@ function e($key) {
             const form = document.getElementById("oneTimeBookingForm");
             const finalSubmitBtn = document.getElementById("finalSubmitBtn");
 
-            // --- Form Validation Logic ---
             function validateForm() {
                 const requiredFields = form.querySelectorAll('[required]');
                 let allFieldsFilled = true;
 
-                // Reset previous invalid states
                 form.querySelectorAll('.is-invalid, .is-invalid-group').forEach(el => {
                     el.classList.remove('is-invalid', 'is-invalid-group');
                 });
 
                 requiredFields.forEach(field => {
-                    const isVisible = field.offsetWidth > 0 && field.offsetHeight > 0; // Check if element is visible
+                    const isVisible = field.offsetWidth > 0 && field.offsetHeight > 0;
                     const isRadioOrCheckbox = field.type === 'radio' || field.type === 'checkbox';
                     const isValuePresent = field.value.trim() !== '';
                     const isChecked = field.checked;
                     const fieldParent = field.closest('.form-group');
 
-                    // Only validate visible and required fields
                     if (isVisible && ((isRadioOrCheckbox && !isChecked) || (!isRadioOrCheckbox && !isValuePresent))) {
                         field.classList.add('is-invalid');
                         if (fieldParent) {
@@ -398,134 +503,27 @@ function e($key) {
                     }
                 });
 
-                // Custom validation for service type selection
                 const serviceTypeHidden = document.getElementById('serviceTypeHidden');
                 const serviceOptionsGroup = document.querySelector('.service-options');
-                const serviceLabel = document.querySelector('label[for="serviceType"]');
                 
                 if (serviceTypeHidden && serviceTypeHidden.value === '') {
                     allFieldsFilled = false;
                     serviceOptionsGroup.classList.add('is-invalid-group');
-                    // Added: Apply is-invalid-group to the parent of the label
-                    if (serviceLabel && serviceLabel.closest('.form-group')) {
-                        serviceLabel.closest('.form-group').classList.add('is-invalid-group');
-                    }
-                } else {
-                    serviceOptionsGroup.classList.remove('is-invalid-group');
-                    // Added: Remove is-invalid-group from the parent of the label
-                    if (serviceLabel && serviceLabel.closest('.form-group')) {
-                        serviceLabel.closest('.form-group').classList.remove('is-invalid-group');
-                    }
-                }
-                
-                // Custom validation for cleaning materials radio group
-                const cleaningMaterialsRadios = document.querySelectorAll('input[name="cleaningMaterials"]');
-                const cleaningMaterialsParent = cleaningMaterialsGroup.closest('.form-group'); // Get the parent .form-group
-                let isCleaningMaterialSelected = false;
-                cleaningMaterialsRadios.forEach(radio => {
-                    if (radio.checked) {
-                        isCleaningMaterialSelected = true;
-                    }
-                });
-
-                if (!isCleaningMaterialSelected) {
-                    allFieldsFilled = false;
-                    if (cleaningMaterialsParent) {
-                        cleaningMaterialsParent.classList.add('is-invalid-group');
-                    }
-                } else {
-                    if (cleaningMaterialsParent) {
-                        cleaningMaterialsParent.classList.remove('is-invalid-group');
-                    }
-                }
-
-                // Custom validation for 'materialsNeeded' if 'materialsYes' is checked and it's required
-                if (materialsYes.checked) {
-                    const materialsNeededInput = document.getElementById('materialsNeeded');
-                    if (materialsNeededInput && materialsNeededInput.value.trim() === '') {
-                        allFieldsFilled = false;
-                        materialsNeededInput.classList.add('is-invalid');
-                        materialsNeededInput.closest('.form-group').classList.add('is-invalid-group');
-                    } else if (materialsNeededInput) {
-                        materialsNeededInput.classList.remove('is-invalid');
-                        materialsNeededInput.closest('.form-group').classList.remove('is-invalid-group');
-                    }
                 }
 
                 return allFieldsFilled;
             }
-            // --- End of Form Validation Logic ---
 
-            // ** START OF NEW REAL-TIME VALIDATION LOGIC **
-            const requiredFields = form.querySelectorAll('[required]');
-            
-            requiredFields.forEach(field => {
-                const isRadioOrCheckbox = field.type === 'radio' || field.type === 'checkbox';
-                const eventType = isRadioOrCheckbox ? 'change' : 'input';
-
-                field.addEventListener(eventType, () => {
-                    // Check if the field is no longer empty or unchecked
-                    let isValid = false;
-                    if (isRadioOrCheckbox) {
-                        const fieldName = field.name;
-                        const radioGroup = form.querySelectorAll(`[name="${fieldName}"]`);
-                        radioGroup.forEach(radio => {
-                            if (radio.checked) {
-                                isValid = true;
-                            }
-                        });
-                    } else {
-                        isValid = field.value.trim() !== '';
-                    }
-
-                    // Remove the invalid class if the field is now valid
-                    if (isValid) {
-                        field.classList.remove('is-invalid');
-                        const fieldParent = field.closest('.form-group');
-                        if (fieldParent) {
-                            fieldParent.classList.remove('is-invalid-group');
-                        }
-                    }
-
-                    // Special handling for the cleaning materials group
-                    if (isRadioOrCheckbox && field.name === 'cleaningMaterials') {
-                        const cleaningMaterialsParent = cleaningMaterialsGroup.closest('.form-group');
-                        const cleaningMaterialsRadios = document.querySelectorAll('input[name="cleaningMaterials"]');
-                        let isSelected = false;
-                        cleaningMaterialsRadios.forEach(radio => {
-                            if (radio.checked) {
-                                isSelected = true;
-                            }
-                        });
-                        if (isSelected) {
-                            if (cleaningMaterialsParent) {
-                                cleaningMaterialsParent.classList.remove('is-invalid-group');
-                            }
-                        }
-                    }
-
-                    // Special handling for the service type buttons
-                    if (field.id === 'serviceTypeHidden' && field.value !== '') {
-                        const serviceOptionsGroup = document.querySelector('.service-options');
-                        serviceOptionsGroup.classList.remove('is-invalid-group');
-                    }
-                });
-            });
-            // ** END OF NEW REAL-TIME VALIDATION LOGIC **
-
-            // --- FINAL SUBMIT LOGIC (I-handle ang validation bago mag-submit) ---
             finalSubmitBtn.addEventListener("click", (e) => {
                 if (!validateForm()) {
-                    e.preventDefault(); // Pigilan ang form submission kung may error
+                    e.preventDefault();
                     const requiredFieldsModal = document.getElementById("requiredFieldsModal");
                     if (requiredFieldsModal) {
                         requiredFieldsModal.classList.add("show");
                     }
-                } 
-                // Kung magpapatuloy at walang errors, papayagan ang default form submission (Update)
+                }
             });
 
-            // Close required fields modal
             const confirmRequiredFieldsBtn = document.getElementById("confirmRequiredFields");
             if (confirmRequiredFieldsBtn) {
                 confirmRequiredFieldsBtn.addEventListener("click", () => {
@@ -533,152 +531,87 @@ function e($key) {
                 });
             }
 
-            // Optional: close modal pag click sa labas
-            window.addEventListener("click", (e) => {
-                if (e.target === document.getElementById("requiredFieldsModal")) {
-                    document.getElementById("requiredFieldsModal").classList.remove("show");
-                }
-            });
-
-            // --- DATE VALIDATION (NEW) ---
             const bookingDateInput = document.getElementById('bookingDate');
             if (bookingDateInput) {
                 const today = new Date().toISOString().split('T')[0];
                 bookingDateInput.setAttribute('min', today);
             }
-            // --- END DATE VALIDATION ---
 
-            // --- TIME & PRICE LOGIC ---
             const bookingTimeInput = document.getElementById('bookingTime');
             const durationSelect = document.getElementById('duration');
             const estimatedTimeDisplay = document.getElementById('estimatedTimeDisplay');
-            const finalPriceDisplay = document.getElementById('finalPriceDisplay'); // Kuha ang element para sa presyo
+            const finalPriceDisplay = document.getElementById('finalPriceDisplay');
 
-            let timeHelper = document.createElement('small');
-            timeHelper.style.display = 'none';
-            timeHelper.style.color = 'red';
-            timeHelper.style.marginTop = '0.25rem';
-            timeHelper.textContent = 'Please choose between 9 AM and 6 PM';
-            if (bookingTimeInput) {
-                bookingTimeInput.parentNode.appendChild(timeHelper);
-            }
-
-            let durationHelper = document.createElement('small');
-            durationHelper.style.display = 'none'; // Initially hidden
-            durationHelper.style.color = '#555';
-            durationHelper.style.marginTop = '0.25rem';
-            if (durationSelect) {
-                durationSelect.parentNode.appendChild(durationHelper);
-            }
-
-            // Function to format time to 12-hour format
             function formatTime12Hour(timeString) {
                 const [hours, minutes] = timeString.split(':').map(Number);
                 const period = hours >= 12 ? 'PM' : 'AM';
-                const adjustedHours = hours % 12 || 12; // Convert 0 to 12 for midnight/noon
+                const adjustedHours = hours % 12 || 12;
                 const formattedMinutes = minutes < 10 ? '0' + minutes : minutes;
                 return `${adjustedHours}:${formattedMinutes} ${period}`;
-            }
-
-            if (bookingTimeInput) {
-                bookingTimeInput.addEventListener('change', () => {
-                    const selectedTime = bookingTimeInput.value;
-                    // Check if time is outside 09:00 to 18:00 (6 PM)
-                    if (selectedTime && (selectedTime < '09:00' || selectedTime > '18:00')) {
-                        timeHelper.style.display = 'block';
-                        // If time is invalid, disable duration and clear estimate
-                        if (durationSelect) durationSelect.disabled = true;
-                        estimatedTimeDisplay.style.display = 'none';
-                    } else {
-                        timeHelper.style.display = 'none';
-                        // If time is valid, enable duration and update estimate
-                        if (durationSelect) durationSelect.disabled = false;
-                        updateEstimatedCompletion(); // Update estimate when time is valid
-                    }
-                });
-            }
-
-            if (durationSelect) {
-                durationSelect.addEventListener('change', () => {
-                    updateEstimatedCompletion(); // Update completion time when duration changes
-                });
             }
 
             function updateEstimatedCompletion() {
                 const selectedTimeStr = bookingTimeInput.value;
                 const selectedDuration = parseInt(durationSelect.value);
                 
-                // Base rates from your radio buttons (assuming this logic for demo)
-                // Default: 'No materials' rate (35 AED/hr)
-                let ratePerHour = 35; 
+                let ratePerHour = 35;
                 if (materialsYes.checked) {
-                    ratePerHour = 40; // 'Yes materials' rate (40 AED/hr)
+                    ratePerHour = 40;
                 }
 
-                // Check for valid Duration selection
-                if (!selectedTimeStr || isNaN(selectedDuration) || bookingTimeInput.classList.contains('is-invalid') || durationSelect.disabled) {
+                if (!selectedTimeStr || isNaN(selectedDuration)) {
                     estimatedTimeDisplay.style.display = 'none';
-                    // Kapag walang duration, ipapakita ang AED 0
-                    finalPriceDisplay.textContent = 'AED 0'; 
+                    finalPriceDisplay.textContent = 'AED 0';
                     return;
                 }
 
-                // --- Time Calculation (Existing Logic) ---
                 const [hours, minutes] = selectedTimeStr.split(':').map(Number);
                 const startDate = new Date();
-                startDate.setHours(hours, minutes, 0, 0); 
+                startDate.setHours(hours, minutes, 0, 0);
 
                 const endDate = new Date(startDate.getTime() + selectedDuration * 60 * 60 * 1000);
-
                 const formattedCompletionTime = formatTime12Hour(endDate.getHours().toString().padStart(2, '0') + ':' + endDate.getMinutes().toString().padStart(2, '0'));
 
-                let completionText = `Estimated completion: ${formattedCompletionTime}`;
-                completionText += ` (${selectedDuration} hrs)`;
-
+                let completionText = `Estimated completion: ${formattedCompletionTime} (${selectedDuration} hrs)`;
                 estimatedTimeDisplay.textContent = completionText;
                 estimatedTimeDisplay.style.display = 'block';
-                // --- End Time Calculation ---
 
-                // --- Price Calculation ---
                 const estimatedPrice = selectedDuration * ratePerHour;
-                
-                // Ginamit ang Math.round() para masigurong whole number at walang decimal
-                finalPriceDisplay.textContent = `AED ${Math.round(estimatedPrice)}`; 
+                finalPriceDisplay.textContent = `AED ${Math.round(estimatedPrice)}`;
             }
 
-            // I-call ang updateEstimatedCompletion tuwing magbabago ang cleaning materials
+            if (bookingTimeInput) {
+                bookingTimeInput.addEventListener('change', updateEstimatedCompletion);
+            }
+            if (durationSelect) {
+                durationSelect.addEventListener('change', updateEstimatedCompletion);
+            }
             materialsYes.addEventListener('change', updateEstimatedCompletion);
             materialsNo.addEventListener('change', updateEstimatedCompletion);
 
-            // =========================================================
-            // *** CLIENT TYPE LOGIC ***
-            // =========================================================
             const serviceCards = document.querySelectorAll('.service-card');
             const serviceTypeHiddenInput = document.getElementById('serviceTypeHidden');
             const clientTypeSelect = document.getElementById('clientType');
 
-            // MAPPING ng Client Type batay sa ibinigay na logic
             const clientTypeOptions = {
                 'Checkout Cleaning': ['Holiday Apartment'],
                 'In-House Cleaning': ['Holiday Apartment'],
                 'Refresh Cleaning': ['Holiday Apartment', 'Residential', 'Offices'],
                 'Deep Cleaning': ['Holiday Apartment', 'Residential', 'Offices'],
             };
-            
-            // Function para i-populate ang clientTypeSelect
+
             function populateClientType(selectedServiceType) {
-                // I-clear ang lahat ng kasalukuyang options at ibalik sa default prompt
+                const currentValue = clientTypeSelect.value;
                 clientTypeSelect.innerHTML = '<option value="">Select Client Type...</option>';
                 
-                // I-enable ang select field
-                clientTypeSelect.disabled = false;
-
-                // I-populate ang bagong options
                 const options = clientTypeOptions[selectedServiceType] || [];
                 options.forEach(type => {
                     const option = document.createElement('option');
                     option.value = type;
                     option.textContent = type;
+                    if (type === currentValue) {
+                        option.selected = true;
+                    }
                     clientTypeSelect.appendChild(option);
                 });
             }
@@ -690,29 +623,21 @@ function e($key) {
                     const selectedServiceType = card.dataset.serviceType;
                     serviceTypeHiddenInput.value = selectedServiceType;
                     
-                    // Tiyakin na gumagana ang Client Type logic
-                    if (clientTypeSelect) {
-                         populateClientType(selectedServiceType);
+                                       if (clientTypeSelect) {
+                        populateClientType(selectedServiceType);
                     }
-                    
-                    // Also enable duration select and reset if needed
-                    if (durationSelect) {
-                        durationSelect.disabled = false;
-                        durationSelect.value = ""; // Reset to default prompt
-                        updateEstimatedCompletion(); // Clear estimate if duration is reset
-                    }
-                    // Clear any previous validation on service options
-                    const serviceOptionsGroup = document.querySelector('.service-options');
-                    const serviceLabel = document.querySelector('label[for="serviceType"]');
-                    serviceOptionsGroup.classList.remove('is-invalid-group');
-                    if (serviceLabel && serviceLabel.closest('.form-group')) {
-                        serviceLabel.closest('.form-group').classList.remove('is-invalid-group');
-                    }
+                    updateEstimatedCompletion();
                 });
             });
 
-            // Initial call: Para ma-set ang default/initial value ng Estimated Price (AED 0)
-            updateEstimatedCompletion(); 
+            // Initialize client type options on page load
+            const initialServiceType = serviceTypeHiddenInput.value;
+            if (initialServiceType) {
+                populateClientType(initialServiceType);
+            }
+
+            // Initialize estimated price/time display
+            updateEstimatedCompletion();
         });
     </script>
 

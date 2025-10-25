@@ -85,7 +85,7 @@ $conn->close();
 
             <div class="nav__buttons">
                 <button class="button--header button--sign-up" onclick="window.location.href='sign_up.php'">SIGN UP</button>
-                <button class="button--header button--login" onclick="window.location.href='client_login.php'">LOGIN</button>
+                <button class="button--header button--login" onclick="window.location.href='landing_page2.html'">LOGIN</button>
                 <div class="nav__toggle" id="nav-toggle">
                     <i class="bx bx-menu"></i>
                 </div>
@@ -98,7 +98,7 @@ $conn->close();
             <div class="content">
                 <h1>Dubai's Premier <br> Deep Cleaning Services</h1>
                 <div class="buttons">
-                    <button class="button"  onclick="window.location.href='client_login.php'">Book Now</button>
+                    <button class="button"  onclick="window.location.href='landing_page2.html'">Book Now</button>
                 </div>
             </div>
         </section>
@@ -140,7 +140,7 @@ $conn->close();
                     <h3>General Cleaning</h3>
                     <p class="subtitle">For Homes and Offices</p>
                     <p>Standard cleaning service tailored to the number of hours booked</p>
-                    <button class="book-now-btn"  onclick="window.location.href='client_login.php'">Book Now</button>
+                    <button class="book-now-btn"  onclick="window.location.href='landing_page2.html'">Book Now</button>
                 </div>
 
                 <div class="service-card">
@@ -150,7 +150,7 @@ $conn->close();
                     <h3>Checkout Cleaning</h3>
                     <p class="subtitle">For Holiday Rental Units</p>
                     <p>Designed to prepare the unit for the next guest after checkout</p>
-                    <button class="book-now-btn"  onclick="window.location.href='client_login.php'">Book Now</button>
+                    <button class="book-now-btn"  onclick="window.location.href='landing_page2.html'">Book Now</button>
                 </div>
 
                 <div class="service-card">
@@ -159,7 +159,7 @@ $conn->close();
                     </div>
                     <h3>In-House Cleaning</h3>
                     <p>Cleaning service requested while the guest is currently staying in the unit</p>
-                    <button class="book-now-btn"  onclick="window.location.href='client_login.php'">Book Now</button>
+                    <button class="book-now-btn"  onclick="window.location.href='landing_page2.html'">Book Now</button>
                 </div>
 
                 <div class="service-card">
@@ -168,7 +168,7 @@ $conn->close();
                     </div>
                     <h3>Refresh Cleaning</h3>
                     <p>For units that have been vacant for several days or weeks</p>
-                    <button class="book-now-btn"  onclick="window.location.href='client_login.php'">Book Now</button>
+                    <button class="book-now-btn"  onclick="window.location.href='landing_page2.html'">Book Now</button>
                 </div>
 
                 <div class="service-card">
@@ -177,7 +177,7 @@ $conn->close();
                     </div>
                     <h3>Deep Cleaning</h3>
                     <p>Intensive cleaning service for units in very dirty or "disaster" conditions</p>
-                    <button class="book-now-btn"  onclick="window.location.href='client_login.php'">Book Now</button>
+                    <button class="book-now-btn"  onclick="window.location.href='landing_page2.html'">Book Now</button>
                 </div>
             </div>
         </section>
