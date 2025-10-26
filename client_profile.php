@@ -1,11 +1,65 @@
 <?php
-// PHP code for client_profile.php
-$firstName="Danelle Marie";
-$lastName="Beltran";
-$birthday="2003-06-11";
-$contactNumber="+971809954545"; // Dapat 13 characters ang total (+971 at 9 digits)
-$emailAddress="danellemarie6@gmail.com";
+session_start();
+require 'connection.php'; // your DB connection
+
+// ✅ Ensure user is logged in
+if (!isset($_SESSION['email'])) {
+    echo "<script>alert('Please log in first.'); window.location.href='login.php';</script>";
+    exit;
+}
+
+$client_email = $_SESSION['email'];
+$success = false;
+$error = '';
+
+// Handle profile update
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['firstName'])) {
+    $firstName = $_POST['firstName'];
+    $lastName = $_POST['lastName'];
+    $birthday = $_POST['birthday'];
+    $contactNumber = $_POST['contactNumber'];
+    $emailAddress = $_POST['emailAddress'];
+
+    $stmt = $conn->prepare("UPDATE clients SET first_name=?, last_name=?, birthday=?, contact_number=?, email=? WHERE email=?");
+    $stmt->bind_param("ssssss", $firstName, $lastName, $birthday, $contactNumber, $emailAddress, $client_email);
+    $stmt->execute();
+
+    if ($stmt->affected_rows >= 0) {
+        // Update session email if changed
+        $_SESSION['email'] = $emailAddress;
+        // ✅ REDIRECT to prevent form resubmission on refresh (PRG pattern)
+        header("Location: client_profile.php?success=1");
+        exit;
+    } else {
+        $error = "Failed to update profile. Please try again.";
+    }
+
+    $stmt->close();
+}
+
+// Fetch user data from database
+$stmt = $conn->prepare("SELECT first_name, last_name, birthday, contact_number, email FROM clients WHERE email = ? LIMIT 1");
+$stmt->bind_param("s", $client_email);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows === 0) {
+    echo "<script>alert('User not found.'); window.location.href='login.php';</script>";
+    exit;
+}
+
+$user = $result->fetch_assoc();
+$stmt->close();
+$conn->close();
+
+$firstName = $user['first_name'];
+$lastName = $user['last_name'];
+$birthday = $user['birthday'];
+$contactNumber = $user['contact_number'];
+$emailAddress = $user['email'];
 ?>
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -23,14 +77,14 @@ $emailAddress="danellemarie6@gmail.com";
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.3s ease-out, padding 0.3s ease-out;
-    padding: 0; /* Ensures no padding when collapsed */
-    background-color: #f7f7f7; /* Light background for visibility */
+    padding: 0;
+    background-color: #f7f7f7;
 }
 
 /* Show dropdown menu when active */
 .has-dropdown.active-dropdown .dropdown__menu {
-    max-height: 200px; /* Adjust based on max content height */
-    padding: 5px 0; /* Add back padding when open */
+    max-height: 200px;
+    padding: 5px 0;
 }
 
 /* Rotate arrow icon when dropdown is active */
@@ -41,302 +95,300 @@ $emailAddress="danellemarie6@gmail.com";
 /* Basic styling for the arrow icon */
 .arrow-icon {
     transition: transform 0.3s ease;
-    margin-left: auto; /* Push to the right */
+    margin-left: auto;
 }
 
 /* Adjustments for dropdown items */
 .dropdown__menu .menu__link {
-    padding-left: 30px; /* Indent dropdown links */
+    padding-left: 30px;
     font-size: 0.95em;
 }
 /* --- END SIDEBAR DROPDOWN STYLES --- */
 
 /* --- OVERRIDE FOR SIDEBAR HEIGHT (START) --- */
 .dashboard__wrapper {
-min-height: 100vh; /* O kung anuman ang tamang height setup ng inyong dashboard */
-align-items: stretch;
+    min-height: 100vh;
+    align-items: stretch;
 }
 
 .dashboard__sidebar {
-height: auto !important; /* Siguruhin na aabot hanggang sa dulo ng content */
-min-height: 100%; /* Mag-stretch kasabay ng content */
-overflow-y: auto; /* Para sa sidebar scrolling kung kailangan */
+    height: auto !important;
+    min-height: 100%;
+    overflow-y: auto;
 }
 /* --- OVERRIDE FOR SIDEBAR HEIGHT (END) --- */
 
 
 /* Container for the profile card/form */
 .profile-form-container {
-background-color: #fff;
-padding: 30px;
-border-radius: 8px;
-box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-max-width: 800px;
-margin: 20px auto;
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    max-width: 800px;
+    margin: 20px auto;
 }
 
 .profile-form-container .main-title {
-margin-top: 0;
-padding-bottom: 10px;
-border-bottom: 1px solid #eee;
-margin-bottom: 15px;
+    margin-top: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 15px;
 }
 
 /* Custom style for the icon in the main title */
 .profile-form-container .main-title i {
-color: #007bff; /* Kulay asul */
-margin-right: 8px; /* Nagdagdag ng konting space */
-font-size: 1.3em; /* Pinalaki nang kaunti */
+    color: #007bff;
+    margin-right: 8px;
+    font-size: 1.3em;
 }
 
 .profile-form-container .page-description {
-margin-top: -10px;
-margin-bottom: 25px;
-color: #666;
-font-size: 0.95em;
+    margin-top: -10px;
+    margin-bottom: 25px;
+    color: #666;
+    font-size: 0.95em;
 }
 
 /* Grid layout for two-column fields */
 .form-grid {
-display: grid;
-grid-template-columns: 1fr;
-gap: 20px 30px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px 30px;
 }
 
 @media (min-width: 600px) {
-.form-grid {
-grid-template-columns: 1fr 1fr;
-}
-.form-group-full {
-grid-column: 1 / -1;
-}
+    .form-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    .form-group-full {
+        grid-column: 1 / -1;
+    }
 }
 
 .form-group {
-margin-bottom: 5px;
+    margin-bottom: 5px;
 }
 
 .form-group label {
-display: block;
-font-weight: 600;
-color: #333;
-margin-bottom: 5px;
-font-size: 1em;
+    display: block;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+    font-size: 1em;
 }
 
 .form-group input[type="text"],
 .form-group input[type="email"],
 .form-group input[type="date"],
 .form-group input[type="tel"] {
-width: 100%;
-padding: 12px 15px;
-border: 1px solid #ccc;
-border-radius: 5px;
-box-sizing: border-box;
-font-size: 1.0em; /* Base size */
-color: #555;
-background-color: #f9f9f9;
-transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s;
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 1.0em;
+    color: #555;
+    background-color: #f9f9f9;
+    transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s;
 }
 
 /* --- START BIRTHDAY FONT SIZE INCREASE (NEW) --- */
 .form-group input[type="date"] {
-    font-size: 1.15em; /* Linalakihan ang font size para sa Birthday */
-    /* Maaari ring magdagdag ng padding o line-height kung kinakailangan */
+    font-size: 1.15em;
 }
 /* --- END BIRTHDAY FONT SIZE INCREASE --- */
 
 
 .form-group input:disabled {
-background-color: #f1f1f1;
-color: #777;
-cursor: default;
-border-color: #e0e0e0;
+    background-color: #f1f1f1;
+    color: #777;
+    cursor: default;
+    border-color: #e0e0e0;
 }
 
 /* MODIFIED: Input Focus Styles */
 .form-group input:focus:not(:disabled) {
-border-color: #007bff;
-box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-outline: none;
-background-color: #fff;
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+    outline: none;
+    background-color: #fff;
 }
 
-/* NEW: Style for the inline error message (KEEP IN CASE YOU NEED IT LATER, BUT WE ARE HIDING IT NOW)*/
+/* NEW: Style for the inline error message */
 .error-message {
-color: #dc3545; /* Pula */
-font-size: 0.85em;
-margin-top: 5px;
-display: none; /* Default hidden */
+    color: #dc3545;
+    font-size: 0.85em;
+    margin-top: 5px;
+    display: none;
 }
 
 /* Buttons */
 .form-actions {
-margin-top: 25px;
-display: flex;
-gap: 10px;
-justify-content: flex-start;
+    margin-top: 25px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-start;
 }
 
 .btn {
-padding: 10px 18px;
-border: none;
-border-radius: 6px;
-font-size: 0.95em;
-cursor: pointer;
-transition: background-color 0.3s ease;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.95em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
 }
 
 .btn--edit {
-background-color: #004a80;
-color: white;
+    background-color: #004a80;
+    color: white;
 }
 .btn--edit:hover {
-background-color: #005a99;
+    background-color: #005a99;
 }
 
 /* Save Button (orange) */
 .btn--save {
-background-color: #E87722;
-color: #fff;
+    background-color: #E87722;
+    color: #fff;
 }
 .btn--save:hover {
-background-color: #D66C1E;
+    background-color: #D66C1E;
 }
 
 /* Cancel Button (light gray, soft) */
 .btn--cancel {
-background-color: #e6e6e6;
-color: #444;
+    background-color: #e6e6e6;
+    color: #444;
 }
 .btn--cancel:hover {
-background-color: #d5d5d5;
+    background-color: #d5d5d5;
 }
 
 /* Success Modal */
 #successModal {
-display: none;
-position: fixed;
-top: 0;
-left: 0;
-width: 100%;
-height: 100%;
-background: rgba(0,0,0,0.4);
-justify-content: center;
-align-items: center;
-z-index: 9999;
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.4);
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
 }
 
 .modal-content {
-background: white;
-padding: 25px 35px;
-border-radius: 10px;
-text-align: center;
-max-width: 350px;
-box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    background: white;
+    padding: 25px 35px;
+    border-radius: 10px;
+    text-align: center;
+    max-width: 350px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
 }
 
 .modal-content i {
-font-size: 50px;
-color: #28a745;
-margin-bottom: 10px;
+    font-size: 50px;
+    color: #28a745;
+    margin-bottom: 10px;
 }
 
 .modal-content h3 {
-margin-bottom: 8px;
-color: #333;
+    margin-bottom: 8px;
+    color: #333;
 }
 
 .modal-content p {
-color: #666;
-margin-bottom: 15px;
+    color: #666;
+    margin-bottom: 15px;
 }
 
 .modal-content button {
-background-color: #004a80;
-color: white;
-padding: 8px 20px;
-border: none;
-border-radius: 6px;
-cursor: pointer;
+    background-color: #004a80;
+    color: white;
+    padding: 8px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
 }
 .modal-content button:hover {
-background-color: #005a99;
+    background-color: #005a99;
 }
 
 /* --- LOGOUT MODAL STYLES --- */
 /* Base Modal Container for Logout */
 #logoutModal {
-display: none; /* Hidden by default */
-position: fixed;
-top: 0;
-left: 0;
-width: 100%;
-height: 100%;
-background: rgba(0, 0, 0, 0.4);
-justify-content: center;
-align-items: center;
-z-index: 9999;
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
 }
 
 /* Content Box for Logout Modal */
 #logoutModal .modal__content {
-background-color: white; /* Used white instead of undefined var(--container-color) */
-padding: 2.5rem;
-border-radius: 8px;
-box-shadow: 0 4px 15px rgba(0, 0, 0, .2);
-text-align: center;
-width: 90%;
-max-width: 380px;
-/* Pabababain ng 20px mula sa center */
-transform: translateY(20px);
+    background-color: white;
+    padding: 2.5rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, .2);
+    text-align: center;
+    width: 90%;
+    max-width: 380px;
+    transform: translateY(20px);
 }
 
 /* Title/Question for Logout Modal */
 #logoutModal .modal__title {
-color: #333; /* Used standard color instead of undefined var(--title-color1) */
-margin-bottom: 2.5rem;
-display: block;
-font-size: 1.17em;
-font-weight: bold;
-margin-top: 0;
+    color: #333;
+    margin-bottom: 2.5rem;
+    display: block;
+    font-size: 1.17em;
+    font-weight: bold;
+    margin-top: 0;
 }
 
 /* Action Buttons Container for Logout Modal */
 #logoutModal .modal__actions {
-display: flex;
-justify-content: center;
-gap: 15px;
-margin-top: 1.5rem;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 1.5rem;
 }
 
 /* Common button styling for Logout Modal */
 #logoutModal .modal__actions button {
-font-size: 0.85em;
-padding: 10px 20px;
-border: none;
-border-radius: 5px;
-cursor: pointer;
-font-weight: bold;
-transition: background-color .3s ease, color .3s ease;
+    font-size: 0.85em;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color .3s ease, color .3s ease;
 }
 
 /* Cancel Button */
 #logoutModal #cancelLogout {
-background-color: #ddd;
-color: #444; /* Standard text color */
+    background-color: #ddd;
+    color: #444;
 }
 #logoutModal #cancelLogout:hover {
-background-color: #cccccc;
+    background-color: #cccccc;
 }
 
 /* Log Out Button */
 #logoutModal #confirmLogout {
-background-color: #4040BF;
-color: #fff;
+    background-color: #4040BF;
+    color: #fff;
 }
 #logoutModal #confirmLogout:hover {
-background-color: #303099;
+    background-color: #303099;
 }
 /* --- END LOGOUT MODAL STYLES --- */
 </style>
@@ -453,22 +505,24 @@ oninput="this.setCustomValidity('')">
 </div>
 
 <script>
+// Show success modal if profile was updated
+<?php if ($success): ?>
+window.addEventListener('DOMContentLoaded', () => {
+    showModal('successModal');
+});
+<?php endif; ?>
+
 // --- START SIDEBAR DROPDOWN TOGGLE LOGIC (NEW) ---
 document.addEventListener('DOMContentLoaded', () => {
     const dropdownToggles = document.querySelectorAll('.has-dropdown > .menu__link');
 
     dropdownToggles.forEach(toggle => {
-        // I-prevent ang default action para hindi mag-redirect sa '#'
         toggle.addEventListener('click', (e) => {
             e.preventDefault();
             
-            // Hanapin ang parent <li> element
             const parentItem = toggle.closest('.has-dropdown');
-            
-            // I-toggle ang active-dropdown class
             parentItem.classList.toggle('active-dropdown');
 
-            // Optionally, i-close ang iba pang bukas na dropdowns
             document.querySelectorAll('.has-dropdown.active-dropdown').forEach(item => {
                 if (item !== parentItem) {
                     item.classList.remove('active-dropdown');
@@ -487,159 +541,142 @@ const cancelBtn = document.getElementById('cancelBtn');
 const inputs = document.querySelectorAll('#profileForm input');
 const contactNumberInput = document.getElementById('contactNumber'); 
 
-// Iimbak ang orihinal na values sa isang JS object
+// Store original values
 const originalValues = {
-firstName: "<?php echo htmlspecialchars($firstName); ?>",
-lastName: "<?php echo htmlspecialchars($lastName); ?>",
-birthday: "<?php echo htmlspecialchars($birthday); ?>",
-contactNumber: "<?php echo htmlspecialchars($contactNumber); ?>",
-emailAddress: "<?php echo htmlspecialchars($emailAddress); ?>"
+    firstName: "<?php echo htmlspecialchars($firstName); ?>",
+    lastName: "<?php echo htmlspecialchars($lastName); ?>",
+    birthday: "<?php echo htmlspecialchars($birthday); ?>",
+    contactNumber: "<?php echo htmlspecialchars($contactNumber); ?>",
+    emailAddress: "<?php echo htmlspecialchars($emailAddress); ?>"
 };
 let originalContactNumber = originalValues.contactNumber; 
 
 // Function to set cursor position
 function setCursorPosition(input, pos) {
-if (input.setSelectionRange) {
-input.focus();
-input.setSelectionRange(pos, pos);
-}
+    if (input.setSelectionRange) {
+        input.focus();
+        input.setSelectionRange(pos, pos);
+    }
 }
 
 // EVENT LISTENER FOR CONTACT NUMBER: Enforce prefix and restrict non-digit input
 contactNumberInput.addEventListener('keydown', (e) => {
-if (contactNumberInput.disabled) return;
+    if (contactNumberInput.disabled) return;
 
-const prefix = '+971';
-const start = contactNumberInput.selectionStart;
-const end = contactNumberInput.selectionEnd;
-const value = contactNumberInput.value;
+    const prefix = '+971';
+    const start = contactNumberInput.selectionStart;
+    const end = contactNumberInput.selectionEnd;
+    const value = contactNumberInput.value;
 
-// 1. Prevent deleting/editing the prefix (+971)
-if (
-(e.key === 'Backspace' && start <= prefix.length && start === end) ||
-(e.key === 'Delete' && start < prefix.length) ||
-(e.key === '-' || e.key === ' ')
-) {
-e.preventDefault();
-if (e.key === 'Backspace') {
-setCursorPosition(contactNumberInput, prefix.length);
-}
-return;
-}
+    // 1. Prevent deleting/editing the prefix (+971)
+    if (
+        (e.key === 'Backspace' && start <= prefix.length && start === end) ||
+        (e.key === 'Delete' && start < prefix.length) ||
+        (e.key === '-' || e.key === ' ')
+    ) {
+        e.preventDefault();
+        if (e.key === 'Backspace') {
+            setCursorPosition(contactNumberInput, prefix.length);
+        }
+        return;
+    }
 
-// 2. Restrict input to numbers (0-9) only for new typing
-if (!e.metaKey && !e.ctrlKey && e.key.length === 1 && (e.key < '0' || e.key > '9')) {
-e.preventDefault();
-return;
-}
+    // 2. Restrict input to numbers (0-9) only for new typing
+    if (!e.metaKey && !e.ctrlKey && e.key.length === 1 && (e.key < '0' || e.key > '9')) {
+        e.preventDefault();
+        return;
+    }
 
-// 3. Limit length (13 chars: +971 and 9 digits)
-if (value.length >= 13 && start >= prefix.length && e.key.length === 1 && (e.key >= '0' && e.key <= '9') && start === end) {
-e.preventDefault();
-}
+    // 3. Limit length (13 chars: +971 and 9 digits)
+    if (value.length >= 13 && start >= prefix.length && e.key.length === 1 && (e.key >= '0' && e.key <= '9') && start === end) {
+        e.preventDefault();
+    }
 });
 
-// Event listener for real-time input cleaning (removes any non-digit character that slips through)
+// Event listener for real-time input cleaning
 contactNumberInput.addEventListener('input', () => {
-const prefix = '+971';
-let value = contactNumberInput.value;
+    const prefix = '+971';
+    let value = contactNumberInput.value;
 
-// Clean non-digit characters except + at the start and enforce the prefix
-let cleanValue = prefix + value.substring(prefix.length).replace(/[^\d]/g, '');
+    let cleanValue = prefix + value.substring(prefix.length).replace(/[^\d]/g, '');
 
-// Enforce 13 character limit
-if (cleanValue.length > 13) {
-cleanValue = cleanValue.substring(0, 13);
-}
+    if (cleanValue.length > 13) {
+        cleanValue = cleanValue.substring(0, 13);
+    }
 
-// If the displayed value needs cleaning, update it
-if (contactNumberInput.value !== cleanValue) {
-contactNumberInput.value = cleanValue;
-}
+    if (contactNumberInput.value !== cleanValue) {
+        contactNumberInput.value = cleanValue;
+    }
 
-// Keep cursor away from the prefix area
-if (contactNumberInput.selectionStart < prefix.length) {
-setCursorPosition(contactNumberInput, prefix.length);
-}
+    if (contactNumberInput.selectionStart < prefix.length) {
+        setCursorPosition(contactNumberInput, prefix.length);
+    }
 });
 
 
 editBtn.addEventListener('click', () => {
-// I-store ang original contact number bago mag-edit
-originalContactNumber = contactNumberInput.value; 
-inputs.forEach(input => input.disabled = false);
+    originalContactNumber = contactNumberInput.value; 
+    inputs.forEach(input => input.disabled = false);
 
-// Wala nang automatic focus dito.
-
-editBtn.style.display = 'none';
-saveBtn.style.display = 'inline-block';
-cancelBtn.style.display = 'inline-block';
+    editBtn.style.display = 'none';
+    saveBtn.style.display = 'inline-block';
+    cancelBtn.style.display = 'inline-block';
 });
 
 cancelBtn.addEventListener('click', () => {
-inputs.forEach(input => {
-        // I-restore ang original value mula sa JS object
-        input.value = originalValues[input.id];
-        input.disabled = true;
+    inputs.forEach(input => {
+        input.value = originalValues[input.id];
+        input.disabled = true;
+    });
+
+    contactNumberInput.value = originalContactNumber;
+
+    saveBtn.style.display = 'none';
+    cancelBtn.style.display = 'none';
+    editBtn.style.display = 'inline-block';
 });
 
-// Siguraduhin na ang contact number ay restored din
-contactNumberInput.value = originalContactNumber;
-
-saveBtn.style.display = 'none';
-cancelBtn.style.display = 'none';
-editBtn.style.display = 'inline-block';
-});
-
+// ✅ FIXED: Form submission now actually submits to server
 document.getElementById('profileForm').addEventListener('submit', e => {
-// Ang checkValidity() at pattern attribute ang mag-ha-handle ng error pop-up.
-if (!contactNumberInput.checkValidity()) {
-// Ensure the cursor is set after the prefix if validation fails
-setCursorPosition(contactNumberInput, 4);
-return; // Let the browser handle the error display
-}
+    if (!contactNumberInput.checkValidity()) {
+        setCursorPosition(contactNumberInput, 4);
+        e.preventDefault();
+        return;
+    }
 
-e.preventDefault(); // I-prevent ang default submit para sa Success Modal (at server submit)
-
-// Dito mo na isasagawa ang AJAX/fetch request para i-save ang data sa database.
-
-// Simulate Success:
-showModal('successModal');
-inputs.forEach(input => input.disabled = true);
-saveBtn.style.display = 'none';
-cancelBtn.style.display = 'none';
-editBtn.style.display = 'inline-block';
+    // Enable all inputs before submitting so their values are sent
+    inputs.forEach(input => input.disabled = false);
+    
+    // Let the form submit naturally (page will reload and show success modal via PHP)
 });
 
-// Modal Functions (No Transition)
+
+// Modal Functions
 function showModal(id) {
-const modal = document.getElementById(id);
-if (modal) {
-modal.style.display = 'flex';
-}
+    const modal = document.getElementById(id);
+    if (modal) {
+        modal.style.display = 'flex';
+    }
 }
 
 function closeModal(id) {
-const modal = document.getElementById(id);
-if (modal) {
-modal.style.display = 'none';
-}
+    const modal = document.getElementById(id);
+    if (modal) {
+        modal.style.display = 'none';
+    }
 }
 
-// Added the necessary function to specifically show the logout modal
 function showLogoutModal() {
-showModal('logoutModal');
+    showModal('logoutModal');
 }
 
-// Event listeners for the logout modal buttons (using the new IDs)
+// Event listeners for the logout modal buttons
 document.getElementById('cancelLogout').addEventListener('click', () => {
-closeModal('logoutModal');
+    closeModal('logoutModal');
 });
 
-// For demonstration, confirmLogout just closes the modal (You would add your actual logout logic here)
 document.getElementById('confirmLogout').addEventListener('click', () => {
-// window.location.href = "logout.php";  // Example logout redirect
-closeModal('logoutModal'); // For now, just close the modal
+    window.location.href = "logout.php";
 });
 
 </script>

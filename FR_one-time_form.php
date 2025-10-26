@@ -1,30 +1,98 @@
 <?php
-// PHP code for FR_one-time_form.php
-// Handles the display and submission of the client's rating and feedback.
+session_start();
+require 'connection.php';
 
-// 1. Get the reference number and action (leave or edit) from the URL
-$ref_no = isset($_GET['ref']) ? htmlspecialchars($_GET['ref']) : 'ALZ-CC-2409-0015'; // Default Ref No
-$action = isset($_GET['action']) ? htmlspecialchars($_GET['action']) : 'leave';
+// ✅ Ensure the user is logged in
+if (!isset($_SESSION['email'])) {
+    echo "<script>alert('Please log in first.'); window.location.href='login.php';</script>";
+    exit;
+}
 
-// --- REAL DATA SIMULATION ---
+$client_email = $_SESSION['email'];
+
+// ✅ Get booking ID from URL
+$booking_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+
+if ($booking_id <= 0) {
+    echo "<script>alert('Invalid booking ID.'); window.location.href='client_dashboard.php';</script>";
+    exit;
+}
+
+// ✅ Retrieve booking details for the logged-in client
+$stmt = $conn->prepare("SELECT * FROM bookings WHERE id = ? AND email = ? LIMIT 1");
+$stmt->bind_param("is", $booking_id, $client_email);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows === 0) {
+    echo "<script>alert('Booking not found.'); window.location.href='client_dashboard.php';</script>";
+    exit;
+}
+
+$booking = $result->fetch_assoc();
+
+// ✅ Function to generate a reference number (even without ref_no column)
+function generateRefNo($id, $service_type, $date) {
+    $prefix = match ($service_type) {
+        'Checkout Cleaning' => 'CC',
+        'In-House Cleaning' => 'IH',
+        'Refresh Cleaning' => 'RC',
+        'Deep Cleaning' => 'DC',
+        default => 'SV'
+    };
+    $dateStr = date('ym', strtotime($date));
+    return "ALZ-{$prefix}-{$dateStr}-" . str_pad($id, 4, '0', STR_PAD_LEFT);
+}
+
+// ✅ Calculate estimated price
+function calculateFinalPrice($booking) {
+    $duration = floatval($booking['duration'] ?? 1);
+    $materialsStr = $booking['materials_provided'] ?? '';
+    preg_match('/(\d+(\.\d+)?)\s*AED/i', $materialsStr, $matches);
+    $pricePerHour = isset($matches[1]) ? floatval($matches[1]) : 0;
+    $finalPrice = $pricePerHour * $duration;
+
+    if (stripos($materialsStr, 'yes') !== false) {
+        $finalPrice *= 2;
+    }
+
+    return $finalPrice;
+}
+
+// ✅ Define page title and action (avoid undefined variable error)
+$page_title = "Service Feedback";
+$action = "submit";
+$submit_button_text = "Submit Feedback";
+
+// ✅ Prepare details
 $job_details = [
-    'ref_no' => $ref_no,
-    'date' => '2025-08-24',             
-    'time' => '08:18 PM',               
-    'duration' => '5 Hours',            
-    'address' => 'Lucky Korean Mall, Baguio City',
-    'service_type' => 'General Cleaning',
-    'client_type' => 'Offices',
-    // Kept the employee data for Step 2 rating generation
-    'cleaners' => ['Anna Sanchez', 'Ben Kuya', 'Cali Magno', 'Dan Cruz', 'Eva Ramos', 'Finn Reyes'],
-    'driver' => 'David Perez',
+    'ref_no' => generateRefNo($booking['id'], $booking['service_type'], $booking['service_date']),
+    'date' => date('F d, Y', strtotime($booking['service_date'])),
+    'time' => date('g:i A', strtotime($booking['service_time'])),
+    'full_name' => $booking['full_name'],
+    'email' => $booking['email'],
+    'phone' => $booking['phone'],
+    'service_type' => $booking['service_type'],
+    'client_type' => $booking['client_type'],
+    'property_type' => $booking['property_type'],
+    'address' => $booking['address'],
+    'duration' => $booking['duration'] . ' Hours',
+    'materials_provided' => $booking['materials_provided'],
+    'comments' => $booking['comments'] ?? 'N/A',
+    'status' => $booking['status'],
+    'final_price' => calculateFinalPrice($booking) . ' AED',
+    'cleaners' => ['Cleaner 1', 'Cleaner 2'], // dummy data
+    'driver' => 'Driver 1'
 ];
-// --- END OF SIMULATION ---
 
-// 2. Determine the page title and button text based on action
-$page_title = ($action === 'edit') ? "Edit Service Rating" : "Rate Service";
-$submit_button_text = ($action === 'edit') ? "Update" : "Submit";
+$stmt->close();
+$conn->close();
 ?>
+
+
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>

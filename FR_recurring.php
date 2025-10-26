@@ -511,23 +511,7 @@
                             </ul>
                         </div>
                     </div>
-                    <div class="appointment-details">
-                        <p class="full-width-detail ref-no-detail"><strong>Reference No:</strong> <span class="ref-no-value">ALZ-WK-2410-0016</span></p>
-                        <p><i class='bx bx-calendar-check'></i> <strong>Start Date:</strong> October 05, 2024</p> <p class="end-date-detail"><i class='bx bx-calendar-check'></i> <strong>End Date:</strong> N/A (Active)</p>
-                        <p><i class='bx bx-time'></i> <strong>Time:</strong> 9:00 AM</p> <p class="duration-detail"><i class='bx bx-stopwatch'></i> <strong>Duration:</strong> 4 hours</p>
-                        <p class="frequency-detail"><i class='bx bx-sync'></i> <strong>Frequency:</strong> Weekly</p> <p class="sessions-detail"><i class='bx bx-list-ol'></i> <strong>No. of Sessions:</strong> <span class="sessions-count">4 of 12</span></p>
-                        
-                        <p class="full-width-detail"><i class='bx bx-map-alt'></i> <strong>Address:</strong> 707 Downtown, Dubai</p>
-                        <hr class="divider full-width-detail">
-                        <p><i class='bx bx-building-house'></i> <strong>Client Type:</strong> Residential</p>
-                        <p class="service-type-detail"><i class='bx bx-wrench'></i> <strong>Service Type:</strong> General Cleaning</p>
-
-                        <p class="full-width-detail status-detail">
-                            <strong>Plan Status:</strong>
-                            <span class="overall-plan-tag overall-active"><i class='bx bx-play-circle'></i> ACTIVE</span>
-                        </p>
-                        <p class="price-detail">Estimated Price: <span class="aed-color">AED 400</span></p>
-                    </div>
+                   
                 </div>
             </div>
         </div>
@@ -588,23 +572,7 @@
                             </ul>
                         </div>
                     </div>
-                    <div class="appointment-details">
-                        <p class="full-width-detail ref-no-detail"><strong>Reference No:</strong> <span class="ref-no-value">ALZ-BWK-2409-0012</span></p>
-                        <p><i class='bx bx-calendar-check'></i> <strong>Start Date:</strong> September 20, 2024</p> <p class="end-date-detail"><i class='bx bx-calendar-check'></i> <strong>End Date:</strong> October 15, 2024</p>
-                        <p><i class='bx bx-time'></i> <strong>Time:</strong> 2:00 PM</p> <p class="duration-detail"><i class='bx bx-stopwatch'></i> <strong>Duration:</strong> 3 hours</p>
-                        <p class="frequency-detail"><i class='bx bx-sync'></i> <strong>Frequency:</strong> Bi-Weekly</p> <p class="sessions-detail"><i class='bx bx-list-ol'></i> <strong>No. of Sessions:</strong> <span class="sessions-count">6 of 6</span></p>
-                        
-                        <p class="full-width-detail"><i class='bx bx-map-alt'></i> <strong>Address:</strong> 606 JLT, Dubai</p>
-                        <hr class="divider full-width-detail">
-                        <p><i class='bx bx-building-house'></i> <strong>Client Type:</strong> Residential</p>
-                        <p class="service-type-detail"><i class='bx bx-wrench'></i> <strong>Service Type:</strong> General Cleaning</p>
-
-                        <p class="full-width-detail status-detail">
-                            <strong>Plan Status:</strong>
-                            <span class="overall-plan-tag overall-completed"><i class='bx bx-check-double'></i> COMPLETED</span>
-                        </p>
-                        <p class="price-detail">Final Price: <span class="aed-color">AED 300</span></p>
-                    </div>
+                    
                 </div>
                 
                 <div class="appointment-list-item" 
@@ -634,23 +602,7 @@
                             </ul>
                         </div>
                     </div>
-                    <div class="appointment-details">
-                        <p class="full-width-detail ref-no-detail"><strong>Reference No:</strong> <span class="ref-no-value">ALZ-BWK-2410-0018</span></p>
-                        <p><i class='bx bx-calendar-check'></i> <strong>Start Date:</strong> October 10, 2024</p> <p class="end-date-detail"><i class='bx bx-calendar-check'></i> <strong>End Date:</strong> N/A (Active)</p>
-                        <p><i class='bx bx-time'></i> <strong>Time:</strong> 11:00 AM</p> <p class="duration-detail"><i class='bx bx-stopwatch'></i> <strong>Duration:</strong> 3 hours</p>
-                        <p class="frequency-detail"><i class='bx bx-sync'></i> <strong>Frequency:</strong> Bi-Weekly</p> <p class="sessions-detail"><i class='bx bx-list-ol'></i> <strong>No. of Sessions:</strong> <span class="sessions-count">1 of 10</span></p>
-                        
-                        <p class="full-width-detail"><i class='bx bx-map-alt'></i> <strong>Address:</strong> 404 Dubai Marina, Dubai</p>
-                        <hr class="divider full-width-detail">
-                        <p><i class='bx bx-building-house'></i> <strong>Client Type:</strong> Residential</p>
-                        <p class="service-type-detail"><i class='bx bx-wrench'></i> <strong>Service Type:</strong> General Cleaning</p>
-
-                        <p class="full-width-detail status-detail">
-                            <strong>Plan Status:</strong>
-                            <span class="overall-plan-tag overall-active"><i class='bx bx-play-circle'></i> ACTIVE</span>
-                        </p>
-                        <p class="price-detail">Estimated Price: <span class="aed-color">AED 300</span></p>
-                    </div>
+                    
                 </div>
                 
                 <div class="appointment-list-item" 
@@ -680,23 +632,7 @@
                             </ul>
                         </div>
                     </div>
-                    <div class="appointment-details">
-                        <p class="full-width-detail ref-no-detail"><strong>Reference No:</strong> <span class="ref-no-value">ALZ-BWK-2409-0013</span></p>
-                        <p><i class='bx bx-calendar-check'></i> <strong>Start Date:</strong> September 15, 2024</p> <p class="end-date-detail"><i class='bx bx-calendar-check'></i> <strong>End Date:</strong> N/A (Paused)</p>
-                        <p><i class='bx bx-time'></i> <strong>Time:</strong> 10:00 AM</p> <p class="duration-detail"><i class='bx bx-stopwatch'></i> <strong>Duration:</strong> 3 hours</p>
-                        <p class="frequency-detail"><i class='bx bx-sync'></i> <strong>Frequency:</strong> Bi-Weekly</p> <p class="sessions-detail"><i class='bx bx-list-ol'></i> <strong>No. of Sessions:</strong> <span class="sessions-count">4 of 8</span></p>
-                        
-                        <p class="full-width-detail"><i class='bx bx-map-alt'></i> <strong>Address:</strong> 303 Business Bay, Dubai</p>
-                        <hr class="divider full-width-detail">
-                        <p><i class='bx bx-building-house'></i> <strong>Client Type:</strong> Residential</p>
-                        <p class="service-type-detail"><i class='bx bx-wrench'></i> <strong>Service Type:</strong> General Cleaning</p>
-
-                        <p class="full-width-detail status-detail">
-                            <strong>Plan Status:</strong>
-                            <span class="overall-plan-tag overall-paused"><i class='bx bx-pause-circle'></i> PAUSED</span>
-                        </p>
-                        <p class="price-detail">Estimated Price: <span class="aed-color">AED 300</span></p>
-                    </div>
+                   >
                 </div>
                 
               
@@ -728,23 +664,7 @@
                             </ul>
                         </div>
                     </div>
-                    <div class="appointment-details">
-                        <p class="full-width-detail ref-no-detail"><strong>Reference No:</strong> <span class="ref-no-value">ALZ-BWK-2409-0001</span></p>
-                        <p><i class='bx bx-calendar-check'></i> <strong>Start Date:</strong> September 01, 2024</p> <p class="end-date-detail"><i class='bx bx-calendar-check'></i> <strong>End Date:</strong> N/A (Active)</p>
-                        <p><i class='bx bx-time'></i> <strong>Time:</strong> 9:00 AM</p> <p class="duration-detail"><i class='bx bx-stopwatch'></i> <strong>Duration:</strong> 4 hours</p>
-                        <p class="frequency-detail"><i class='bx bx-sync'></i> <strong>Frequency:</strong> Bi-Weekly</p> <p class="sessions-detail"><i class='bx bx-list-ol'></i> <strong>No. of Sessions:</strong> <span class="sessions-count">7 of 15</span></p>
-                        
-                        <p class="full-width-detail"><i class='bx bx-map-alt'></i> <strong>Address:</strong> 101 Downtown, Dubai</p>
-                        <hr class="divider full-width-detail">
-                        <p><i class='bx bx-building-house'></i> <strong>Client Type:</strong> Residential</p>
-                        <p class="service-type-detail"><i class='bx bx-wrench'></i> <strong>Service Type:</strong> General Cleaning</p>
-
-                        <p class="full-width-detail status-detail">
-                            <strong>Plan Status:</strong>
-                            <span class="overall-plan-tag overall-active"><i class='bx bx-play-circle'></i> ACTIVE</span>
-                        </p>
-                        <p class="price-detail">Final Price: <span class="aed-color">AED 400</span></p>
-                    </div>
+                   
                 </div>
             </div>
         </div>

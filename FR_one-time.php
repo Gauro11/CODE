@@ -316,10 +316,14 @@ function renderBookingCard($booking) {
                 <i class='bx bx-star'></i> View Rating
             </button>
             <?php else: ?>
-            <a href="FR_one-time_form.php?ref=<?= urlencode($refNo) ?>&action=leave" class="action-btn feedback-btn">
-                <i class='bx bx-star'></i> Rate Now
-            </a>
-            <?php endif; ?>
+    <a href="FR_one-time_form.php?id=<?= $booking['id']; ?>&action=leave" class="action-btn feedback-btn">
+        <i class='bx bx-star'></i> Rate Now
+    </a>
+<?php endif; ?>
+
+            
+
+           
 
             <div class="dropdown-menu-container">
                 <button class="more-options-btn" onclick="toggleDropdown(this)"><i class='bx bx-dots-vertical-rounded'></i></button>
