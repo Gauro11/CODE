@@ -2,16 +2,18 @@
 header('Content-Type: application/json');
 error_reporting(0); // hide warnings/notices
 
-$host = 'localhost';
-$db   = 'alazima';
-$user = 'root';
-$pass = '';
 
-$conn = new mysqli($host, $user, $pass, $db);
+$servername = "localhost";
+$username   = "u665838367_alazimaa";
+$password   = '6$HvZ#Vd';  // ✅ Use single quotes to prevent $ interpretation
+$dbname     = "u665838367_alazima";
+
+$conn = new mysqli($servername, $username, $password, $dbname);
+
 if ($conn->connect_error) {
-    echo json_encode(['success' => false, 'message' => 'DB connection failed']);
-    exit;
+    die("Connection failed: " . $conn->connect_error);
 }
+
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'message' => 'Invalid request method']);

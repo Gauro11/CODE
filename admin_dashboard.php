@@ -1,14 +1,17 @@
 <?php
 // ✅ DATABASE CONNECTION
+
 $servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "alazima";
+$username   = "u665838367_alazimaa";
+$password   = '6$HvZ#Vd';  // ✅ Use single quotes to prevent $ interpretation
+$dbname     = "u665838367_alazima";
 
 $conn = new mysqli($servername, $username, $password, $dbname);
+
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
+
 
 // ✅ Get current month and year
 $current_month_year = date('F Y');
