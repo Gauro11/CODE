@@ -285,6 +285,21 @@ $conn->close();
 <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 <link rel="stylesheet" href="client_db.css">
 <style>
+    .dashboard__sidebar {
+    min-width: 250px;
+    width: 250px;
+    flex-shrink: 0;
+}
+
+.dashboard__wrapper {
+    display: flex;
+    min-height: 100vh;
+}
+
+.dashboard__content {
+    flex: 1;
+    overflow-x: auto;
+}
 .view-all-container {
 text-align: center;
 margin-top: 20px;

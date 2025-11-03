@@ -101,6 +101,21 @@ if ($search) {
 /* Sidebar dropdown fix */
 .has-dropdown .dropdown__menu { display: none; }
 .has-dropdown.open .dropdown__menu { display: block; }
+.dashboard__sidebar {
+    min-width: 250px;
+    width: 250px;
+    flex-shrink: 0;
+}
+
+.dashboard__wrapper {
+    display: flex;
+    min-height: 100vh;
+}
+
+.dashboard__content {
+    flex: 1;
+    overflow-x: auto;
+}
 </style>
 </head>
 <body>
