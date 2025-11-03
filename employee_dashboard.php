@@ -7,7 +7,7 @@ $DEBUG_MODE = false; // Change to false after checking
 
 // ✅ Ensure employee is logged in
 if (!isset($_SESSION['email'])) {
-    echo "<script>alert('Please log in first.'); window.location.href='employee_login.html';</script>";
+    echo "<script>alert('Please log in first.'); window.location.href='landing_page2.html';</script>";
     exit;
 }
 
@@ -21,7 +21,7 @@ $employeeResult = $stmt->get_result();
 $employee = $employeeResult->fetch_assoc();
 
 if (!$employee) {
-    echo "<script>alert('Employee not found.'); window.location.href='employee_login.html';</script>";
+    echo "<script>alert('Employee not found.'); window.location.href='landing_page2.html';</script>";
     exit;
 }
 
