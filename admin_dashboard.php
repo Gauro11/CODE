@@ -1,30 +1,81 @@
 <?php
-// KINAKAILANGAN: DYNAMIC DATA FOR TOTAL BOOKINGS BREAKDOWN (NEW)
-// Kunin ang kasalukuyang buwan at taon
+// ✅ DATABASE CONNECTION
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "alazima";
+
+$conn = new mysqli($servername, $username, $password, $dbname);
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+// ✅ Get current month and year
 $current_month_year = date('F Y');
 
-// Sample breakdown data by type and service
-$one_time_services_breakdown = [
-    'Checkout Cleaning' => 30,
-    'In-House Cleaning' => 25,
-    'Refresh Cleaning' => 40,
-    'Deep Cleaning' => 12,
-];
+// ===========================
+// FETCH DYNAMIC DATA
+// ===========================
 
-$recurring_services_breakdown = [
-    'Weekly' => 15,
-    'Bi-weekly' => 10,
-    'Monthly' => 8,
-];
+// ✅ Total Clients (from clients table)
+$sql_clients = "SELECT COUNT(*) AS total FROM clients";
+$result_clients = $conn->query($sql_clients);
+$totalClients = ($result_clients && $row = $result_clients->fetch_assoc()) ? (int)$row['total'] : 0;
 
-// Kalkulahin ang kabuuang bilang ng bookings
+// ✅ Total Bookings (from bookings table)
+$sql_bookings = "SELECT COUNT(*) AS total FROM bookings";
+$result_bookings = $conn->query($sql_bookings);
+$totalBookings = ($result_bookings && $row = $result_bookings->fetch_assoc()) ? (int)$row['total'] : 0;
+
+// ✅ Total Employees (only if table exists)
+$sql_employees = "SHOW TABLES LIKE 'employees'";
+$result_employees = $conn->query($sql_employees);
+if ($result_employees && $result_employees->num_rows > 0) {
+    $emp = $conn->query("SELECT COUNT(*) AS total FROM employees");
+    $totalEmployees = ($emp && $row = $emp->fetch_assoc()) ? (int)$row['total'] : 0;
+} else {
+    $totalEmployees = 0;
+}
+
+// ✅ One-Time services breakdown
+$one_time_services_breakdown = [];
+$sql_one_time = "
+    SELECT service_type, COUNT(*) AS total
+    FROM bookings
+    WHERE booking_type = 'One-Time'
+    GROUP BY service_type
+";
+$result_one = $conn->query($sql_one_time);
+if ($result_one && $result_one->num_rows > 0) {
+    while ($row = $result_one->fetch_assoc()) {
+        $one_time_services_breakdown[$row['service_type']] = (int)$row['total'];
+    }
+}
+
+// ✅ Recurring services breakdown
+$recurring_services_breakdown = [];
+$sql_recurring = "
+    SELECT service_type, COUNT(*) AS total
+    FROM bookings
+    WHERE booking_type = 'Recurring'
+    GROUP BY service_type
+";
+$result_rec = $conn->query($sql_recurring);
+if ($result_rec && $result_rec->num_rows > 0) {
+    while ($row = $result_rec->fetch_assoc()) {
+        $recurring_services_breakdown[$row['service_type']] = (int)$row['total'];
+    }
+}
+
+// ✅ Compute totals
 $total_one_time = array_sum($one_time_services_breakdown);
 $total_recurring = array_sum($recurring_services_breakdown);
 $total_active_bookings = $total_one_time + $total_recurring;
 
-// Para sa placeholder, kailangan nating malaman ang maximum number ng items
+// ✅ Determine max items for layout balance
 $max_list_items = max(count($one_time_services_breakdown), count($recurring_services_breakdown));
-// KINAKAILANGAN: New function para mag-render ng breakdown list
+
+// ✅ Helper function: render breakdown list
 function render_breakdown_list($data, $max_items) {
     $html = '<ul class="breakdown-list">';
     $current_count = 0;
@@ -32,7 +83,6 @@ function render_breakdown_list($data, $max_items) {
         $html .= '<li><span class="service-name">' . htmlspecialchars($service) . '</span> <span class="count">' . number_format($count) . '</span></li>';
         $current_count++;
     }
-    // Idagdag ang placeholder items kung mas kaunti ang listahan
     for ($i = $current_count; $i < $max_items; $i++) {
         $html .= '<li class="placeholder-item"><span class="service-name"></span> <span class="count"></span></li>';
     }
@@ -40,8 +90,54 @@ function render_breakdown_list($data, $max_items) {
     return $html;
 }
 
-// ** TINANGGAL ANG $active_section PHP LOGIC DITO **
+// ===========================
+// BOOKINGS CHART DATA
+// ===========================
+
+// Current month range
+$startOfMonth = date('Y-m-01');
+$endOfMonth = date('Y-m-t');
+
+// 1️⃣ Bookings Trend - daily bookings this month
+$trendQuery = "SELECT service_date as day, COUNT(*) as total 
+               FROM bookings 
+               WHERE service_date BETWEEN ? AND ? 
+               GROUP BY service_date 
+               ORDER BY service_date ASC";
+$stmtTrend = $conn->prepare($trendQuery);
+$stmtTrend->bind_param("ss", $startOfMonth, $endOfMonth);
+$stmtTrend->execute();
+$resultTrend = $stmtTrend->get_result();
+
+$trendLabels = [];
+$trendData = [];
+while($row = $resultTrend->fetch_assoc()) {
+    $trendLabels[] = $row['day'];
+    $trendData[] = $row['total'];
+}
+
+// 2️⃣ Service Popularity - bookings per service_type this month
+$serviceQuery = "SELECT service_type, COUNT(*) as total 
+                 FROM bookings 
+                 WHERE service_date BETWEEN ? AND ? 
+                 GROUP BY service_type";
+$stmtService = $conn->prepare($serviceQuery);
+$stmtService->bind_param("ss", $startOfMonth, $endOfMonth);
+$stmtService->execute();
+$resultService = $stmtService->get_result();
+
+$serviceLabels = [];
+$serviceData = [];
+while($row = $resultService->fetch_assoc()) {
+    $serviceLabels[] = $row['service_type'];
+    $serviceData[] = $row['total'];
+}
+
+$conn->close();
 ?>
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -603,6 +699,7 @@ margin-bottom: 20px;
                         <li class="menu__item"><a href="UM_clients.php?content=manage-clients" class="menu__link" data-content="manage-clients">Clients</a></li>
                         <li class="menu__item"><a href="UM_employees.php?content=manage-employees" class="menu__link" data-content="manage-employees">Employees</a></li>
                         <li class="menu__item"><a href="UM_admins.php?content=manage-admins" class="menu__link" data-content="manage-admins">Admins</a></li>
+                        <li class="menu__item"><a href="archived_clients.php?content=manage-archive" class="menu__link" data-content="manage-archive">Archive</a></li>
                     </ul>       
                 </li>
                 
@@ -621,6 +718,8 @@ margin-bottom: 20px;
                 <li class="menu__item"><a href="Reports.php?content=reports" class="menu__link" data-content="reports"><i class='bx bx-file-text'></i> Reports</a></li>
                 
                 <li class="menu__item"><a href="admin_profile.php?content=profile" class="menu__link" data-content="profile"><i class='bx bx-user'></i> Profile</a></li>
+
+                <li class="menu__item"><a href="concern.php?content=profile" class="menu__link" data-content="profile"><i class='bx bx-user'></i> Issues&Concerns</a></li>
                 
                 <li class="menu__item"><a href="javascript:void(0)" class="menu__link" data-content="logout" onclick="showLogoutModal()"><i class='bx bx-log-out'></i> Logout</a></li>
             </ul>
@@ -633,205 +732,203 @@ margin-bottom: 20px;
 <p class="welcome__message">Here's a quick overview of system activity and pending tasks. Use the sidebar for management and reports.</p>
 <div class="summary-cards-container">
     
-    <div class="summary-card stat-card total-clients">
-        <div class="card-content">
-            <h2 class="stat-value">125</h2> 
-            <p class="stat-title">Total Client</p>
-        </div>
-        <i class='bx bx-group card-icon'></i>
-    </div>
-    
-    <div class="summary-card stat-card total-bookings">
-        <div class="card-content">
-            <h2 class="stat-value">140</h2> 
-            <p class="stat-title">Total Bookings</p>
-        </div>
-        <i class='bx bx-book-open card-icon'></i>
-    </div>
-    
-    <div class="summary-card stat-card concerns">
-        <div class="card-content">
-            <h2 class="stat-value">17</h2> 
-            <p class="stat-title">No. of Concerns</p> 
-        </div>
-        <i class='bx bx-error-alt card-icon'></i>
-    </div>
-    
-    <div class="summary-card stat-card active-employees">
-        <div class="card-content">
-            <h2 class="stat-value">45</h2> 
-            <p class="stat-title">No. of Employees</p>
-        </div>
-        <i class='bx bx-user-pin card-icon'></i>
-    </div>
-</div>
+     
 
-<div class="booking-activity-row">
-    
-    <div class="dashboard__container booking-breakdown-container">
-        <div class="container-title">
-            <i class='bx bx-book-content'></i> Total Bookings Breakdown **(<?php echo $current_month_year; ?>)**
-        </div>
-        
-        <div class="breakdown-content-wrapper"> 
-            
-            <div class="breakdown-section one-time-section">
-                <h4>One-time Services</h4>
-                <?php echo render_breakdown_list($one_time_services_breakdown, $max_list_items); ?>
-            </div>
-            
-            <div class="breakdown-section recurring-section">
-                <h4>Recurring Services</h4>
-                <?php echo render_breakdown_list($recurring_services_breakdown, $max_list_items); ?>
+  <div class="summary-cards-container">
+            <!-- Total Clients -->
+            <div class="summary-card stat-card total-clients">
+                <div class="card-content">
+                    <h2 class="stat-value"><?php echo $totalClients; ?></h2>
+                    <p class="stat-title">Total Clients</p>
+                </div>
+                <i class='bx bx-group card-icon'></i>
             </div>
 
-        </div>
-        
-        <div class="total-summary">
-            <strong>Total Active Bookings:</strong> <span><?php echo number_format($total_active_bookings); ?></span>
-        </div>
+            <!-- Total Bookings -->
+            <div class="summary-card stat-card total-bookings">
+                <div class="card-content">
+                    <h2 class="stat-value"><?php echo $totalBookings; ?></h2>
+                    <p class="stat-title">Total Bookings</p>
+                </div>
+                <i class='bx bx-book-open card-icon'></i>
+            </div>
+
+            <!-- Concerns (Static Example) -->
+            <div class="summary-card stat-card concerns">
+                <div class="card-content">
+                    <h2 class="stat-value">17</h2>
+                    <p class="stat-title">No. of Concerns</p>
+                </div>
+                <i class='bx bx-error-alt card-icon'></i>
+            </div>
+
+            <!-- Total Employees -->
+            <div class="summary-card stat-card active-employees">
+                <div class="card-content">
+                    <h2 class="stat-value"><?php echo $totalEmployees; ?></h2>
+                    <p class="stat-title">No. of Employees</p>
+                </div>
+                <i class='bx bx-user-pin card-icon'></i>
+            </div>
         </div>
     
 
 </div>
 
-<div class="charts-row">
+<!-- ========================= -->
+<!-- DASHBOARD CHARTS ROW -->
+<!-- ========================= -->
+<div class="charts-row" style="display:flex; gap:20px; flex-wrap:wrap; margin:20px 0;">
 
-    <div class="dashboard__container performance-overview-container chart-half-width">
+    <!-- Bookings Trend Chart -->
+    <div class="dashboard__container performance-overview-container chart-half-width" style="flex:1 1 45%; background:#fff; border-radius:12px; padding:20px; box-shadow:0 3px 10px rgba(0,0,0,0.1);">
         <div class="container-title">
-            <i class='bx bx-trending-up'></i> Performance Overview - Bookings Trend
+            <i class='bx bx-trending-up'></i> Performance Overview - Bookings Trend (<?php echo $current_month_year; ?>)
         </div>
         <div class="chart-container">
             <canvas id="bookingsTrendChart"></canvas>
         </div>
         <div class="view-all-container">
-            <a href="?content=reports" class="view-all-link">View Full Reports <i class='bx bx-right-arrow-alt'></i></a>
-        </div>
-    </div>
-    
-    <div class="dashboard__container performance-overview-container chart-half-width">
-        <div class="container-title">
-            <i class='bx bx-pie-chart-alt-2'></i> Service Popularity Breakdown (<?php echo date('F Y'); ?>)
-        </div>
-        <div class="chart-container" style="max-height: 350px;">
-            <canvas id="servicePopularityChart"></canvas>
-        </div>
-        <div class="view-all-container">
-            <a href="?content=reports" class="view-all-link">View Full Service Statistics <i class='bx bx-right-arrow-alt'></i></a>
-        </div>
-    </div>
     
 </div>
+
+
+
+    </div>
+
+    <!-- Service Popularity Chart -->
+    <div class="dashboard__container performance-overview-container chart-half-width" style="flex:1 1 45%; background:#fff; border-radius:12px; padding:20px; box-shadow:0 3px 10px rgba(0,0,0,0.1);">
+        <div class="container-title">
+            <i class='bx bx-pie-chart-alt-2'></i> Service Popularity Breakdown (<?php echo $current_month_year; ?>)
+        </div>
+        <div class="chart-container" style="max-height:350px;">
+            <canvas id="servicePopularityChart"></canvas>
+        </div>
+       
+
+<div class="view-all-container">
+   
+</div>
+
+    </div>
+
+</div>
+
+
+<!-- ========================= -->
+<!-- CHART.JS SCRIPT -->
+<!-- ========================= -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Bookings Trend Chart
+    const bookingsTrendCtx = document.getElementById('bookingsTrendChart').getContext('2d');
+    const bookingsTrendChart = new Chart(bookingsTrendCtx, {
+        type: 'line',
+        data: {
+            labels: <?php echo json_encode($trendLabels); ?>,
+            datasets: [{
+                label: 'Bookings per Day',
+                data: <?php echo json_encode($trendData); ?>,
+                borderColor: '#007bff',
+                backgroundColor: 'rgba(0, 123, 255, 0.2)',
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: true },
+                tooltip: { mode: 'index', intersect: false }
+            },
+            scales: {
+                x: { title: { display: true, text: 'Date' } },
+                y: { title: { display: true, text: 'Number of Bookings' }, beginAtZero: true }
+            }
+        }
+    });
+
+    // Service Popularity Chart
+    const servicePopularityCtx = document.getElementById('servicePopularityChart').getContext('2d');
+    const servicePopularityChart = new Chart(servicePopularityCtx, {
+        type: 'pie',
+        data: {
+            labels: <?php echo json_encode($serviceLabels); ?>,
+            datasets: [{
+                label: 'Bookings per Service',
+                data: <?php echo json_encode($serviceData); ?>,
+                backgroundColor: [
+                    '#007bff','#28a745','#ffc107','#dc3545','#17a2b8','#6f42c1','#fd7e14','#20c997'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom' },
+                tooltip: { mode: 'nearest', intersect: true }
+            }
+        }
+    });
+</script>
+
 </section>
 
-<section id="manage-clients" class="content__section">
+<!-- MAIN DASHBOARD -->
+<section id="manage-clients" class="content__section" onclick="redirectTo('clients.php')">
     <h2 class="section__title">User Management - Clients</h2>
     <p>Manage all client accounts here.</p>
 </section>
-<section id="manage-employees" class="content__section">
+
+<section id="manage-employees" class="content__section" onclick="redirectTo('employees.html')">
     <h2 class="section__title">User Management - Employees</h2>
     <p>Manage all employee accounts here.</p>
 </section>
-<section id="manage-admins" class="content__section">
+
+<section id="manage-admins" class="content__section" onclick="redirectTo('admins.html')">
     <h2 class="section__title">User Management - Admins</h2>
     <p>Manage all administrator accounts here.</p>
 </section>
-<section id="appointments-one-time" class="content__section">
+
+<section id="appointments-one-time" class="content__section" onclick="redirectTo('AP_one-time.php')">
     <h2 class="section__title">Appointment Management - One-time Service</h2>
     <p>Manage one-time service appointments.</p>
-</p>
 </section>
-<section id="appointments-recurring" class="content__section">
+
+<section id="appointments-recurring" class="content__section" onclick="redirectTo('appointments_recurring.html')">
     <h2 class="section__title">Appointment Management - Recurring Service</h2>
     <p>Manage recurring service contracts and appointments.</p>
 </section>
-<section id="employee-scheduling" class="content__section">
-    <h2 class="section__title">Employee Scheduling</h2>
-    <p>View and manage staff shifts and service assignments.</p>
-</section>
-<section id="feedback-ratings" class="content__section">
-    <h2 class="section__title">Feedback & Ratings</h2>
-    <p>Review customer ratings and feedback for services and employees.</p>
-</section>
-<section id="reports" class="content__section">
-    <h2 class="section__title">Reports</h2>
-    <p>Access sales, payroll, and performance analytics reports.</p>
-</section>
 
-<section id="profile" class="content__section">
-<h2 class="section__title">Personal Information</h2> 
-<div class="profile__edit-form">
-<form id="profileForm">
-    
-    <div class="form-row two-column">
-        <div class="form-group">
-            <label for="firstName">First Name</label>
-            <input type="text" id="firstName" name="firstName" required value="Danelle" disabled>
-        </div>
-        <div class="form-group">
-            <label for="lastName">Last Name</label>
-            <input type="text" id="lastName" name="lastName" required value="Beltran" disabled>
-        </div>
-    </div>
-    
-    <div class="form-row two-column">
-        <div class="form-group">
-            <label for="email">Email</label>
-            <input type="email" id="email" name="email" required value="danellemarie6@gmail.com" disabled>
-        </div>
-        <div class="form-group">
-            <label for="contactNumber">Contact Number</label>
-            <input type="text" id="contactNumber" name="contactNumber" required 
-                   value="+971501234567" 
-                   maxlength="13" 
-                   pattern="^\+971[0-9]{9}$" 
-                   title="Please enter a valid 9-digit number after +971." 
-                   disabled>
-        </div>
-    </div>
-    
-    <div class="form-row">
-        <div class="form-group full-width">
-            <label for="address">Address</label>
-            <input type="text" id="address" name="address" required value="123 Admin Street, Dubai, UAE" disabled>
-        </div>
-    </div>
 
-    <div class="form-row three-column">
-        <div class="form-group">
-            <label for="birthday">Birthday</label>
-            <input type="date" id="birthday" name="birthday" required value="1995-10-01" placeholder="mm/dd/yyyy" disabled>
-        </div>
-        <div class="form-group">
-            <label for="age">Age</label>
-            <input type="number" id="age" name="age" value="29" readonly> 
-        </div>
-        <div class="form-group">
-            <label for="gender">Gender</label>
-            <select id="gender" name="gender" disabled>
-                <option value="">-Select Here-</option>
-                <option value="Male">Male</option>
-                <option value="Female" selected>Female</option>
-                <option value="Other">Other</option>
-            </select>
-        </div>
-    </div>
 
-    <div class="form-row">
-        <div class="form-group full-width">
-            <label for="role">Role</label>
-            <span id="role" class="role-display">Administrator</span> 
-        </div>
-    </div>
-    
-    <div class="form__actions">
-        <button type="button" class="btn btn--primary" id="editProfileBtn"><i class='bx bx-edit'></i> Edit Profile</button>
-        
-        <button type="button" class="btn btn--secondary" id="cancelEditBtn"><i class='bx bx-x-circle'></i> Cancel</button>
-    </div>
-</form>
-</div>
-</section>
+
+
+
+
+<script>
+function redirectTo(page) {
+    window.location.href = page;
+}
+</script>
+
+<style>
+.content__section {
+    padding: 20px;
+    border: 1px solid #ddd;
+    margin: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.content__section:hover {
+    background-color: #f5f5f5;
+    transform: scale(1.02);
+}
+</style>
+
+
+
 
 </main>
 </div>
@@ -874,469 +971,174 @@ margin-bottom: 20px;
 </div>
 </div>
 </div>
-<script>
-    // --- Profile Section Edit/Save/Cancel Logic & Age Calculation ---
-    
-    const profileForm = document.getElementById('profileForm');
-    const editableFields = profileForm.querySelectorAll('input:not([readonly]):not([disabled]):not([type="submit"]):not([type="button"]), select:not([disabled])');
-    const birthdayField = document.getElementById('birthday');
-    const ageField = document.getElementById('age');
-    
-    const editProfileBtn = document.getElementById('editProfileBtn');
-    const cancelEditBtn = document.getElementById('cancelEditBtn');
-    
-    const profileSaveModal = document.getElementById('profileSaveModal');
-    const requiredFieldsModal = document.getElementById('requiredFieldsModal');
-    const cancelModal = document.getElementById('cancelModal');
+<script>// Fixed Navigation Script - Replace the entire script section at the bottom
 
-    // KINAKAILANGAN: Variable para i-store ang original values
-    let originalFormValues = {};
-    
-    // Function para kumuha ng current values ng form
-    function captureOriginalValues() {
-        editableFields.forEach(field => {
-            originalFormValues[field.id] = field.value;
-        });
-    }
+const navLinks = document.querySelectorAll('.sidebar__menu .menu__link');
+const logoutLink = document.querySelector('.sidebar__menu .menu__link[data-content="logout"]');
+const logoutModal = document.getElementById('logoutModal');
+const cancelLogoutBtn = document.getElementById('cancelLogout');
+const confirmLogoutBtn = document.getElementById('confirmLogout');
 
-    // Function para i-disable ang fields at i-set sa Read-only Mode
-    function setReadOnlyMode(revert = false) {
-        editableFields.forEach(field => {
-            field.setAttribute('disabled', 'disabled');
-            if (revert) {
-                // Ibalik sa original value kapag nag-Cancel
-                field.value = originalFormValues[field.id];
-            }
-        });
-        
-        editProfileBtn.innerHTML = "<i class='bx bx-edit'></i> Edit Profile";
-        cancelEditBtn.style.display = 'none';
-        
-        // I-re-calculate ang edad kapag nag-revert para sa consistency (kung na-reset ang birthday)
-        if (revert && birthdayField) calculateAge();
-    }
-    
-    // Function para i-enable ang fields at i-set sa Edit Mode
-    function setEditMode() {
-        // I-store muna ang original values bago mag-enable
-        captureOriginalValues();
-        
-        editableFields.forEach(field => {
-            field.removeAttribute('disabled');
-        });
-        
-        editProfileBtn.innerHTML = "<i class='bx bx-save'></i> Save Changes";
-        cancelEditBtn.style.display = 'block';
-    }
+// Handle logout modal
+function showLogoutModal() {
+    if (logoutModal) logoutModal.classList.add('show');
+}
 
-    // Function para mag-validate ng required fields
-    function validateForm() {
-        let isValid = true;
-        profileForm.querySelectorAll('[required]:not([disabled])').forEach(field => {
-            if (field.value.trim() === '') {
-                isValid = false;
-                // Kung gusto mong mag-highlight ng invalid field
-                field.style.borderColor = 'red'; 
-            } else {
-                field.style.borderColor = ''; // Ibalik sa default
-            }
-        });
-        return isValid;
-    }
-    
-    // 5. Age Calculation Function
-    function calculateAge() {
-        if (!birthdayField || !ageField || !birthdayField.value) {
-            ageField.value = '';
-            return;
-        }
-
-        const birthday = new Date(birthdayField.value);
-        const today = new Date();
-        
-        let age = today.getFullYear() - birthday.getFullYear();
-        const monthDifference = today.getMonth() - birthday.getMonth();
-
-        // I-adjust ang edad kung hindi pa naabot ang kaarawan sa taong ito
-        if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthday.getDate())) {
-            age--;
-        }
-        
-        ageField.value = age >= 0 ? age : 0;
-    }
-
-    // 1. Toggle Edit Mode (Initial check for logic)
-    editProfileBtn.addEventListener('click', function(e) {
-        if (editProfileBtn.textContent.includes('Edit Profile')) {
-            // Pasok sa Edit Mode
-            setEditMode();
-            
-        } else {
-            // 2. Save Changes (Check for validation)
-            e.preventDefault();
-            
-            if (validateForm()) {
-                // Valid, mag-Save
-                setReadOnlyMode(false);
-                profileSaveModal.classList.add('show');
-                
-            } else {
-                // Hindi Valid, ipakita ang Required Fields Modal
-                requiredFieldsModal.classList.add('show');
-            }
-        }
+if (cancelLogoutBtn && logoutModal) {
+    cancelLogoutBtn.addEventListener('click', function() {
+        logoutModal.classList.remove('show');
     });
+}
 
-    // 3. Cancel Changes
-    cancelEditBtn.addEventListener('click', function() {
-        // Ipakita ang Discard Changes Modal
-        cancelModal.classList.add('show');
+if (confirmLogoutBtn) {
+    confirmLogoutBtn.addEventListener('click', function() {
+        window.location.href = "landing_page2.html";
     });
+}
 
-    // 4. Confirm Discard (Yes button sa loob ng #cancelModal)
-    document.getElementById('yesCancel').addEventListener('click', function() {
-        setReadOnlyMode(true); // I-reset ang form at i-disable ang fields
-        cancelModal.classList.remove('show');
+// Dropdown and Navigation Handler
+(function(){
+  const nav = document.querySelector('.sidebar__menu');
+  if (!nav) return;
+
+  const dropdownParents = nav.querySelectorAll('.has-dropdown');
+  const menuLinks = nav.querySelectorAll('.menu__link');
+
+  function closeAllDropdowns(except = null) {
+    dropdownParents.forEach(item => {
+      if (item !== except) {
+        item.classList.remove('open');
+        const link = item.querySelector('.menu__link');
+        if (link) link.classList.remove('active', 'active-parent');
+      }
     });
-    
-    // Cancel Discard (No button sa loob ng #cancelModal)
-    document.getElementById('noCancel').addEventListener('click', function() {
-        cancelModal.classList.remove('show');
+  }
+
+  // Attach click handler for parent dropdown links ONLY
+  dropdownParents.forEach(parent => {
+    const parentLink = parent.querySelector(':scope > .menu__link'); // Direct child only
+    if (!parentLink) return;
+
+    parentLink.addEventListener('click', function(e) {
+      e.preventDefault(); // Always prevent for dropdown parents
+      const isOpen = parent.classList.contains('open');
+      if (isOpen) {
+        parent.classList.remove('open');
+        parentLink.classList.remove('active', 'active-parent');
+      } else {
+        closeAllDropdowns(parent);
+        parent.classList.add('open');
+        parentLink.classList.add('active', 'active-parent');
+      }
     });
+  });
 
-    // 5. Birthday Field Listener
-    if (birthdayField) {
-        birthdayField.addEventListener('change', calculateAge);
-    }
-    
-    // Initial check ng edad sa page load, para kung may default value
-    if (birthdayField) calculateAge();
-    
-    // --- Core Navigation Fix Logic ---
-    const navLinks = document.querySelectorAll('.sidebar__menu .menu__link');
-    const sections = document.querySelectorAll('.content__section');
-    
-    // KINAKAILANGAN: Kunin ang Logout elements
-    const logoutLink = document.querySelector('.sidebar__menu .menu__link[data-content="logout"]');
-    const logoutModal = document.getElementById('logoutModal');
-    const cancelLogoutBtn = document.getElementById('cancelLogout');
-    const confirmLogoutBtn = document.getElementById('confirmLogout');
-    const dropdownParents = document.querySelectorAll('.sidebar__menu .has-dropdown');
+  // Handle clicks for CHILD menu links (inside dropdowns)
+  const childLinks = nav.querySelectorAll('.dropdown__menu .menu__link');
+  childLinks.forEach(link => {
+    link.addEventListener('click', function(e) {
+      const contentId = link.getAttribute('data-content');
+      
+      // Map content IDs to their respective pages
+      const pageMap = {
+        'manage-clients': 'clients.php',
+        'manage-employees': 'UM_employees.php',
+        'manage-admins': 'UM_admins.php',
+        'appointments-one-time': 'AP_one-time.php',
+        'appointments-recurring': 'AP_recurring.php',
+        'employee-scheduling': 'employeessched.php',
+        'feedback-ratings': 'FR.php',
+        'reports': 'Reports.php',
+        'profile': 'admin_profile.php'
+      };
 
+      // If this link should redirect to another page
+      if (pageMap[contentId]) {
+        e.preventDefault();
+        window.location.href = pageMap[contentId] + '?content=' + contentId;
+        return;
+      }
 
-    // Variable to store the currently active content link (e.g., Dashboard, Clients, Reports)
-    let activeContentLink = document.querySelector('.menu__link.active');
+      // Handle logout
+      if (contentId === 'logout') {
+        e.preventDefault();
+        showLogoutModal();
+        return;
+      }
 
-    // ** SIMULA NG BINAGONG NAVIGATION LOGIC PARA SA PERMANENTENG HIGHLIGHT SA PARENT **
+      // For in-page sections (like dashboard)
+      const target = document.getElementById(contentId);
+      if (target) {
+        e.preventDefault();
+        document.querySelectorAll('.content__section').forEach(s => s.classList.remove('active'));
+        target.classList.add('active');
 
-    // Function para i-activate ang isang section
-    function activateSection(contentId) {
-        sections.forEach(section => {
-            section.classList.remove('active');
-        });
+        menuLinks.forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
 
-        const targetSection = document.getElementById(contentId);
-        if (targetSection) {
-            targetSection.classList.add('active');
+        const parentItem = link.closest('.has-dropdown');
+        if (parentItem) {
+          const parentLink = parentItem.querySelector(':scope > .menu__link');
+          if (parentLink) parentLink.classList.add('active-parent');
         }
-    }
-
-    // Function para i-handle ang 'active' class sa navigation links (Para sa Content Links)
-    function updateActiveContentLink(targetLink) {
-        // 1. Alisin ang 'active' at 'active-parent' sa lahat ng links
-        navLinks.forEach(link => {
-            link.classList.remove('active');
-            link.classList.remove('active-parent');
-            // Isara din ang lahat ng dropdowns
-            link.closest('.has-dropdown')?.classList.remove('open');
-        });
-        
-        // 2. I-set ang 'active' at 'active-parent' sa bagong napiling link (Content Link)
-        targetLink.classList.add('active');
-        targetLink.classList.add('active-parent');
-        activeContentLink = targetLink; // Update the global tracker
-
-        // 3. Kung ang napiling link ay sub-menu, i-set ang 'active-parent' sa parent nito at i-open
-        const parentDropdown = targetLink.closest('.has-dropdown');
-        if (parentDropdown) {
-             const parentLink = parentDropdown.querySelector('.menu__link');
-             if (parentLink) {
-                parentLink.classList.add('active-parent');
-                parentDropdown.classList.add('open');
-             }
-        }
-    }
-
-    // Function para i-toggle ang highlight at open state ng Parent (Dropdown Link)
-    function toggleDropdownHighlight(parentLink, parentItem) {
-        const isCurrentlyOpen = parentItem.classList.contains('open');
-
-        // 1. I-toggle ang 'open' state at highlight
-        parentItem.classList.toggle('open', !isCurrentlyOpen); // I-toggle ang open state
-        parentLink.classList.toggle('active', !isCurrentlyOpen); // I-toggle ang highlight
-        parentLink.classList.toggle('active-parent', !isCurrentlyOpen); // I-toggle ang highlight
-
-        // 2. Isara ang lahat ng iba pang dropdowns
-        dropdownParents.forEach(otherParent => {
-            if (otherParent !== parentItem && otherParent.classList.contains('open')) {
-                otherParent.classList.remove('open');
-                otherParent.querySelector('.menu__link').classList.remove('active');
-                otherParent.querySelector('.menu__link').classList.remove('active-parent');
-            }
-        });
-        
-        // 3. Tiyakin na ang activeContentLink (kahit nasa sub-menu o top-level) ay naka-highlight
-        if (activeContentLink) {
-            // Tiyakin na ang activeContentLink ay may active class (para hindi mawala ang Dashboard highlight)
-            activeContentLink.classList.add('active');
-            activeContentLink.classList.add('active-parent');
-            
-            // At kung ang activeContentLink ay nasa loob ng ibang dropdown, i-highlight din ang parent na 'yon
-            const activeContentParent = activeContentLink.closest('.has-dropdown');
-            if (activeContentParent && activeContentParent !== parentItem) {
-                 activeContentParent.querySelector('.menu__link').classList.add('active-parent');
-            }
-        }
-    }
-
-    // Navigation Link Click Listener
-    navLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
-            const contentId = link.getAttribute('data-content');
-            
-            // A. Kung ang link ay parent dropdown (href="#")
-            if (link.closest('.has-dropdown') && link.getAttribute('href') === '#') {
-                e.preventDefault(); 
-                
-                const parentItem = link.closest('.has-dropdown');
-                toggleDropdownHighlight(link, parentItem);
-                
-            } 
-            // B. Kung ang link ay sub-menu link, normal top-level link, o 'logout'
-            else if (contentId) {
-                
-                if (contentId !== 'logout') {
-                    e.preventDefault(); 
-                    
-                    // Kunin ang contentId (Hal. 'dashboard', 'manage-clients', 'profile')
-                    const targetContentId = contentId.includes('-') ? contentId.split('-').pop() : contentId;
-
-                    // I-activate ang section
-                    activateSection(targetContentId);
-                    
-                    // I-update ang active link (ito na ang mag-aalis ng lahat ng highlight at magse-set ng bago)
-                    updateActiveContentLink(link);
-                }
-                // Hayaan ang 'logout' na mag-trigger ng modal.
-            }
-        });
+      }
     });
+  });
 
-    // Initial content activation logic (Based sa URL parameter o default sa 'dashboard')
-    window.onload = function() {
-        const urlParams = new URLSearchParams(window.location.search);
-        let activeContent = urlParams.get('content') || 'dashboard';
-        
-        // I-activate ang tamang section
-        activateSection(activeContent);
+  // Handle direct menu links (not in dropdowns)
+  const directLinks = Array.from(menuLinks).filter(link => {
+    return !link.closest('.dropdown__menu') && !link.closest('.has-dropdown');
+  });
 
-        // Hanapin at i-activate ang tamang link
-        const initialActiveLink = document.querySelector(`.sidebar__menu .menu__link[data-content*="${activeContent}"]`);
-        if (initialActiveLink) {
-             updateActiveContentLink(initialActiveLink); // Set the active content link
+  directLinks.forEach(link => {
+    link.addEventListener('click', function(e) {
+      const contentId = link.getAttribute('data-content');
+      
+      if (contentId === 'logout') {
+        e.preventDefault();
+        showLogoutModal();
+        return;
+      }
+
+      if (contentId === 'dashboard') {
+        e.preventDefault();
+        window.location.href = 'admin_dashboard.php?content=dashboard';
+        return;
+      }
+
+      // Handle other direct links as needed
+      const target = document.getElementById(contentId);
+      if (target) {
+        e.preventDefault();
+        closeAllDropdowns();
+        document.querySelectorAll('.content__section').forEach(s => s.classList.remove('active'));
+        target.classList.add('active');
+
+        menuLinks.forEach(l => l.classList.remove('active', 'active-parent'));
+        link.classList.add('active');
+      }
+    });
+  });
+
+  // Restore state from URL on load
+  window.addEventListener('load', function() {
+    const params = new URLSearchParams(window.location.search);
+    const content = params.get('content');
+    if (content) {
+      const link = nav.querySelector(`.menu__link[data-content="${content}"]`);
+      if (link) {
+        const parentItem = link.closest('.has-dropdown');
+        if (parentItem) {
+          parentItem.classList.add('open');
+          const parentLink = parentItem.querySelector(':scope > .menu__link');
+          if (parentLink) parentLink.classList.add('active-parent');
         }
-        
-        // Tiyakin na bukas ang dropdown kung active ang sub-menu
-        const activeLinkParent = initialActiveLink ? initialActiveLink.closest('.has-dropdown') : null;
-        if (activeLinkParent) {
-            activeLinkParent.classList.add('open');
-            // Tiyakin na ang parent link ay may active-parent class din
-            activeLinkParent.querySelector('.menu__link').classList.add('active-parent');
-        }
-        
-        // I-set ang initial active content link
-        activeContentLink = initialActiveLink;
-    };
-    
-    // ** WAKAS NG BINAGONG NAVIGATION LOGIC **
-    
-    // FIX: LOGIC PARA IPAKITA ANG LOGOUT MODAL
-    if (logoutLink && logoutModal) {
-        logoutLink.addEventListener('click', function(e) {
-            e.preventDefault(); // PIGILAN ANG PAG-REDIRECT
-            // CHANGE: Use classList.add('show')
-            logoutModal.classList.add('show'); 
-        });
+        link.classList.add('active');
+      }
     }
-
-    // LOGIC PARA I-CLOSE ANG MODAL (Cancel)
-    if (cancelLogoutBtn && logoutModal) {
-        cancelLogoutBtn.addEventListener('click', function() {
-            // CHANGE: Use classList.remove('show')
-            logoutModal.classList.remove('show');
-        });
-    }
-
-    // LOGIC PARA SA CONFIRM LOGOUT (i-reredirect sa href ng link)
-    if (confirmLogoutBtn && logoutLink) {
-        confirmLogoutBtn.addEventListener('click', function() {
-            // CHANGE: Ang 'logout' link natin ay may 'href' na 'javascript:void(0)', kaya palitan na lang natin ang window location
-            // window.location.href = logoutLink.href; // O kaya gawin na lang nating redirect sa home o login page
-            window.location.href = "landing_page2.html"; // I-redirect sa login page/home page
-        });
-    }
-    
-    // --- 1. Bookings Trend Chart Logic (Chart.js) ---
-    const bookingsTrendChartData = {
-        // Labels remain 3 months
-        labels: ['Apr 2024', 'May 2024', 'Jun 2024'], 
-        datasets: [
-            {
-                label: 'Completed', 
-                data: [70, 50, 45], 
-                backgroundColor: 'rgba(76, 175, 80, 0.8)', // Green
-                borderColor: 'rgba(76, 175, 80, 1)',
-                borderWidth: 1,
-            },
-            // TANGGAL: Inalis ang 'Confirmed' dataset para lumiit ang chart data
-            /*
-            {
-                label: 'Confirmed', 
-                data: [10, 8, 12],
-                backgroundColor: 'rgba(66, 165, 245, 0.8)', // Light Blue
-                borderColor: 'rgba(66, 165, 245, 1)',
-                borderWidth: 1,
-            },
-            */
-            {
-                label: 'Cancelled', 
-                data: [6, 8, 7],
-                backgroundColor: 'rgba(255, 152, 0, 0.8)', // Orange
-                borderColor: 'rgba(255, 152, 0, 1)',
-                borderWidth: 1,
-            },
-            {
-                label: 'No Show', 
-                data: [2, 4, 3],
-                backgroundColor: 'rgba(179, 33, 51, 0.8)', // Red
-                borderColor: 'rgba(179, 33, 51, 1)',
-                borderWidth: 1,
-            }
-        ]
-    };
-
-    const bookingsTrendOptions = {
-        responsive: true,
-        maintainAspectRatio: false, 
-        // START MODIFICATION FOR WIDER BARS (Ibinabalik ang dati nating ginawa)
-        categoryPercentage: 0.8, 
-        barPercentage: 0.7, 
-        // END MODIFICATION FOR WIDER BARS
-        scales: {
-            x: {
-                // Stacked set to false for grouped bar chart
-                stacked: false, 
-                title: {
-                    display: true,
-                    text: 'Month/Period'
-                }
-            },
-            y: {
-                // Stacked set to false for grouped bar chart
-                stacked: false, 
-                beginAtZero: true,
-                title: {
-                    display: true,
-                    text: 'Number of Bookings'
-                }
-            }
-        },
-        plugins: {
-            legend: {
-                position: 'top',
-            },
-            tooltip: {
-                mode: 'index',
-                intersect: false
-            }
-        }
-    };
-
-    const bookingsTrendCtx = document.getElementById('bookingsTrendChart');
-
-    if (bookingsTrendCtx) {
-        new Chart(bookingsTrendCtx, {
-            type: 'bar', 
-            data: bookingsTrendChartData,
-            options: bookingsTrendOptions,
-        });
-    }
-
-    // --- 2. Service Popularity Pie Chart Logic (Chart.js) ---
-    const servicePopularityData = {
-        labels: [
-            'Refresh Cleaning', 
-            'Checkout Cleaning', 
-            'In-House Cleaning', 
-            'Deep Cleaning',
-        ],
-        datasets: [{
-            data: [40, 30, 25, 12], // Total: 107
-            backgroundColor: [
-                '#FF6384', // Refresh (Pink)
-                '#36A2EB', // Checkout (Blue)
-                '#FFCE56', // In-House (Yellow)
-                '#9966FF', // Deep (Purple)
-            ],
-            hoverOffset: 4
-        }]
-    };
-    
-    const servicePopularityOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: 'right',
-            },
-            tooltip: {
-                callbacks: {
-                    label: function(context) {
-                        let label = context.label || '';
-                        if (label) {
-                            label += ': ';
-                        }
-                        if (context.parsed !== null) {
-                            // Calculate percentage
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const value = context.parsed;
-                            const percentage = ((value / total) * 100).toFixed(1);
-                            // Dito na lang ilalagay ang count at percentage
-                            label = label + ' (' + value + ') - ' + percentage + '%';
-                        }
-                        return label;
-                    }
-                }
-            }
-        }
-    };
-    
-    const servicePopularityCtx = document.getElementById('servicePopularityChart');
-
-    if (servicePopularityCtx) {
-        new Chart(servicePopularityCtx, {
-            type: 'pie', // Pie chart ang ginamit natin
-            data: servicePopularityData,
-            options: servicePopularityOptions,
-        });
-    }
-
-
-
-    // --- DROPDOWN TOGGLE LOGIC (RE-IMPLEMENTED) ---
-    // (Wala nang kailangan gawin dito dahil nasa navLinks listener na ang logic)
-    // --- END DROPDOWN TOGGLE LOGIC ---
-/* --- END: Profile Section Edit/Save/Cancel Logic & Navigation Fix (FINAL FIX) --- */
+  });
+})();
 </script>
+
 </body>
 </html>

@@ -2,7 +2,6 @@
 session_start();
 require 'connection.php';
 
-// Get logged-in user's email
 $user_email = $_SESSION['email'] ?? '';
 
 $serviceTypes = [
@@ -11,7 +10,6 @@ $serviceTypes = [
     'Monthly' => []
 ];
 
-// Fetch recurring bookings for this user
 $sql = "SELECT * FROM bookings WHERE booking_type='Recurring' AND email=? ORDER BY service_date DESC";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("s", $user_email);
@@ -19,57 +17,72 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 if ($result && $result->num_rows > 0) {
-    while ($row = $result->fetch_assoc()) {
-        $frequency = $row['frequency'] ?? 'Weekly';
-        if (!isset($serviceTypes[$frequency])) $frequency = 'Weekly';
 
-        // Calculate estimated price
+    while ($row = $result->fetch_assoc()) {
+        
+        // 🔍 DEBUG: Check what's in the database row
+        echo "<!-- DEBUG Row ID: " . $row['id'] . " -->";
+        echo "<!-- DEBUG drivers column: '" . ($row['drivers'] ?? 'NULL') . "' -->";
+        echo "<!-- DEBUG cleaners column: '" . ($row['cleaners'] ?? 'NULL') . "' -->";
+
+        $frequency = $row['frequency'] ?? 'Weekly';
+        if (!isset($serviceTypes[$frequency])) {
+            $frequency = 'Weekly';
+        }
+
         $estimated_price = 0;
         $materials_provided = $row['materials_provided'] ?? '';
         $duration = floatval($row['duration'] ?? 0);
+
         if (preg_match('/(\d+(?:\.\d+)?)\s*AED\s*\/\s*hr/i', $materials_provided, $matches)) {
             $hourly_rate = floatval($matches[1]);
             $estimated_price = $hourly_rate * $duration;
         }
 
-        // Generate reference number based on frequency
-        $freq_code = '';
-        if ($frequency === 'Weekly') $freq_code = 'WK';
-        elseif ($frequency === 'Bi-Weekly') $freq_code = 'BWK';
-        else $freq_code = 'MTH';
-        
+        // Generate unique recurring reference
+        $freq_code = $frequency === 'Weekly' ? 'WK' :
+                     ($frequency === 'Bi-Weekly' ? 'BWK' : 'MTH');
+
         $reference_no = 'ALZ-' . $freq_code . '-' . date('ym', strtotime($row['service_date'])) . '-' . str_pad($row['id'], 4, '0', STR_PAD_LEFT);
 
         $serviceTypes[$frequency][] = [
             'booking_id' => $row['id'],
             'reference_no' => $reference_no,
-            'start_date' => $row['service_date'],
-            'end_date' => $row['end_date'] ?? null,
+            'full_name' => $row['full_name'] ?? '',
+            'phone' => $row['phone'] ?? '',
+            'start_date' => $row['start_date'] ?? $row['service_date'],  // ✅ Use start_date, fallback to service_date
+            'end_date' => $row['end_date'] ?? null,  // ✅ Use end_date column
             'booking_time' => $row['service_time'],
             'duration' => $row['duration'] ?? '0',
             'frequency' => $frequency,
+            'preferred_day' => $row['preferred_day'] ?? '',
             'sessions_completed' => $row['sessions_completed'] ?? 0,
             'total_sessions' => $row['total_sessions'] ?? 0,
             'address' => $row['address'] ?? '',
             'client_type' => $row['client_type'] ?? 'N/A',
-            'status' => $row['status'] ?? 'Pending', // ✅ Include DB status
+            'status' => strtoupper($row['status'] ?? 'PENDING'),
+
             'service_type' => $row['service_type'] ?? 'General Cleaning',
             'property_layout' => $row['property_type'] ?? '',
-            'materials_required' => $row['materials_needed'] ?? 'No',
-            'materials_description' => $row['comments'] ?? '',
-            'additional_request' => $row['additional_request'] ?? '',
+            'materials_required' => $row['materials_provided'] ?? 'No',
+            'materials_description' => $row['materials_needed'] ?? '',
+            'additional_request' => $row['comments'] ?? '',
             'image_1' => $row['media1'] ?? '',
             'image_2' => $row['media2'] ?? '',
             'image_3' => $row['media3'] ?? '',
             'estimated_price' => $estimated_price,
-            'final_price' => $row['final_price'] ?? 0
+            'final_price' => $row['final_price'] ?? 0,
+
+            // ✅ Fetch staff from database
+            'driver_name' => $row['drivers'] ?? '',
+            'cleaners_names' => $row['cleaners'] ?? ''
         ];
     }
 }
 
-
 $conn->close();
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -83,6 +96,20 @@ $conn->close();
 
 <style>
 .cancel-appointment-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.6);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal {
     display: none;
     position: fixed;
     z-index: 1000;
@@ -257,10 +284,7 @@ $conn->close();
     padding: 8px 12px; font-weight: bold; cursor: pointer; border-radius: 6px; text-align: center; transition: all 0.3s; text-decoration: none; display: flex; align-items: center; gap: 5px; font-size: 0.9em; background-color: #0056b3; border: 2px solid #0056b3; color: white;
 }
 .action-btn.edit-plan-btn:hover { background-color: #0062cc; border-color: #0062cc; }
-.action-btn.sessions-btn {
-    padding: 8px 12px; font-weight: bold; cursor: pointer; border-radius: 6px; text-align: center; transition: all 0.3s; text-decoration: none; display: flex; align-items: center; gap: 5px; font-size: 0.9em; background-color: #008080; border: 2px solid #008080; color: white;
-}
-.action-btn.sessions-btn:hover { background-color: #009999; border-color: #009999; }
+
 .dropdown-menu .whatsapp-chat-link i { color: #25D366; }
 .appointment-details .ref-no-detail { margin-bottom: 15px; }
 
@@ -382,6 +406,117 @@ $conn->close();
     border-color: transparent transparent #fff transparent;
     filter: drop-shadow(0 -2px 1px rgba(0, 0, 0, 0.05));
 }
+
+/* Edit Modal Styles */
+.action-btn.edit-plan-btn {
+    padding: 8px 12px;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 6px;
+    text-align: center;
+    transition: all 0.3s;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.9em;
+    background-color: #0056b3;
+    border: 2px solid #0056b3;
+    color: white;
+}
+
+.action-btn.edit-plan-btn:hover {
+    background-color: #0062cc;
+    border-color: #0062cc;
+}
+.dropdown-menu-container {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background-color: white;
+    min-width: 200px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    border-radius: 8px;
+    padding: 8px 0;
+    margin-top: 5px;
+}
+
+.dropdown-menu.show {
+    display: block;
+}
+
+.dropdown-menu li {
+    list-style: none;
+}
+
+.dropdown-menu li a {
+    color: #333;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.3s;
+}
+
+.dropdown-menu li a:hover {
+    background-color: #f1f1f1;
+}
+
+.dropdown-menu li a i {
+    font-size: 1.2em;
+}
+
+.more-options-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    font-size: 1.5em;
+    color: #666;
+    transition: color 0.3s;
+}
+
+.more-options-btn:hover {
+    color: #333;
+}
+
+.cancel-link i {
+    color: #B32133 !important;
+}
+
+.whatsapp-chat-link i {
+    color: #25D366 !important;
+}
+.dropdown-menu-container {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background-color: white;
+    min-width: 200px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    border-radius: 8px;
+    padding: 8px 0;
+    margin-top: 5px;
+}
+
+.dropdown-menu.show {
+    display: block;
+}
 </style>
 </head>
     
@@ -464,10 +599,7 @@ $conn->close();
                             </ul>
                         </li>
                         <li>
-                            To view your scheduled sessions, click the <strong>Sessions</strong> button. 
-                            <ul>
-                                <li>Feedback and ratings is submitted after every <strong>Completed</strong> session.</li>
-                            </ul>
+                            Feedback and ratings can be submitted after every <strong>Completed</strong> session.
                         </li>
                     </ul>
                     
@@ -478,6 +610,7 @@ $conn->close();
                 </div>
             </div>
         </div>
+        
         
         <div class="horizontal-tabs-container">
             <div class="service-tabs-bar">
@@ -495,15 +628,12 @@ $conn->close();
         
         <?php
         // Function to render recurring appointment item
-       function renderRecurringAppointmentItem($booking) {
-    // Use status from DB with fallback
-    $plan_status = $booking['status'] ?? 'PENDING';
-
-    // Format start date and time
+          function renderRecurringAppointmentItem
+     ($booking) {
+    $plan_status = $booking['status'] ?? 'Pending';
     $formatted_start_date = date('F d, Y', strtotime($booking['start_date']));
     $formatted_time = date('g:i A', strtotime($booking['booking_time']));
 
-    // Format end date display
     $end_date_display = 'N/A';
     if (!empty($booking['end_date'])) {
         $end_date_display = date('F d, Y', strtotime($booking['end_date']));
@@ -517,7 +647,6 @@ $conn->close();
         }
     }
 
-    // Search terms
     $search_terms = implode(' ', [
         $booking['reference_no'] ?? '',
         $formatted_start_date,
@@ -527,7 +656,6 @@ $conn->close();
         $plan_status
     ]);
 
-    // Status class and icon
     $status_class = 'overall-' . strtolower(str_replace(' ', '-', $plan_status));
     $status_icons = [
         'Pending' => '<i class="bx bx-time-five"></i>',
@@ -543,30 +671,95 @@ $conn->close();
     if ($plan_status === 'Pending') {
         $buttons = '
             <a href="javascript:void(0)" class="action-btn view-details-btn" onclick="showRecurringDetailsModal(this.closest(\'.appointment-list-item\'))"><i class="bx bx-show"></i> View Details</a>
-            <a href="BA_recurring.php?edit='.$booking['reference_no'].'" class="action-btn edit-plan-btn"><i class="bx bx-edit"></i> Edit</a>
+            <a href="EDIT_recurring.php?booking_id='.$booking['booking_id'].'" class="action-btn edit-plan-btn"><i class="bx bx-edit"></i> Edit</a>
             <div class="dropdown-menu-container">
+            
                 <button class="more-options-btn" onclick="toggleDropdown(this)"><i class="bx bx-dots-vertical-rounded"></i></button>
                 <ul class="dropdown-menu">
                     <li><a href="https://wa.me/971529009188" target="_blank" class="whatsapp-chat-link"><i class="bx bxl-whatsapp"></i> Chat on WhatsApp</a></li>
-                    <li><a href="javascript:void(0)" class="cancel-link" onclick="showCancelModal(\''.$booking['reference_no'].'\')"><i class="bx bx-x-circle" style="color: #B32133;"></i> Cancel</a></li>
+                    <li><a href="javascript:void(0)" class="cancel-link" onclick="showCancelModal(\''.$booking['reference_no'].'\', '.$booking['booking_id'].')"><i class="bx bx-x-circle" style="color: #B32133;"></i> Cancel</a></li>
                 </ul>
             </div>
         ';
     } else {
         $buttons = '
             <a href="javascript:void(0)" class="action-btn view-details-btn" onclick="showRecurringDetailsModal(this.closest(\'.appointment-list-item\'))"><i class="bx bx-show"></i> View Details</a>
-            <a href="javascript:void(0)" class="action-btn sessions-btn"><i class="bx bx-list-ul"></i> Sessions</a>
             <div class="dropdown-menu-container">
                 <button class="more-options-btn" onclick="toggleDropdown(this)"><i class="bx bx-dots-vertical-rounded"></i></button>
                 <ul class="dropdown-menu">
                     <li><a href="https://wa.me/971529009188" target="_blank" class="whatsapp-chat-link"><i class="bx bxl-whatsapp"></i> Chat on WhatsApp</a></li>
                     <li><a href="javascript:void(0)" class="report-link" onclick="showReportModal(this)"><i class="bx bx-error-alt"></i> Report Issue</a></li>
+                     <li><a href="javascript:void(0)" class="cancel-link" onclick="showCancelModal(\''.$booking['reference_no'].'\', '.$booking['booking_id'].')"><i class="bx bx-x-circle" style="color: #B32133;"></i> Cancel</a></li>
+                </ul>
                 </ul>
             </div>
         ';
     }
 
-    // Price display
+    
+$staff_details = '';
+    if (!empty($booking['driver_name']) || !empty($booking['cleaners_names'])) {
+        $staff_details .= '<hr class="divider full-width-detail">';
+        if (!empty($booking['driver_name'])) {
+            $staff_details .= '<p class="full-width-detail"><i class=\'bx bx-car\'></i> <strong>Driver:</strong> '.htmlspecialchars($booking['driver_name']).'</p>';
+        }
+        if (!empty($booking['cleaners_names'])) {
+            $staff_details .= '<p class="full-width-detail"><i class=\'bx bx-group\'></i> <strong>Cleaners:</strong> '.htmlspecialchars($booking['cleaners_names']).'</p>';
+        }
+    }
+    $estimated_sessions = 0;
+if (!empty($booking['start_date']) && !empty($booking['end_date']) && !empty($booking['frequency'])) {
+    $start = new DateTime($booking['start_date']);
+    $end = new DateTime($booking['end_date']);
+    $frequency = $booking['frequency'];
+    
+    if ($frequency === 'Weekly') {
+        $interval = 7;
+        $current = clone $start;
+        while ($current <= $end) {
+            $estimated_sessions++;
+            $current->modify('+' . $interval . ' days');
+        }
+    } elseif ($frequency === 'Bi-Weekly') {
+        $interval = 14;
+        $current = clone $start;
+        while ($current <= $end) {
+            $estimated_sessions++;
+            $current->modify('+' . $interval . ' days');
+        }
+    } elseif ($frequency === 'Monthly') {
+        $startDay = (int)$start->format('d');
+        $current = clone $start;
+        
+        // Count first session
+        if ($current <= $end) {
+            $estimated_sessions = 1;
+        }
+        
+        // Loop through months
+        while (true) {
+            $current->modify('+1 month');
+            
+            // Handle cases where day doesn't exist in month (e.g., Jan 31 -> Feb 28)
+            $tempDay = (int)$current->format('d');
+            if ($tempDay !== $startDay) {
+                $current->setDate(
+                    (int)$current->format('Y'),
+                    (int)$current->format('m'),
+                    min($startDay, (int)$current->format('t'))
+                );
+            }
+            
+            if ($current > $end) {
+                break;
+            }
+            
+            $estimated_sessions++;
+        }
+    }
+}
+    
+
     $price_label = ($plan_status === 'COMPLETED') ? 'Final Price' : 'Estimated Price';
     $price = ($plan_status === 'COMPLETED' && !empty($booking['final_price'])) ? $booking['final_price'] : $booking['estimated_price'];
 
@@ -594,20 +787,24 @@ $conn->close();
             <p><i class="bx bx-calendar-check"></i> <strong>Start Date:</strong> '.$formatted_start_date.'</p>
             <p class="end-date-detail"><i class="bx bx-calendar-check"></i> <strong>End Date:</strong> '.$end_date_display.'</p>
             <p><i class="bx bx-time"></i> <strong>Time:</strong> '.$formatted_time.'</p>
-            <p class="duration-detail"><i class="bx bx-stopwatch"></i> <strong>Duration:</strong> '.($booking['duration'] ?? '0').' hours</p>
+             <p class="duration-detail"><i class=\'bx bx-stopwatch\'></i> <strong>Duration:</strong> '.$booking['duration'].' hours</p>
             <p class="frequency-detail"><i class="bx bx-sync"></i> <strong>Frequency:</strong> '.($booking['frequency'] ?? '').'</p>
-            <p class="sessions-detail"><i class="bx bx-list-ol"></i> <strong>No. of Sessions:</strong> <span class="sessions-count">'.($booking['sessions_completed'] ?? 0).' of '.($booking['total_sessions'] ?? 0).'</span></p>
+         <p class="sessions-detail"><i class="bx bx-list-ol"></i> <strong>No. of Sessions:</strong> <span class="sessions-count">'.$estimated_sessions.'</span></p>
             
             <p class="full-width-detail"><i class="bx bx-map-alt"></i> <strong>Address:</strong> '.($booking['address'] ?? '').'</p>
             <hr class="divider full-width-detail">
-            <p><i class="bx bx-building-house"></i> <strong>Client Type:</strong> '.($booking['client_type'] ?? '').'</p>
-            <p class="service-type-detail"><i class="bx bx-wrench"></i> <strong>Service Type:</strong> '.($booking['service_type'] ?? '').'</p>
+           <p class="full-width-detail"><i class="bx bx-map-alt"></i> <strong>Address:</strong> '.($booking['address'] ?? '').'</p>
+<hr class="divider full-width-detail">
+<p><i class="bx bx-building-house"></i> <strong>Client Type:</strong> '.($booking['client_type'] ?? '').'</p>
+<p class="service-type-detail"><i class="bx bx-wrench"></i> <strong>Service Type:</strong> '.($booking['service_type'] ?? '').'</p>
 
-            <p class="full-width-detail status-detail">
-                <strong>Plan Status:</strong>
-                <span class="overall-plan-tag '.$status_class.'">'.$status_icon.' '.$plan_status.'</span>
-            </p>
-            <p class="price-detail">'.$price_label.': <span class="aed-color">AED '.$price.'</span></p>
+'.$staff_details.'
+
+<p class="full-width-detail status-detail">
+    <strong>Plan Status:</strong>
+    <span class="overall-plan-tag '.$status_class.'">'.$status_icon.' '.$plan_status.'</span>
+</p>
+<p class="price-detail">'.$price_label.': <span class="aed-color">AED '.$price.'</span></p>
         </div>
     </div>';
 }
@@ -705,7 +902,7 @@ $conn->close();
 <div class="modal" id="detailsModal" onclick="if(event.target.id === 'detailsModal') closeModal('detailsModal')">
     <div class="modal-content">
         <span class="close-btn" onclick="closeModal('detailsModal')">&times;</span> 
-        <h3><i class='bx bx-list-ul'></i> Plan Sessions Overview</h3>
+        <h3><i class='bx bx-list-ul'></i> Booking Details</h3>
         <div id="modal-details-content"></div>
     </div>
 </div>
@@ -825,21 +1022,165 @@ $conn->close();
     </div>
 </div>
 
+<!-- Update Success Modal -->
+<div id="updateSuccessModal" class="cancel-appointment-modal">
+    <div class="cancel-modal-content">
+        <span class="close-btn-x" onclick="closeModal('updateSuccessModal')">&times;</span>
+        <i class='bx bx-check-circle cancel-icon' style="color: #00A86B;"></i>
+        <h3 style="border-bottom: none;">Booking Updated!</h3>
+        <p>Your booking has been successfully updated.</p>
+        <div class="modal__actions">
+            <button onclick="location.reload()" class="primary-cancel-btn" style="background-color: #00A86B; border-color: #00A86B;">OK</button>
+        </div>
+    </div>
+</div>
+
 <script src="client_db.js"></script>
 <script src="HIS_function.js"></script>
 
 <script>
-function showCancelModal(refNo) {
+function openEditModal(button) {
+    try {
+        const bookingData = JSON.parse(button.getAttribute('data-booking'));
+        console.log('Booking Data:', bookingData); // Debug log
+        
+        // Populate form fields
+        document.getElementById('edit_booking_id').value = bookingData.booking_id;
+        document.getElementById('edit_reference_no').value = bookingData.reference_no;
+        document.getElementById('edit_status').value = bookingData.status;
+        document.getElementById('edit_full_name').value = bookingData.full_name;
+        document.getElementById('edit_email').value = '<?php echo $_SESSION['email'] ?? ''; ?>';
+        document.getElementById('edit_phone').value = bookingData.phone;
+        document.getElementById('edit_service_type').value = bookingData.service_type;
+        document.getElementById('edit_client_type').value = bookingData.client_type;
+        document.getElementById('edit_start_date').value = bookingData.start_date;
+        document.getElementById('edit_service_time').value = bookingData.booking_time;
+        document.getElementById('edit_duration').value = bookingData.duration;
+        document.getElementById('edit_frequency').value = bookingData.frequency;
+        document.getElementById('edit_preferred_day').value = bookingData.preferred_day || '';
+        document.getElementById('edit_property_layout').value = bookingData.property_layout;
+        document.getElementById('edit_address').value = bookingData.address;
+        document.getElementById('edit_materials_needed').value = bookingData.materials_required;
+        document.getElementById('edit_comments').value = bookingData.materials_description;
+        
+        // Display images if available
+        const imagesPreview = document.getElementById('edit_images_preview');
+        imagesPreview.innerHTML = '';
+        if (bookingData.image_1) {
+            imagesPreview.innerHTML += `<img src="${bookingData.image_1}" alt="Image 1">`;
+        }
+        if (bookingData.image_2) {
+            imagesPreview.innerHTML += `<img src="${bookingData.image_2}" alt="Image 2">`;
+        }
+        if (bookingData.image_3) {
+            imagesPreview.innerHTML += `<img src="${bookingData.image_3}" alt="Image 3">`;
+        }
+        
+        // Show modal
+        const modal = document.getElementById('editBookingModal');
+        modal.style.display = 'flex';
+        console.log('Modal displayed'); // Debug log
+    } catch (error) {
+        console.error('Error opening edit modal:', error);
+        alert('Error loading booking data. Please try again.');
+    }
+}
+
+
+
+function saveBookingChanges(event) {
+    event.preventDefault();
+    
+    const formData = new FormData(document.getElementById('editBookingForm'));
+    
+    fetch('update_recurring_booking.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            closeModal('editBookingModal');
+            document.getElementById('updateSuccessModal').style.display = 'flex';
+        } else {
+            alert('Error updating booking: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while updating the booking.');
+    });
+    
+    return false;
+}
+
+function toggleDropdown(button) {
+    // Close all other dropdowns first
+    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+        if (menu !== button.nextElementSibling) {
+            menu.classList.remove('show');
+        }
+    });
+    
+    // Toggle current dropdown
+    const dropdownMenu = button.nextElementSibling;
+    dropdownMenu.classList.toggle('show');
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    if (!event.target.closest('.dropdown-menu-container')) {
+        document.querySelectorAll('.dropdown-menu').forEach(menu => {
+            menu.classList.remove('show');
+        });
+    }
+});
+
+
+
+let currentBookingId = null;
+
+function showCancelModal(refNo, bookingId) {
+    currentBookingId = bookingId;
     document.getElementById('cancel-ref-number').innerText = refNo;
     const confirmCancelBtn = document.getElementById('confirmCancel');
-    confirmCancelBtn.onclick = null;
     confirmCancelBtn.onclick = function() {
-        console.log("Cancelling appointment: " + refNo);
-        closeModal('cancelModal');
-        document.getElementById('cancelled-ref-number').innerText = refNo;
-        document.getElementById('cancelSuccessModal').style.display = 'flex';
+        cancelRecurringAppointment(refNo);
     };
     document.getElementById('cancelModal').style.display = 'flex'; 
+}
+
+function cancelRecurringAppointment(refNo) {
+    const confirmBtn = document.getElementById('confirmCancel');
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Cancelling...';
+    
+    const formData = new FormData();
+    formData.append('booking_id', currentBookingId);
+    
+    fetch('cancel_recurring_booking.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = 'Yes, Cancel';
+        
+        if (data.success) {
+            closeModal('cancelModal');
+            document.getElementById('cancelled-ref-number').innerText = refNo;
+            document.getElementById('cancelSuccessModal').style.display = 'flex';
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = 'Yes, Cancel';
+        alert('Error occurred.');
+    });
 }
 
 function sortAppointmentsByStatus(containerId, filterValue = 'default') {
@@ -901,7 +1242,6 @@ function sortAppointmentsByStatus(containerId, filterValue = 'default') {
     }
 }
 
-
 function initializeStatusSortingOnLoad() {
     const containerIds = [
         'weekly-cleaning-list',
@@ -914,30 +1254,8 @@ function initializeStatusSortingOnLoad() {
     });
 }
 
-document.addEventListener('DOMContentLoaded', initializeStatusSortingOnLoad);
 
-document.addEventListener('DOMContentLoaded', () => {
-    const sessionButtons = document.querySelectorAll('.sessions-btn');
-    
-    sessionButtons.forEach(button => {
-        const listItem = button.closest('.appointment-list-item');
-        if (listItem) {
-            const planStatus = listItem.getAttribute('data-plan-status'); 
-            
-            if (planStatus === 'PENDING') {
-                button.style.display = 'none';
-            } else {
-                const refNoElement = listItem.querySelector('.ref-no-value');
-                if (refNoElement) {
-                    const refNo = refNoElement.textContent.trim();
-                    button.href = `HIS_sessions.php?ref=${encodeURIComponent(refNo)}`;
-                    button.removeAttribute('onclick'); 
-                    button.style.display = 'flex';
-                }
-            }
-        }
-    });
-});
+document.addEventListener('DOMContentLoaded', initializeStatusSortingOnLoad);
 </script>
 </body>
 </html>

@@ -4,7 +4,7 @@ require 'connection.php'; // your DB connection
 
 // ✅ Ensure user is logged in
 if (!isset($_SESSION['email'])) {
-    echo "<script>alert('Please log in first.'); window.location.href='login.php';</script>";
+    echo "<script>alert('Please log in first.'); window.location.href='landing_page2.html';</script>";
     exit;
 }
 
@@ -25,9 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['firstName'])) {
     $stmt->execute();
 
     if ($stmt->affected_rows >= 0) {
-        // Update session email if changed
         $_SESSION['email'] = $emailAddress;
-        // ✅ REDIRECT to prevent form resubmission on refresh (PRG pattern)
         header("Location: client_profile.php?success=1");
         exit;
     } else {
@@ -37,14 +35,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['firstName'])) {
     $stmt->close();
 }
 
-// Fetch user data from database
+// Fetch user data
 $stmt = $conn->prepare("SELECT first_name, last_name, birthday, contact_number, email FROM clients WHERE email = ? LIMIT 1");
 $stmt->bind_param("s", $client_email);
 $stmt->execute();
 $result = $stmt->get_result();
 
 if ($result->num_rows === 0) {
-    echo "<script>alert('User not found.'); window.location.href='login.php';</script>";
+    echo "<script>alert('User not found.'); window.location.href='landing_page2.html';</script>";
     exit;
 }
 
@@ -58,6 +56,14 @@ $birthday = $user['birthday'];
 $contactNumber = $user['contact_number'];
 $emailAddress = $user['email'];
 ?>
+
+<!-- ✅ ADD THIS AFTER BODY TAG -->
+<?php if (isset($_GET['success']) && $_GET['success'] == 1): ?>
+<script>
+    alert("✅ Profile updated successfully!");
+</script>
+<?php endif; ?>
+
 
 
 <!DOCTYPE html>

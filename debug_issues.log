@@ -1,0 +1,340 @@
+[02-Nov-2025 22:48:16 Europe/Berlin] PHP Warning:  Undefined array key "issue_type" in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 20
+[02-Nov-2025 22:48:30 Europe/Berlin] PHP Warning:  Undefined array key "issue_type" in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 20
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 655
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 655
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 655
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 655
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 655
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 655
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 655
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 655
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 655
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 655
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 655
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 655
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 655
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 655
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 655
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 655
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 655
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 655
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 655
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 655
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 655
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 655
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 655
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 655
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 650
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 652
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 653
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 655
+[03-Nov-2025 01:12:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 655
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 656
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:33 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 657
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[03-Nov-2025 01:32:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654

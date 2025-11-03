@@ -56,16 +56,16 @@ if ($result && $result->num_rows > 0) {
             'status' => strtoupper($row['status'] ?? 'PENDING'),
             'service_type' => $row['booking_type'] ?? 'One-Time',
             'property_layout' => $row['property_type'] ?? '',
-            'materials_required' => $row['materials_needed'] ?? 'No',
-            'materials_description' => $row['comments'] ?? '',
-            'additional_request' => $row['additional_request'] ?? '',
+            'materials_required' => $row['materials_provided'] ?? 'No - 35 AED / hr', // ✅ FIXED: Now uses materials_provided
+            'materials_description' => $row['materials_needed'] ?? '', // ✅ FIXED: Now uses materials_needed
+            'additional_request' => $row['comments'] ?? '', // ✅ FIXED: Now uses comments
             'image_1' => $row['media1'] ?? '',
             'image_2' => $row['media2'] ?? '',
             'image_3' => $row['media3'] ?? '',
             'estimated_price' => $estimated_price,
             'final_price' => $row['final_price'] ?? 0,
-            'driver_name' => $row['driver_name'] ?? '',
-            'cleaners_names' => $row['cleaners_names'] ?? ''
+            'driver_name' => $row['drivers'] ?? '',
+            'cleaners_names' => $row['cleaners'] ?? ''
         ];
     }
 } else {
@@ -549,7 +549,7 @@ switch ($booking['status']) {
                     </li>
                     <li>
                         <a href="javascript:void(0)" class="cancel-link" 
-                           onclick="showCancelModal(\'' . $booking['reference_no'] . '\')">
+                          onclick="showCancelModal(\'' . $booking['reference_no'] . '\', ' . $booking['booking_id'] . ')">
                            <i class="bx bx-x-circle" style="color: #B32133;"></i> Cancel
                         </a>
                     </li>
@@ -906,25 +906,56 @@ switch ($booking['status']) {
 </div>
 
 <script>
-function showCancelModal(refNo) {
+
+let currentBookingId = null;
+
+function showCancelModal(refNo, bookingId) {
+    currentBookingId = bookingId;
     document.getElementById('cancel-ref-number').innerText = refNo;
     const confirmCancelBtn = document.getElementById('confirmCancel');
-    confirmCancelBtn.onclick = null;
     confirmCancelBtn.onclick = function() {
-        console.log("Cancelling appointment: " + refNo);
-        closeModal('cancelModal');
-        document.getElementById('cancelled-ref-number').innerText = refNo;
-        document.getElementById('cancelSuccessModal').style.display = 'flex';
+        cancelAppointment(refNo);
     };
     document.getElementById('cancelModal').style.display = 'flex'; 
 }
 
-function closeModal(modalId) {
-    let modal = document.getElementById(modalId);
-    if (modal) {
-        modal.style.display = 'none';
-    }
+function cancelAppointment(refNo) {
+    const confirmBtn = document.getElementById('confirmCancel');
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Cancelling...';
+    
+    const formData = new FormData();
+    formData.append('booking_id', currentBookingId);
+    
+    fetch('cancel_booking.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = 'Yes, Cancel';
+        
+        if (data.success) {
+            closeModal('cancelModal');
+            document.getElementById('cancelled-ref-number').innerText = refNo;
+            document.getElementById('cancelSuccessModal').style.display = 'flex';
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = 'Yes, Cancel';
+        alert('Error occurred.');
+    });
 }
+
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}
+
 
 function sortAppointmentsByStatus(containerId, filterStatus = 'default') {
     const container = document.getElementById(containerId);

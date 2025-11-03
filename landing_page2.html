@@ -160,13 +160,29 @@
             border-radius: 6px;
             margin-bottom: 1rem;
             font-size: 0.85rem;
-            display: flex;
+            display: none;
             align-items: center;
             gap: 0.5rem;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .error-message.show {
+            display: flex;
         }
 
         .error-message i {
             font-size: 1.1rem;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .form-group {
@@ -419,7 +435,10 @@
             <div class="forms-wrapper">
                 <!-- Login Form -->
                 <form action="login_process.php" method="POST" class="login-form active-form" id="loginFormContainer">
-                   
+                    <div class="error-message" id="loginError">
+                        <i class='bx bx-error-circle'></i>
+                        <span id="loginErrorText">Invalid email or password. Please try again.</span>
+                    </div>
 
                     <div class="form-group">
                         <label for="email"><span class="required">*</span> Email Address</label>
@@ -446,6 +465,11 @@
 
                 <!-- Sign Up Form -->
                 <form action="sign_up.php" method="POST" class="login-form" id="signupFormContainer" novalidate>
+                    <div class="error-message" id="signupError">
+                        <i class='bx bx-error-circle'></i>
+                        <span id="signupErrorText">Please check the form for errors.</span>
+                    </div>
+
                     <div class="form-row">
                         <div class="form-group">
                             <label for="firstName"><span class="required">*</span> First Name</label>
@@ -549,6 +573,7 @@
             signupTab.classList.remove('active');
             loginFormContainer.classList.add('active-form');
             signupFormContainer.classList.remove('active-form');
+            hideError('loginError');
         });
 
         signupTab.addEventListener('click', () => {
@@ -556,6 +581,49 @@
             loginTab.classList.remove('active');
             signupFormContainer.classList.add('active-form');
             loginFormContainer.classList.remove('active-form');
+            hideError('signupError');
+        });
+
+        // Error message functions
+        function showError(errorId, message) {
+            const errorElement = document.getElementById(errorId);
+            const errorTextElement = document.getElementById(errorId + 'Text');
+            if (message) {
+                errorTextElement.textContent = message;
+            }
+            errorElement.classList.add('show');
+        }
+
+        function hideError(errorId) {
+            const errorElement = document.getElementById(errorId);
+            errorElement.classList.remove('show');
+        }
+
+        // Check for error in URL (from PHP redirect)
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const error = urlParams.get('error');
+            
+            if (error === 'invalid_credentials') {
+                showError('loginError', 'Invalid email or password. Please try again.');
+                // Highlight the input fields
+                document.getElementById('email').classList.add('error-border');
+                document.getElementById('password').classList.add('error-border');
+            } else if (error === 'email_exists') {
+                signupTab.click();
+                showError('signupError', 'This email address is already registered.');
+                document.getElementById('signupEmail').classList.add('error-border');
+            } else if (error === 'signup_failed') {
+                signupTab.click();
+                showError('signupError', 'Registration failed. Please try again.');
+            }
+        });
+
+        // Remove error styling on input
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', () => {
+                input.classList.remove('error-border');
+            });
         });
 
         // Password toggle functionality

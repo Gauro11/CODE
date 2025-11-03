@@ -1,7 +1,7 @@
 <?php
 session_start();
 
---- 1. Connect to the database ---
+
 $servername = "localhost";
 $username = "u665838367_alazimaa";
 $password = '6$HvZ#Vd'; // safer

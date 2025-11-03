@@ -3,6 +3,7 @@
  * This function will search for the specific appointment item and call showDetailsModal.
  * @param {HTMLElement} buttonElement - The 'View Appointment' button clicked.
  */
+
 function viewAppointmentFromRating(buttonElement) {
     // 1. Get data from the parent rating-list-item
     const listItem = buttonElement.closest('.rating-list-item');
@@ -64,7 +65,10 @@ function showViewRatingModal(listItem) {
     // Get mock rating data from data attributes
     // Use 'data-rating-stars' and 'data-rating-feedback' which should be present in all items that are RATED.
     const stars = listItem.dataset.ratingStars || '0';
-    const feedback = listItem.dataset.ratingFeedback || 'No feedback provided.';
+   const feedback = listItem.dataset.ratingFeedback || 'No feedback provided.';
+document.getElementById('viewFeedback').textContent = feedback;
+
+    
     
     // GET ALL APPOINTMENT DETAILS FROM DATA ATTRIBUTES
     // These attributes are expected to be present on the list item, regardless of which tab it is from.
@@ -214,123 +218,125 @@ function clearError(element) {
  * and opening the success modal, OR displaying individual field errors.
  * @returns {boolean} Always returns false to prevent standard form submission (since we don't have a backend yet).
  */
+/**
+ * Submit issue report
+ */
 function submitReport() {
-    // Elements
-    const issueType = document.getElementById('issueType');
-    const issueDetails = document.getElementById('issueDetails');
+    document.getElementById('issueTypeError').style.display = 'none';
+    document.getElementById('issueDetailsError').style.display = 'none';
     
-    // New Error Message Elements
-    const issueTypeError = document.getElementById('issueTypeError');
-    const issueDetailsError = document.getElementById('issueDetailsError');
+    const issueType = document.getElementById('issueType').value;
+    const issueDetails = document.getElementById('issueDetails').value;
 
-    let isValid = true;
-    
-    // Reset ONLY the error message visibility (just in case they were hidden by clearError())
-    issueTypeError.style.display = 'none'; 
-    issueDetailsError.style.display = 'none'; 
-
-    // 1. Validate Type of Issue 
-    if (issueType.value === "") {
-        issueTypeError.style.display = 'inline-block'; // Show error message
-        isValid = false;
+    if (!issueType) {
+        document.getElementById('issueTypeError').style.display = 'block';
+        return false;
     }
-
-    // 2. Validate Issue Description 
-    if (issueDetails.value.trim() === "") {
-        issueDetailsError.style.display = 'inline-block'; // Show error message
-        isValid = false;
-    }
-    
-    // 3. Handle Invalid Submission (MODIFIED TO NO LONGER SHOW THE GENERAL MODAL)
-    if (!isValid) {
-        // Optional: Focus on the first invalid field
-        if (issueType.value === "") {
-            issueType.focus();
-        } else if (issueDetails.value.trim() === "") {
-            issueDetails.focus();
-        }
-        
-        // IMPORTANT: Return false to prevent form submission and stop the success modal logic
+    if (!issueDetails.trim()) {
+        document.getElementById('issueDetailsError').style.display = 'block';
         return false;
     }
 
-    // --- START: Original Success Logic (Only runs if isValid is true) ---
-
-    // 1. Capture the exact submission time for audit trail
-    captureSubmissionTime();
-
-    // 2. Get the Reference Number to display in the success modal
+    const bookingId = document.getElementById('report-booking-id').value;
     const refNumber = document.getElementById('report-ref-number').textContent;
 
-    // 3. Close the main Report Issue Modal
-    closeModal('reportIssueModal');
+    const formData = new FormData();
+    formData.append('report_issue', '1');
+    formData.append('booking_id', bookingId);
+    formData.append('issue_type', issueType);
+    formData.append('issue_description', issueDetails);
 
-    // 4. Update the success modal with the Ref Number
-    document.getElementById('submitted-ref-number').textContent = refNumber;
+    formData.append('issue_date', document.getElementById('issueDate').value);
+    formData.append('issue_time', document.getElementById('issueTime').value);
 
-    // 5. Open the success modal
-    let successModal = document.getElementById('reportSuccessModal');
-    if (successModal) {
-        modal.style.display = 'block'; 
-    }
+    formData.append('submission_date', document.getElementById('submissionDate').value);
+    formData.append('submission_time', document.getElementById('submissionTime').value);
 
-    // We return false to prevent the form from actually submitting and refreshing the page
+    formData.append('attachment1', document.getElementById('attachment1').files[0] || '');
+    formData.append('attachment2', document.getElementById('attachment2').files[0] || '');
+    formData.append('attachment3', document.getElementById('attachment3').files[0] || '');
+
+    fetch('', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.text())
+    .then(data => {
+        closeModal('reportIssueModal');
+        document.getElementById('submitted-ref-number').textContent = refNumber;
+        document.getElementById('reportSuccessModal').style.display = 'flex';
+
+        setTimeout(() => location.reload(), 2000);
+    })
+    .catch(err => {
+        alert("Error submitting report.");
+        console.log(err);
+    });
+
     return false;
+}
+
+
+/**
+ * Clear error message when user starts typing/selecting
+ */
+function clearError(element) {
+    const errorId = element.id + 'Error';
+    const errorElement = document.getElementById(errorId);
+    if (errorElement) {
+        errorElement.style.display = 'none';
+    }
+}
+
+/**
+ * Update file name display when file is selected
+ */
+function updateFileName(input) {
+    const fileNameDisplay = input.parentElement.querySelector('.custom-file-text');
+    if (input.files && input.files[0]) {
+        fileNameDisplay.textContent = input.files[0].name;
+    } else {
+        fileNameDisplay.textContent = 'No file chosen';
+    }
 }
 
 /**
  * Shows the Report Issue modal and populates data from the list item.
  * @param {HTMLElement} element - The 'Report Issue' link element.
  */
-function showReportModal(element) {
-    // 1. Find the parent appointment-list-item
-    let listItem = element.closest('.appointment-list-item');
-    if (!listItem) return; 
+// function showReportModal(element) {
+//     // ✅ Read data sent from the button
+//     const bookingId = element.dataset.bookingId;
+//     const refNumber = element.dataset.refNo;
+//     const date = element.dataset.date;
+//     const time = element.dataset.time;
 
-    // 2. Get the required data attributes (Reference No, Date, Time)
-    let refNoElement = listItem.querySelector('.ref-no-value');
-    let refNo = refNoElement ? refNoElement.textContent.trim() : 'N/A';
-    
-    // Get the values from the appointment details 
-    // These are in the required ISO format (YYYY-MM-DD for date, HH:MM for time) from data attributes.
-    let dateText = listItem.dataset.date || ''; // Get ISO date (YYYY-MM-DD) from data-date
-    let timeText = listItem.dataset.time || ''; // Get ISO time (HH:MM) from data-time 
-    
-    // 3. Populate the modal content
-    document.getElementById('report-ref-number').textContent = refNo;
-    
-    // Populate Date and Time with ISO format from data attributes
-    document.getElementById('issueDate').value = dateText;
-    document.getElementById('issueTime').value = timeText;
-    
-    // Reset form fields
-    document.getElementById('issueType').selectedIndex = 0;
-    document.getElementById('issueDetails').value = '';
-    
-    // NEW: Hide individual error messages when opening the modal
-    document.getElementById('issueTypeError').style.display = 'none';
-    document.getElementById('issueDetailsError').style.display = 'none';
-    
-    // Reset file inputs and their display text
-    document.getElementById('attachment1').value = '';
-    document.getElementById('file-name-1').textContent = 'No file chosen';
-    document.getElementById('attachment2').value = '';
-    document.getElementById('file-name-2').textContent = 'No file chosen';
-    document.getElementById('attachment3').value = '';
-    document.getElementById('file-name-3').textContent = 'No file chosen';
-    
-    // 4. Show the modal
-    let modal = document.getElementById('reportIssueModal');
-    if (modal) {
-        modal.style.display = 'block';
-        
-        // Close any open dropdown menu
-        let openDropdown = document.querySelector('.dropdown-menu-container .dropdown-menu.show');
-        if (openDropdown) {
-            openDropdown.classList.remove('show');
-        }
-    }
+//     // ✅ Send to modal
+//     document.getElementById('report-ref-number').textContent = refNumber;
+//     document.getElementById('report-booking-id').value = bookingId;
+//     document.getElementById('issueDate').value = date;
+//     document.getElementById('issueTime').value = time;
+
+//     // ✅ Auto-fill submission (current) date & time
+//     const now = new Date();
+//     document.getElementById('submissionDate').value = now.toISOString().split('T')[0];
+//     document.getElementById('submissionTime').value = now.toTimeString().slice(0, 5);
+
+//     // ✅ Reset select/textarea
+//     document.getElementById('issueType').value = '';
+//     document.getElementById('issueDetails').value = '';
+//     document.querySelectorAll('.custom-file-text').forEach(e => e.textContent = 'No file chosen');
+
+//     // ✅ Open modal
+//     document.getElementById('reportIssueModal').style.display = 'flex';
+// }
+
+// ✅ Update file label
+function updateFileName(input) {
+    const label = input.nextElementSibling.nextElementSibling;
+    label.textContent = input.files.length > 0 ? input.files[0].name : 'No file chosen';
 }
+
 
 /**
  * Closes any modal based on its ID.

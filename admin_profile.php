@@ -1,11 +1,75 @@
 <?php
-// PHP code for admin_profile.php (Updated for Admin)
-$firstName="Admin"; // Sample Admin First Name
-$lastName="Alazima"; // Sample Admin Last Name
-$birthday="1985-01-15"; // Sample Admin Birthday
-$contactNumber="+971551234567"; // Dapat 13 characters ang total (+971 at 9 digits)
-$emailAddress="admin@alazima.com"; // Sample Admin Email
+session_start();
+require 'connection.php'; // your DB connection
+
+// ✅ Ensure admin is logged in
+if (!isset($_SESSION['email'])) {
+    echo "<script>alert('Please log in first.'); window.location.href='landing_page2.html';</script>";
+    exit;
+}
+
+$admin_email = $_SESSION['email'];
+$success = false;
+$error = '';
+
+// Handle profile update
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['first_name'])) {
+    $firstName = $_POST['first_name'];
+    $lastName = $_POST['last_name'];
+    $birthday = $_POST['birthday'];
+    $contactNumber = $_POST['contact_number'];
+    $emailAddress = $_POST['email'];
+    $address = $_POST['address'] ?? null; // optional
+    $gender = $_POST['gender'] ?? 'Prefer Not to Say'; // default if not set
+    $age = $_POST['age'] ?? null;
+
+    $stmt = $conn->prepare("UPDATE admins SET first_name=?, last_name=?, birthday=?, contact_number=?, email=?, address=?, gender=?, age=? WHERE email=?");
+    $stmt->bind_param("ssssssssi", $firstName, $lastName, $birthday, $contactNumber, $emailAddress, $address, $gender, $age, $admin_email);
+    $stmt->execute();
+
+    if ($stmt->affected_rows >= 0) {
+        $_SESSION['email'] = $emailAddress;
+        header("Location: admin_profile.php?success=1");
+        exit;
+    } else {
+        $error = "Failed to update profile. Please try again.";
+    }
+
+    $stmt->close();
+}
+
+// Fetch admin data
+$stmt = $conn->prepare("SELECT first_name, last_name, birthday, contact_number, email, address, gender, age FROM admins WHERE email = ? LIMIT 1");
+$stmt->bind_param("s", $admin_email);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows === 0) {
+    echo "<script>alert('Admin not found.'); window.location.href='landing_page2.html';</script>";
+    exit;
+}
+
+$admin = $result->fetch_assoc();
+$stmt->close();
+$conn->close();
+
+// Pre-fill variables
+$firstName = $admin['first_name'];
+$lastName = $admin['last_name'];
+$birthday = $admin['birthday'];
+$contactNumber = $admin['contact_number'];
+$emailAddress = $admin['email'];
+$address = $admin['address'];
+$gender = $admin['gender'];
+$age = $admin['age'];
 ?>
+<!-- ✅ ADD THIS AFTER BODY TAG -->
+<?php if (isset($_GET['success']) && $_GET['success'] == 1): ?>
+<script>
+    alert("✅ Profile updated successfully!");
+</script>
+<?php endif; ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -342,6 +406,7 @@ background-color: #303099;
 </style>
 </head>
 
+
 <body>
 <header class="header" id="header">
 <nav class="nav container">
@@ -383,7 +448,8 @@ background-color: #303099;
 <li class="menu__item"><a href="AF_recurring.php" class="menu__link">Recurring Service</a></li>
 </ul>
 </li>
-
+<li class="menu__item"><a href="Reports.php?content=reports" class="menu__link" data-content="reports"><i class='bx bx-file-text'></i> Reports</a></li>
+   <li class="menu__item"><a href="concern.php?content=profile" class="menu__link" data-content="profile"><i class='bx bx-user'></i> Issues&Concerns</a></li>
 <li class="menu__item"><a href="admin_profile.php" class="menu__link active" data-content="profile"><i class='bx bx-user'></i> My Profile</a></li>
 <li class="menu__item"><a href="javascript:void(0)" class="menu__link" data-content="logout" onclick="showLogoutModal()"><i class='bx bx-log-out'></i> Logout</a></li>
 </ul>
@@ -391,56 +457,85 @@ background-color: #303099;
 
 <main class="dashboard__content">
 <div class="profile-form-container">
-<h2 class="main-title"><i class='bx bx-user'></i> Admin Profile</h2>
-<p class="page-description">Review and update your personal and contact information.</p>
+    <h2 class="main-title"><i class='bx bx-user'></i> Admin Profile</h2>
+    <p class="page-description">Review and update your personal and contact information.</p>
 
-<form id="profileForm" method="POST">
-<div class="form-grid">
-<div class="form-group">
-<label for="firstName">First name:</label>
-<input type="text" id="firstName" name="firstName" value="<?php echo htmlspecialchars($firstName); ?>" required disabled>
-</div>
-<div class="form-group">
-<label for="lastName">Last name:</label>
-<input type="text" id="lastName" name="lastName" value="<?php echo htmlspecialchars($lastName); ?>" required disabled>
-</div>
-<div class="form-group">
-<label for="birthday">Birthday:</label>
-<input type="date" id="birthday" name="birthday" value="<?php echo $birthday; ?>" required disabled>
-</div>
-<div class="form-group">
-<label for="contactNumber">Contact Number:</label>
-<input type="tel" id="contactNumber" name="contactNumber"
-value="<?php echo htmlspecialchars($contactNumber); ?>"
-required disabled
-pattern="^\+971[0-9]{9}$"
-oninvalid="this.setCustomValidity('Contact Number must start with +971 and be followed by exactly 9 digits (e.g., +971501234567)')"
-oninput="this.setCustomValidity('')">
-</div>
-<div class="form-group form-group-full">
-<label for="emailAddress">Email Address:</label>
-<input type="email" id="emailAddress" name="emailAddress" value="<?php echo htmlspecialchars($emailAddress); ?>" required disabled>
-</div>
-</div>
+    
+    <form id="profileForm" method="POST">
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="first_name">First Name:</label>
+                <input type="text" id="first_name" name="first_name" 
+                       value="<?= htmlspecialchars($firstName) ?>" required disabled>
+            </div>
 
-<div class="form-actions">
-<button type="button" id="editBtn" class="btn btn--edit">Edit</button>
-<button type="submit" id="saveBtn" class="btn btn--save" style="display:none;">Save</button>
-<button type="button" id="cancelBtn" class="btn btn--cancel" style="display:none;">Cancel</button>
-</div>
-</form>
+            <div class="form-group">
+                <label for="last_name">Last Name:</label>
+                <input type="text" id="last_name" name="last_name" 
+                       value="<?= htmlspecialchars($lastName) ?>" required disabled>
+            </div>
+
+            <div class="form-group">
+                <label for="birthday">Birthday:</label>
+                <input type="date" id="birthday" name="birthday" 
+                       value="<?= $birthday ?>" required disabled>
+            </div>
+
+            <div class="form-group">
+                <label for="contact_number">Contact Number:</label>
+                <input type="tel" id="contact_number" name="contact_number"
+                       value="<?= htmlspecialchars($contactNumber) ?>" required disabled
+                       pattern="^\+971[0-9]{9}$"
+                       oninvalid="this.setCustomValidity('Contact Number must start with +971 and be followed by exactly 9 digits (e.g., +971501234567)')"
+                       oninput="this.setCustomValidity('')">
+            </div>
+
+            <div class="form-group form-group-full">
+                <label for="email">Email Address:</label>
+                <input type="email" id="email" name="email" 
+                       value="<?= htmlspecialchars($emailAddress) ?>" required disabled>
+            </div>
+
+            <div class="form-group">
+                <label for="address">Address:</label>
+                <input type="text" id="address" name="address" 
+                       value="<?= htmlspecialchars($address) ?>" disabled>
+            </div>
+
+            <div class="form-group">
+                <label for="gender">Gender:</label>
+                <select id="gender" name="gender" disabled>
+                    <option value="Male" <?= $gender==='Male'?'selected':'' ?>>Male</option>
+                    <option value="Female" <?= $gender==='Female'?'selected':'' ?>>Female</option>
+                    <option value="Prefer Not to Say" <?= $gender==='Prefer Not to Say'?'selected':'' ?>>Prefer Not to Say</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="age">Age:</label>
+                <input type="number" id="age" name="age" 
+                       value="<?= htmlspecialchars($age) ?>" min="0" disabled>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="button" id="editBtn" class="btn btn--edit">Edit</button>
+            <button type="submit" id="saveBtn" class="btn btn--save" style="display:none;">Save</button>
+            <button type="button" id="cancelBtn" class="btn btn--cancel" style="display:none;">Cancel</button>
+        </div>
+    </form>
 </div>
 </main>
-</div>
 
 <div id="successModal">
-<div class="modal-content">
-<i class='bx bx-check-circle'></i>
-<h3>Profile Saved!</h3>
-<p>Your changes have been successfully saved.</p>
-<button onclick="closeModal('successModal')">OK</button>
+    <div class="modal-content">
+        <i class='bx bx-check-circle'></i>
+        <h3>Profile Saved!</h3>
+        <p>Your changes have been successfully saved.</p>
+        <button onclick="closeModal('successModal')">OK</button>
+    </div>
 </div>
-</div>
+
 
 <div id="logoutModal">
 <div class="modal__content">
@@ -451,6 +546,52 @@ oninput="this.setCustomValidity('')">
 </div>
 </div>
 </div>
+
+<script>
+    
+const editBtn = document.getElementById('editBtn');
+const saveBtn = document.getElementById('saveBtn');
+const cancelBtn = document.getElementById('cancelBtn');
+const formFields = document.querySelectorAll('#profileForm input, #profileForm select');
+
+let originalValues = {};
+
+// Save original values
+formFields.forEach(field => {
+    originalValues[field.id] = field.value;
+});
+
+// Edit button
+editBtn.addEventListener('click', () => {
+    formFields.forEach(field => field.disabled = false);
+    editBtn.style.display = 'none';
+    saveBtn.style.display = 'inline-block';
+    cancelBtn.style.display = 'inline-block';
+});
+
+// Cancel button
+cancelBtn.addEventListener('click', () => {
+    formFields.forEach(field => {
+        field.value = originalValues[field.id];
+        field.disabled = true;
+    });
+    editBtn.style.display = 'inline-block';
+    saveBtn.style.display = 'none';
+    cancelBtn.style.display = 'none';
+});
+
+// Optional: Show success modal after form submission
+function showSuccessModal() {
+    const modal = document.getElementById('successModal');
+    modal.style.display = 'block';
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if(modal) modal.style.display = 'none';
+}
+</script>
+
 
 <script>
 // --- START SIDEBAR DROPDOWN TOGGLE LOGIC (NEW) ---

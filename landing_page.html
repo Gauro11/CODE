@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -15,6 +16,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 
 </head>
+
 
 <body>
     <header class="header" id="header">
@@ -163,7 +165,8 @@
             <h2 class="section-title">Building Trust and Delivering Excellence, <br> One Client Review at a Time</h2>
 
             <div class="reviews__container swiper">
-                <div class="swiper-wrapper">
+                <div class="swiper-wrapper" id="reviews-container">
+                    <!-- Reviews will be loaded dynamically here -->
                     <div class="review-card swiper-slide">
                         <div class="stars">
                             <i class="fas fa-star"></i>
@@ -172,73 +175,8 @@
                             <i class="fas fa-star"></i>
                             <i class="fas fa-star"></i>
                         </div>
-                        <p class="review-text">Reliable and efficient cleaning services! Highly efficient, met all my expectations and more, they were there on time and left my duplex in pristine condition. Thank you Alazima Cleaning.</p>
-                        <p class="reviewer-name">Ava Al Mansoori</p>
-                        <p class="reviewer-role">Customer</p>
-                    </div>
-
-                    <div class="review-card swiper-slide">
-                        <div class="stars">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <p class="review-text">I highly recommend Alazima Cleaning for reliable and efficient cleaning services! Highly efficient, met all my expectations and more, they were there on time and left my home in pristine condition.</p>
-                        <p class="reviewer-name">Jason Al Farsi</p>
-                        <p class="reviewer-role">Customer</p>
-                    </div>
-
-                    <div class="review-card swiper-slide">
-                        <div class="stars">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <p class="review-text">Amazing and highly efficient, met all my expectations and more, they were there on time and left my duplex in pristine condition. Thank you Alazima Cleaning Services!</p>
-                        <p class="reviewer-name">Rayaan Syed</p>
-                        <p class="reviewer-role">Customer</p>
-                    </div>
-
-                    <div class="review-card swiper-slide">
-                        <div class="stars">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <p class="review-text">Amazing and highly efficient, met all my expectations and more, they were there on time and left my duplex in pristine condition. Thank you Alazima Cleaning Services!</p>
-                        <p class="reviewer-name">Rayaan Syed</p>
-                        <p class="reviewer-role">Customer</p>
-                    </div>
-
-                    <div class="review-card swiper-slide">
-                        <div class="stars">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <p class="review-text">Amazing and highly efficient, met all my expectations and more, they were there on time and left my duplex in pristine condition. Thank you Alazima Cleaning Services!</p>
-                        <p class="reviewer-name">Rayaan Syed</p>
-                        <p class="reviewer-role">Customer</p>
-                    </div>
-
-                    <div class="review-card swiper-slide">
-                        <div class="stars">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <p class="review-text">Amazing and highly efficient, met all my expectations and more, they were there on time and left my duplex in pristine condition. Thank you Alazima Cleaning Services!</p>
-                        <p class="reviewer-name">Rayaan Syed</p>
+                        <p class="review-text">Loading reviews...</p>
+                        <p class="reviewer-name">Please wait</p>
                         <p class="reviewer-role">Customer</p>
                     </div>
                 </div>
@@ -263,21 +201,18 @@
             navToggle = document.getElementById('nav-toggle'),
             navClose = document.getElementById('nav-close')
 
-        /* Menu show */
         if (navToggle) {
             navToggle.addEventListener('click', () => {
                 navMenu.classList.add('show-menu')
             })
         }
 
-        /* Menu hidden */
         if (navClose) {
             navClose.addEventListener('click', () => {
                 navMenu.classList.remove('show-menu')
             })
         }
 
-        /* REMOVE MENU MOBILE (if clicking a link closes the menu) */
         const navLink = document.querySelectorAll('.nav__link')
 
         function linkAction() {
@@ -335,16 +270,6 @@
             }
         });
 
-        document.addEventListener("DOMContentLoaded", function() {
-            setTimeout(() => {
-                if (window.scrollY > header.offsetHeight) {
-                    hideHeaderTimeout = setTimeout(makeHeaderHidden, 2000);
-                } else {
-                    makeHeaderVisible();
-                }
-            }, 100);
-        });
-
         /*=============== ACTIVE LINK SCROLL SECTION ===============*/
         const sections = document.querySelectorAll('section[id]');
         const navLinks = document.querySelectorAll('.nav__link');
@@ -382,9 +307,73 @@
 
         window.addEventListener('scroll', scrollActive);
 
+        /*=============== FETCH REVIEWS FROM DATABASE ===============*/
+        let swiperInstance = null;
+
+        function generateStars(rating) {
+            let starsHTML = '';
+            const fullStars = Math.floor(rating);
+            const hasHalfStar = rating % 1 >= 0.5;
+            
+            for (let i = 0; i < fullStars; i++) {
+                starsHTML += '<i class="fas fa-star"></i>';
+            }
+            
+            if (hasHalfStar && fullStars < 5) {
+                starsHTML += '<i class="fas fa-star-half-alt"></i>';
+            }
+            
+            const emptyStars = 5 - Math.ceil(rating);
+            for (let i = 0; i < emptyStars; i++) {
+                starsHTML += '<i class="far fa-star"></i>';
+            }
+            
+            return starsHTML;
+        }
+
+        function loadReviews() {
+            fetch('fetch_reviews.php')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.reviews.length > 0) {
+                        const reviewsContainer = document.getElementById('reviews-container');
+                        reviewsContainer.innerHTML = '';
+
+                        data.reviews.forEach(review => {
+                            const reviewCard = document.createElement('div');
+                            reviewCard.className = 'review-card swiper-slide';
+                            
+                            reviewCard.innerHTML = `
+                                <div class="stars">
+                                    ${generateStars(review.rating_stars)}
+                                </div>
+                                <p class="review-text">${review.rating_comment}</p>
+                                <p class="reviewer-name">${review.full_name || 'Anonymous Customer'}</p>
+                                <p class="reviewer-role">Customer</p>
+                            `;
+                            
+                            reviewsContainer.appendChild(reviewCard);
+                        });
+
+                        // Destroy existing swiper if it exists
+                        if (swiperInstance) {
+                            swiperInstance.destroy(true, true);
+                        }
+
+                        // Initialize new swiper
+                        initializeSwiper();
+                    } else {
+                        console.log('No reviews found or error loading reviews');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching reviews:', error);
+                });
+        }
+
         /*=============== SWIPER JS INITIALIZATION ===============*/
-        document.addEventListener("DOMContentLoaded", function() {
-            new Swiper(".reviews__container", {
+        function initializeSwiper() {
+            swiperInstance = new Swiper(".reviews__container", {
                 slidesPerView: 1,
                 spaceBetween: 30,
                 loop: true,
@@ -411,6 +400,20 @@
                 },
                 speed: 800,
             });
+        }
+
+        // Load reviews when page loads
+        document.addEventListener("DOMContentLoaded", function() {
+            loadReviews();
+            
+            // Initialize header behavior
+            setTimeout(() => {
+                if (window.scrollY > header.offsetHeight) {
+                    hideHeaderTimeout = setTimeout(makeHeaderHidden, 2000);
+                } else {
+                    makeHeaderVisible();
+                }
+            }, 100);
         });
     </script>
 </body>

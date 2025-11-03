@@ -1,14 +1,214 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/debug_issues.log'); // Creates log file in same folder
+
 session_start();
 require 'connection.php';
 
-// Get logged-in client email
+// ✅ Ensure user is logged in
 $client_email = $_SESSION['email'] ?? null;
+if (!$client_email) {
+    echo "<script>alert('Please log in first.'); window.location.href='login.php';</script>";
+    exit;
+}
 
-// Fetch completed one-time bookings
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+
+   $booking_id = $_POST['report-booking-id'];
+$issue_type = $_POST['issueType'];
+$issue_description = $_POST['issueDetails'];
+
+
+    date_default_timezone_set('Asia/Manila');
+    $issue_report_date = date('Y-m-d');
+    $issue_report_time = date('H:i:s');
+
+    // Handle images
+    $photo1 = null; $photo2 = null; $photo3 = null;
+
+   if (!empty($_FILES['attachment1']['name'])) {
+    $photo1 = "uploads/" . time() . "_1_" . basename($_FILES['attachment1']['name']);
+    move_uploaded_file($_FILES['attachment1']['tmp_name'], $photo1);
+}
+
+  if (!empty($_FILES['attachment2']['name'])) {
+    $photo1 = "uploads/" . time() . "_1_" . basename($_FILES['attachment2']['name']);
+    move_uploaded_file($_FILES['attachment2']['tmp_name'], $photo1);
+}
+
+   if (!empty($_FILES['attachment3']['name'])) {
+    $photo1 = "uploads/" . time() . "_1_" . basename($_FILES['attachment3']['name']);
+    move_uploaded_file($_FILES['attachment3']['tmp_name'], $photo1);
+}
+
+
+    $query = "UPDATE bookings SET 
+        issue_type='$issue_type',
+        issue_description='$issue_description',
+        issue_report_date='$issue_report_date',
+        issue_report_time='$issue_report_time',
+        issue_photo1='$photo1',
+        issue_photo2='$photo2',
+        issue_photo3='$photo3'
+        WHERE id='$booking_id'";
+
+    if ($conn->query($query)) {
+        echo "success";
+    } else {
+        echo "error: " . $conn->error;
+    }
+}
+// =============================
+// HANDLE REPORT ISSUE SUBMISSION
+// =============================
+// =============================
+// HANDLE REPORT ISSUE SUBMISSION
+// =============================
+if (isset($_POST['report-booking-id'])) {
+    // Force display errors on screen for debugging
+    ini_set('display_errors', 1);
+    error_reporting(E_ALL);
+    
+    echo "<!DOCTYPE html><html><head><title>Debug Output</title></head><body>";
+    echo "<h1>🔍 DEBUG OUTPUT</h1>";
+    echo "<div style='background:#000; color:#0f0; padding:20px; font-family:monospace;'>";
+    
+    echo "<h2>POST Data Received:</h2>";
+    echo "<pre>" . print_r($_POST, true) . "</pre>";
+    
+    echo "<h2>Extracted Values:</h2>";
+    $booking_id = intval($_POST['report-booking-id']);
+    $issue_type = $_POST['issueType'] ?? '';
+    $issue_description = $_POST['issueDetails'] ?? '';
+    $submission_date = $_POST['submissionDate'] ?? date('Y-m-d');
+    $submission_time = $_POST['submissionTime'] ?? date('H:i:s');
+    
+    echo "Booking ID: " . $booking_id . "<br>";
+    echo "Issue Type: '" . htmlspecialchars($issue_type) . "' (Length: " . strlen($issue_type) . ")<br>";
+    echo "Issue Description: '" . htmlspecialchars(substr($issue_description, 0, 100)) . "...' (Length: " . strlen($issue_description) . ")<br>";
+    echo "Submission Date: " . $submission_date . "<br>";
+    echo "Submission Time: " . $submission_time . "<br>";
+    
+    // Check if booking exists
+    echo "<h2>Checking if Booking Exists:</h2>";
+    $check = $conn->query("SELECT id, service_type, status, email FROM bookings WHERE id = $booking_id");
+    if ($check && $check->num_rows > 0) {
+        $existing = $check->fetch_assoc();
+        echo "✅ BOOKING FOUND:<br>";
+        echo "ID: " . $existing['id'] . "<br>";
+        echo "Service: " . $existing['service_type'] . "<br>";
+        echo "Status: " . $existing['status'] . "<br>";
+        echo "Email: " . $existing['email'] . "<br>";
+    } else {
+        echo "❌ BOOKING NOT FOUND!<br>";
+    }
+    
+    // Handle file uploads (simplified for debug)
+    $upload_dir = 'uploads/issues/';
+    if (!is_dir($upload_dir)) {
+        mkdir($upload_dir, 0777, true);
+    }
+    
+    $photo1 = null;
+    $photo2 = null;
+    $photo3 = null;
+    
+    if (isset($_FILES['attachment1']) && $_FILES['attachment1']['error'] == 0) {
+        $filename1 = time() . '_1_' . basename($_FILES['attachment1']['name']);
+        if (move_uploaded_file($_FILES['attachment1']['tmp_name'], $upload_dir . $filename1)) {
+            $photo1 = $filename1;
+        }
+    }
+    
+    if (isset($_FILES['attachment2']) && $_FILES['attachment2']['error'] == 0) {
+        $filename2 = time() . '_2_' . basename($_FILES['attachment2']['name']);
+        if (move_uploaded_file($_FILES['attachment2']['tmp_name'], $upload_dir . $filename2)) {
+            $photo2 = $filename2;
+        }
+    }
+    
+    if (isset($_FILES['attachment3']) && $_FILES['attachment3']['error'] == 0) {
+        $filename3 = time() . '_3_' . basename($_FILES['attachment3']['name']);
+        if (move_uploaded_file($_FILES['attachment3']['tmp_name'], $upload_dir . $filename3)) {
+            $photo3 = $filename3;
+        }
+    }
+    
+    echo "<h2>Preparing SQL Statement:</h2>";
+    $stmt = $conn->prepare("UPDATE bookings SET 
+            issue_type = ?,
+            issue_description = ?,
+            issue_report_date = ?,
+            issue_report_time = ?,
+            issue_photo1 = ?,
+            issue_photo2 = ?,
+            issue_photo3 = ?
+            WHERE id = ?");
+    
+    if (!$stmt) {
+        echo "❌ PREPARE FAILED: " . $conn->error . "<br>";
+        die();
+    }
+    
+    echo "✅ Statement prepared<br>";
+    
+    $stmt->bind_param("sssssssi", 
+        $issue_type, 
+        $issue_description, 
+        $submission_date, 
+        $submission_time,
+        $photo1,
+        $photo2,
+        $photo3,
+        $booking_id
+    );
+    
+    echo "<h2>Executing Query:</h2>";
+    echo "SQL: UPDATE bookings SET issue_type='$issue_type', issue_description='$issue_description', ... WHERE id=$booking_id<br>";
+    
+    if ($stmt->execute()) {
+        $affected = $stmt->affected_rows;
+        echo "✅ QUERY EXECUTED!<br>";
+        echo "Affected Rows: " . $affected . "<br>";
+        
+        if ($affected > 0) {
+            echo "<h2 style='color:#0f0;'>✅ SUCCESS! Data was saved!</h2>";
+            
+            // Verify what was saved
+            $verify = $conn->query("SELECT issue_type, issue_description, issue_report_date FROM bookings WHERE id = $booking_id");
+            if ($verify && $verify->num_rows > 0) {
+                $saved = $verify->fetch_assoc();
+                echo "<h3>Data now in database:</h3>";
+                echo "issue_type: '" . htmlspecialchars($saved['issue_type']) . "'<br>";
+                echo "issue_description: '" . htmlspecialchars(substr($saved['issue_description'], 0, 100)) . "...'<br>";
+                echo "issue_report_date: " . $saved['issue_report_date'] . "<br>";
+            }
+        } else {
+            echo "<h2 style='color:#f00;'>⚠️ WARNING: No rows were affected!</h2>";
+            echo "This means either:<br>";
+            echo "1. The booking ID doesn't exist<br>";
+            echo "2. The data is identical to what's already there<br>";
+        }
+    } else {
+        echo "❌ EXECUTE FAILED: " . $stmt->error . "<br>";
+    }
+    
+    $stmt->close();
+    
+    echo "</div>";
+    echo "<p><a href='FR_one-time.php'>← Go Back</a></p>";
+    echo "</body></html>";
+    exit;
+}
+
+// =============================
+// FETCH COMPLETED ONE-TIME BOOKINGS
+// =============================
 $sql = "SELECT * FROM bookings 
-WHERE status = 'Completed' 
-AND booking_type = 'One-Time' ";
+        WHERE status = 'Completed' 
+        AND booking_type = 'One-Time' ";
 
 if ($client_email) {
     $sql .= "AND email = '" . $conn->real_escape_string($client_email) . "' ";
@@ -17,7 +217,9 @@ $sql .= "ORDER BY service_date DESC, service_time DESC";
 
 $result = $conn->query($sql);
 
-// Store bookings by service type
+// =============================
+// STORE BOOKINGS BY SERVICE TYPE
+// =============================
 $bookings_by_type = [
     'Checkout Cleaning' => [],
     'In-House Cleaning' => [],
@@ -30,32 +232,32 @@ function calculateFinalPrice($booking) {
     $duration = floatval($booking['duration'] ?? 1);
     $materialsStr = $booking['materials_provided'] ?? '';
 
-    // Extract numeric price per hour
     preg_match('/(\d+(\.\d+)?)\s*AED/i', $materialsStr, $matches);
     $pricePerHour = isset($matches[1]) ? floatval($matches[1]) : 0;
 
     $finalPrice = $pricePerHour * $duration;
 
-    // Double price if materials are provided (check "Yes" anywhere)
     if (stripos($materialsStr, 'yes') !== false) {
-        $finalPrice *= 2;
+        $finalPrice *= 1; // optional: modify if needed
     }
 
     return $finalPrice;
 }
 
-// Populate bookings and calculate final price
+// Populate bookings array and calculate price
 if ($result && $result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
         $service_type = $row['service_type'] ?? 'Other';
         if (isset($bookings_by_type[$service_type])) {
-            $row['final_price'] = calculateFinalPrice($row); // <-- key fix
+            $row['final_price'] = calculateFinalPrice($row);
             $bookings_by_type[$service_type][] = $row;
         }
     }
 }
 
-// Helper functions
+// =============================
+// HELPER FUNCTIONS
+// =============================
 function formatDate($date) {
     return empty($date) ? 'N/A' : date('F d, Y', strtotime($date));
 }
@@ -76,7 +278,9 @@ function generateRefNo($id, $service_type, $date) {
     $dateStr = date('ym', strtotime($date));
     return "ALZ-{$prefix}-{$dateStr}-" . str_pad($id, 4, '0', STR_PAD_LEFT);
 }
+
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -146,6 +350,109 @@ function generateRefNo($id, $service_type, $date) {
     margin-right: 5px;
     min-width: 65px;
 }
+.issue-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.issue-card {
+    background: #ffffff;
+    border: 1px solid #e7e7e7;
+    border-radius: 10px;
+    padding: 18px 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    transition: 0.2s ease-in-out;
+}
+
+.issue-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.issue-card h4 {
+    margin: 0;
+    color: #333;
+    font-size: 1.2em;
+    font-weight: 600;
+}
+
+.issue-card p {
+    margin: 6px 0;
+    color: #555;
+    font-size: 0.95em;
+}
+
+.issue-btn {
+    margin-top: 10px;
+    background-color: #ff6b00;
+    color: #fff;
+    border: none;
+    padding: 9px 15px;
+    border-radius: 6px;
+    font-size: 0.9em;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: 0.2s;
+}
+
+.issue-btn:hover {
+    background-color: #ff5500;
+}
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(2px);
+}
+
+.modal-content {
+    background: #fff;
+    width: 420px;
+    margin: 10% auto;
+    padding: 25px;
+    border-radius: 10px;
+    animation: fadeIn .25s ease;
+}
+
+.modal-content h3 {
+    margin-top: 0;
+}
+
+.submit-btn {
+    background-color: #ff6b00;
+    color: #fff;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.cancel-btn {
+    background: #777;
+    color: #fff;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-left: 8px;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+
+
 </style>
 </head>
     
@@ -255,9 +562,9 @@ function generateRefNo($id, $service_type, $date) {
                 <button class="tab-button" onclick="openTab(event, 'deep-cleaning')">
                     <i class='bx bx-water'></i> Deep Cleaning
                 </button>
-                <button class="tab-button" onclick="openTab(event, 'ratings-summary')">
+                <!-- <button class="tab-button" onclick="openTab(event, 'ratings-summary')">
                     <i class='bx bx-stats'></i> Ratings Summary
-                </button>
+                </button> -->
                 <button class="tab-button" onclick="openTab(event, 'issues-concern')">
                     <i class='bx bx-error-alt'></i> Issues and Concern
                 </button>
@@ -285,60 +592,83 @@ function renderBookingCard($booking) {
                    ' COMPLETED' . ($hasRating ? ' RATED' : '');
     ?>
     <div class="appointment-list-item" 
-        data-date="<?= htmlspecialchars($booking['service_date']) ?>" 
-        data-time="<?= htmlspecialchars($booking['service_time']) ?>"
-        data-duration="<?= htmlspecialchars($booking['duration'] ?? 'N/A') ?>"
-        data-client-type="<?= htmlspecialchars($booking['client_type'] ?? 'N/A') ?>"
-        data-service-type="<?= htmlspecialchars($booking['service_type'] ?? 'N/A') ?>"
-        data-address="<?= htmlspecialchars($booking['address'] ?? 'N/A') ?>"
-        data-search-terms="<?= htmlspecialchars($searchTerms) ?>"
-        data-property-layout="<?= htmlspecialchars($booking['property_type'] ?? 'N/A') ?>"
-        data-materials-required="<?= htmlspecialchars($booking['materials_provided'] ?? 'No') ?>"
-        data-materials-description="<?= htmlspecialchars($booking['materials_needed'] ?? 'N/A') ?>"
-        data-additional-request="<?= htmlspecialchars($booking['comments'] ?? 'None') ?>"
-        data-image-1="<?= htmlspecialchars($booking['media1'] ?? '') ?>"
-        data-image-2="<?= htmlspecialchars($booking['media2'] ?? '') ?>"
-        data-image-3="<?= htmlspecialchars($booking['media3'] ?? '') ?>"
-        data-has-feedback="<?= $hasRating ? 'true' : 'false' ?>"
-        data-rating-stars="<?= htmlspecialchars($booking['rating_stars'] ?? '0') ?>" 
-        data-rating-feedback="<?= htmlspecialchars($booking['rating_feedback'] ?? '') ?>"
-        data-status="COMPLETED"
-        data-ref-no="<?= htmlspecialchars($refNo) ?>"
-        data-has-issue="<?= $hasIssue ? 'true' : 'false' ?>">
+    data-issue-type="<?= htmlspecialchars($booking['issue_type'] ?? '') ?>"
+data-issue-description="<?= htmlspecialchars($booking['issue_description'] ?? '') ?>"
+data-submission-date="<?= htmlspecialchars($booking['issue_report_date'] ?? '') ?>"
+data-submission-time="<?= htmlspecialchars($booking['issue_report_time'] ?? '') ?>"
+data-photo1="<?= htmlspecialchars($booking['issue_photo1'] ?? '') ?>"
+data-photo2="<?= htmlspecialchars($booking['issue_photo2'] ?? '') ?>"
+data-photo3="<?= htmlspecialchars($booking['issue_photo3'] ?? '') ?>"
+    data-booking-id="<?= htmlspecialchars($booking['id']) ?>"
+    data-date="<?= htmlspecialchars($booking['service_date']) ?>" 
+    data-time="<?= htmlspecialchars($booking['service_time']) ?>"
+    data-duration="<?= htmlspecialchars($booking['duration'] ?? 'N/A') ?>"
+    data-client-type="<?= htmlspecialchars($booking['client_type'] ?? 'N/A') ?>"
+    data-service-type="<?= htmlspecialchars($booking['service_type'] ?? 'N/A') ?>"
+    data-address="<?= htmlspecialchars($booking['address'] ?? 'N/A') ?>"
+    data-search-terms="<?= htmlspecialchars($searchTerms) ?>"
+    data-property-layout="<?= htmlspecialchars($booking['property_type'] ?? 'N/A') ?>"
+    data-materials-required="<?= htmlspecialchars($booking['materials_provided'] ?? 'No') ?>"
+    data-materials-description="<?= htmlspecialchars($booking['materials_needed'] ?? 'N/A') ?>"
+    data-additional-request="<?= htmlspecialchars($booking['comments'] ?? 'None') ?>"
+    data-image-1="<?= htmlspecialchars($booking['media1'] ?? '') ?>"
+    data-image-2="<?= htmlspecialchars($booking['media2'] ?? '') ?>"
+    data-image-3="<?= htmlspecialchars($booking['media3'] ?? '') ?>"
+    data-has-feedback="<?= $hasRating ? 'true' : 'false' ?>"
+    data-rating-stars="<?= htmlspecialchars($booking['rating_stars'] ?? '0') ?>" 
+    data-rating-feedback="<?= htmlspecialchars($booking['rating_comment'] ?? 'No feedback provided.') ?>"
+    data-status="COMPLETED"
+    data-ref-no="<?= htmlspecialchars($refNo) ?>"
+    data-has-issue="<?= $hasIssue ? 'true' : 'false' ?>">
+    
+    <div class="button-group-top">
+        <a href="javascript:void(0)" class="action-btn view-details-btn" onclick="showDetailsModal(this.closest('.appointment-list-item'))">
+            <i class='bx bx-show'></i> View Details
+        </a>
 
-        <div class="button-group-top">
-            <a href="javascript:void(0)" class="action-btn view-details-btn" onclick="showDetailsModal(this.closest('.appointment-list-item'))">
-                <i class='bx bx-show'></i> View Details
-            </a>
+        <?php if ($hasRating): ?>
+        <button type="button" class="action-btn feedback-btn" onclick="showViewRatingModal(this.closest('.appointment-list-item'))">
+            <i class='bx bx-star'></i> View Rating
+        </button>
+        <?php else: ?>
+        <a href="FR_one-time_form.php?id=<?= $booking['id']; ?>&action=leave" class="action-btn feedback-btn">
+            <i class='bx bx-star'></i> Rate Now
+        </a>
+        <?php endif; ?>
 
-            <?php if ($hasRating): ?>
-            <button type="button" class="action-btn feedback-btn" onclick="showViewRatingModal(this.closest('.appointment-list-item'))">
-                <i class='bx bx-star'></i> View Rating
-            </button>
-            <?php else: ?>
-    <a href="FR_one-time_form.php?id=<?= $booking['id']; ?>&action=leave" class="action-btn feedback-btn">
-        <i class='bx bx-star'></i> Rate Now
-    </a>
-<?php endif; ?>
+
 
             
 
            
 
-            <div class="dropdown-menu-container">
-                <button class="more-options-btn" onclick="toggleDropdown(this)"><i class='bx bx-dots-vertical-rounded'></i></button>
-                <ul class="dropdown-menu">
-                    <?php if ($hasRating): ?>
-                    <li><a href="FR_one-time_form.php?ref=<?= urlencode($refNo) ?>&action=edit" class="edit-rating-link"><i class='bx bx-edit'></i> Edit Rating</a></li>
-                    <?php endif; ?>
-                    <li><a href="https://wa.me/971529009188" target="_blank" class="whatsapp-link"><i class='bx bxl-whatsapp'></i> Chat on WhatsApp</a></li>
-                    <?php if ($hasIssue): ?>
-                    <li><a href="javascript:void(0)" class="report-link view-issue-link" onclick="viewReportedIssue(this.closest('.appointment-list-item'))"><i class='bx bx-error-alt'></i> View Reported Issue</a></li>
-                    <?php else: ?>
-                    <li><a href="javascript:void(0)" class="report-link" onclick="showReportModal(this)"><i class='bx bx-error-alt'></i> Report Issue</a></li>
-                    <?php endif; ?>
-                </ul>
-            </div>
+          <div class="dropdown-menu-container">
+    <button class="more-options-btn" onclick="toggleDropdown(this)"><i class='bx bx-dots-vertical-rounded'></i></button>
+    <ul class="dropdown-menu">
+        <?php if ($hasRating): ?>
+        
+        <?php endif; ?>
+        <li><a href="https://wa.me/971529009188" target="_blank" class="whatsapp-link"><i class='bx bxl-whatsapp'></i> Chat on WhatsApp</a></li>
+        <?php 
+        $hasIssue = isset($booking['issue_type']) && !empty($booking['issue_type']);
+        if ($hasIssue): 
+        ?>
+        <li><a href="javascript:void(0)" class="report-link view-issue-link" onclick="viewReportedIssue(this.closest('.appointment-list-item'))"><i class='bx bx-error-alt'></i> Reported Issue</a></li>
+        <?php else: ?>
+        <li>
+            <a href="#" 
+               class="report-link" 
+               onclick="event.preventDefault(); showReportModal(this); return false;"
+               data-booking-id="<?= htmlspecialchars($booking['id']) ?>"
+               data-ref-no="<?= htmlspecialchars($refNo) ?>"
+               data-date="<?= htmlspecialchars($booking['service_date']) ?>"
+               data-time="<?= htmlspecialchars($booking['service_time']) ?>">
+               <i class='bx bx-error-alt'></i> Report Issue
+            </a>
+        </li>
+        <?php endif; ?>
+    </ul>
+</div>
         </div>
 
         <div class="appointment-details">
@@ -603,42 +933,166 @@ function renderBookingCard($booking) {
             </div>
         </div>
 
-        <!-- Issues and Concern Tab -->
-        <div id="issues-concern" class="tab-content" style="display: none;">
-            <div class="summary-container">
-                <h3><i class='bx bx-error-alt'></i> Submitted Issues and Concerns</h3>
-                
-                <p class="page-description" style="font-size: 1.0em; color: #555; margin-bottom: 25px;">
-                    This section lists all the issues and concerns you have reported for your completed one-time services.
-                </p>
-                
-                <div class="filter-controls-tab" style="margin-bottom: 20px;">
-                    <select class="service-type-filter-dropdown" onchange="filterIssues(null, this.value)">
-                        <option value="all" selected>All Service Types</option>
-                        <option value="Checkout Cleaning">Checkout Cleaning</option>
-                        <option value="In-House Cleaning">In-House Cleaning</option>
-                        <option value="Refresh Cleaning">Refresh Cleaning</option>
-                        <option value="Deep Cleaning">Deep Cleaning</option>
-                    </select>
-                    
-                    <div class="search-container">
-                        <i class='bx bx-search'></i>
-                        <input type="text" placeholder="Search Reference No or Issue Type..." onkeyup="filterIssues(this.value, null)">
-                    </div>
-                </div>
-                
-                <div class="issue-list-container">
-                    <div class="no-issues-message" style="text-align: center; padding: 30px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9; color: #777;">
-                        <i class='bx bx-folder-open' style="font-size: 2em; display: block; margin-bottom: 10px;"></i>
-                        No reported issues found.
-                    </div>
-                    <!-- Dynamic issues list will be loaded here -->
-                </div>
+       <!-- Issues and Concern Tab -->
+<div id="issues-concern" class="tab-content" style="display: none;">
+    <div class="summary-container">
+        <h3><i class='bx bx-error-alt'></i> Submitted Issues and Concerns</h3>
+        
+        <p class="page-description" style="font-size: 1.0em; color: #555; margin-bottom: 25px;">
+            This section lists all the issues and concerns you have reported for your completed one-time services.
+        </p>
+        
+        <!-- FILTERS -->
+        <div class="filter-controls-tab" style="margin-bottom: 20px;">
+            <select class="service-type-filter-dropdown" onchange="filterIssues(null, this.value)">
+                <option value="all" selected>All Service Types</option>
+                <option value="Checkout Cleaning">Checkout Cleaning</option>
+                <option value="In-House Cleaning">In-House Cleaning</option>
+                <option value="Refresh Cleaning">Refresh Cleaning</option>
+                <option value="Deep Cleaning">Deep Cleaning</option>
+            </select>
+            
+            <div class="search-container">
+                <i class='bx bx-search'></i>
+                <input type="text" placeholder="Search Reference No or Issue Type..." onkeyup="filterIssues(this.value, null)">
             </div>
         </div>
+
+        <!-- ISSUE LIST - Display already reported issues from database -->
+        <div class="issue-list-container">
+            <?php
+            // Fetch bookings with reported issues only
+            $client_email = $_SESSION['email'];
+            $sql_issues = "SELECT * FROM bookings 
+                    WHERE status = 'Completed' 
+                    AND booking_type = 'One-Time'
+                    AND email = '" . $conn->real_escape_string($client_email) . "'
+                    AND issue_type IS NOT NULL AND issue_type != ''
+                    ORDER BY service_date DESC";
+
+            $res_issues = $conn->query($sql_issues);
+
+            if ($res_issues && $res_issues->num_rows > 0) {
+                while ($row = $res_issues->fetch_assoc()) {
+                    $refNo = generateRefNo($row['id'], $row['service_type'], $row['service_date']);
+            ?>
+                <div class="issue-card" 
+     data-booking-id="<?= htmlspecialchars($row['id']) ?>"
+     data-service-type="<?php echo htmlspecialchars($row['service_type']); ?>"
+     data-ref-no="<?= htmlspecialchars($refNo) ?>"
+     data-service-date="<?= htmlspecialchars($row['service_date']) ?>"
+     data-service-time="<?= htmlspecialchars($row['service_time']) ?>"
+     data-submission-date="<?= htmlspecialchars($row['submission_date'] ?? 'N/A') ?>"
+     data-submission-time="<?= htmlspecialchars($row['submission_time'] ?? 'N/A') ?>"
+     data-issue-type="<?= htmlspecialchars($row['issue_type']) ?>"
+     data-issue-description="<?= htmlspecialchars($row['issue_description']) ?>"
+     data-photo1="<?= htmlspecialchars($row['issue_photo1'] ?? '') ?>"
+     data-photo2="<?= htmlspecialchars($row['issue_photo2'] ?? '') ?>"
+     data-photo3="<?= htmlspecialchars($row['issue_photo3'] ?? '') ?>"
+     data-search-terms="<?php echo htmlspecialchars($refNo . ' ' . $row['issue_type']); ?>">
+    
+    <h4><?php echo htmlspecialchars($row['service_type']); ?></h4>
+    <p><strong>Ref No:</strong> <?php echo htmlspecialchars($refNo); ?></p>
+    <p><strong>Date:</strong> <?php echo formatDate($row['service_date']); ?> at <?php echo formatTime($row['service_time']); ?></p>
+    <p><strong>Issue Type:</strong> <span class="issue-type-badge" style="background-color: #ffeaa7; color: #d63031; padding: 3px 8px; border-radius: 4px; font-size: 0.9em;"><?php echo htmlspecialchars($row['issue_type']); ?></span></p>
+    
+    <button type="button" class="issue-btn"
+        onclick="viewIssueDetails(this)"
+        data-booking-id="<?= htmlspecialchars($row['id']) ?>">
+        <i class='bx bx-error'></i> View Details
+    </button>
+</div>
+            <?php
+                }
+            } else {
+            ?>
+                <div class="no-issues-message" style="text-align: center; padding: 30px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9; color: #777;">
+                    <i class='bx bx-folder-open' style="font-size: 2em; display: block; margin-bottom: 10px;"></i>
+                    <p style="font-size: 1.1em; margin: 10px 0;">No reported issues found.</p>
+                    <p style="font-size: 0.95em; color: #999;">Issues can be reported from the dropdown menu on each completed booking.</p>
+                </div>
+            <?php } ?>
+        </div>
+    </div>
+</div>
+<!-- View Issue Details Modal -->
+<div class="report-modal" id="viewIssueDetailsModal" onclick="if(event.target.id === 'viewIssueDetailsModal') closeModal('viewIssueDetailsModal')">
+    <div class="report-modal-content" style="max-width: 600px;">
+        <span class="report-close-btn" onclick="closeModal('viewIssueDetailsModal')">&times;</span> 
+        <h3>Reported Issue Details</h3>
+        
+        <div class="issue-details-content">
+            <p class="report-ref-display">
+                <strong>Reference No:</strong> <span id="view-issue-ref" class="report-ref-value"></span>
+            </p>
+            
+            <div class="issue-details-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0;">
+                <div>
+                    <label style="font-weight: bold; color: #555; font-size: 0.9em;">Service Date</label>
+                    <p id="view-issue-service-date" style="margin: 5px 0;">N/A</p>
+                </div>
+                <div>
+                    <label style="font-weight: bold; color: #555; font-size: 0.9em;">Service Time</label>
+                    <p id="view-issue-service-time" style="margin: 5px 0;">N/A</p>
+                </div>
+                <div>
+                    <label style="font-weight: bold; color: #555; font-size: 0.9em;">Date Reported</label>
+                    <p id="view-issue-submission-date" style="margin: 5px 0;">N/A</p>
+                </div>
+                <div>
+                    <label style="font-weight: bold; color: #555; font-size: 0.9em;">Time Reported</label>
+                    <p id="view-issue-submission-time" style="margin: 5px 0;">N/A</p>
+                </div>
+            </div>
+            
+            <hr style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;">
+            
+            <div style="margin: 15px 0;">
+                <label style="font-weight: bold; color: #555; font-size: 0.9em;">Issue Type</label>
+                <p id="view-issue-type-detail" style="margin: 5px 0; padding: 8px; background: #ffeaa7; color: #d63031; border-radius: 4px; display: inline-block;">N/A</p>
+            </div>
+            
+            <div style="margin: 15px 0;">
+                <label style="font-weight: bold; color: #555; font-size: 0.9em;">Description</label>
+                <div id="view-issue-description-detail" style="margin: 5px 0; padding: 12px; background: #f7f7f7; border-left: 3px solid #007bff; border-radius: 4px; line-height: 1.6;">
+                    No description provided.
+                </div>
+            </div>
+            
+            <div style="margin: 15px 0;">
+                <label style="font-weight: bold; color: #555; font-size: 0.9em;">Attachments</label>
+                <div id="view-issue-attachments-detail" style="margin: 10px 0;">
+                    <!-- Attachments will be populated here -->
+                </div>
+            </div>
+            
+            <hr style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;">
+            
+            <div style="text-align: center; padding: 15px; background: #fff3cd; border-radius: 6px; border: 1px solid #ffc107;">
+                <i class='bx bx-info-circle' style="font-size: 1.5em; color: #856404;"></i>
+                <p style="margin: 10px 0 0 0; color: #856404; font-size: 0.95em;">
+                    <strong>Status:</strong> Under Review - Our team will contact you shortly.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<!-- End of Issues and Concern Tab -->
+        
+    </main>
+</div>
+
+
+<!-- End of Issues and Concern Tab -->
         
     </main>
 </div> 
+
+<a href="#header" id="backToTopBtn" title="Back to Top"><i class='bx bx-up-arrow-alt'></i> Back to Top</a>
 
 <a href="#header" id="backToTopBtn" title="Back to Top"><i class='bx bx-up-arrow-alt'></i> Back to Top</a>
 
@@ -682,6 +1136,7 @@ function renderBookingCard($booking) {
 </div>
 
 <!-- Report Issue Modal -->
+<!-- Report Issue Modal -->
 <div class="report-modal" id="reportIssueModal" onclick="if(event.target.id === 'reportIssueModal') closeModal('reportIssueModal')">
     <div class="report-modal-content">
         <span class="report-close-btn" onclick="closeModal('reportIssueModal')">&times;</span> 
@@ -691,10 +1146,17 @@ function renderBookingCard($booking) {
             Reference No: <span id="report-ref-number" class="report-ref-value"></span>
         </p>
 
-        <form class="report-form" onsubmit="return submitReport();">
-            <input type="hidden" id="submissionDate" name="submissionDate">
-            <input type="hidden" id="submissionTime" name="submissionTime">
-            
+   <form class="report-form" method="POST" action="report_issue_process.php" enctype="multipart/form-data">
+
+
+
+
+  <input type="hidden" name="report-booking-id" id="reportBookingId">
+
+
+
+    <input type="hidden" id="submissionDate" name="submissionDate">
+    <input type="hidden" id="submissionTime" name="submissionTime">
             <div class="report-date-time-group">
                 <div>
                     <label for="issueDate">Date:</label>
@@ -707,19 +1169,19 @@ function renderBookingCard($booking) {
             </div>
 
             <label for="issueType">Type of Issue:</label>
-            <select id="issueType" onchange="clearError(this)">
+            <select id="issueType" name="issueType" onchange="clearError(this)" required>
                 <option value="" disabled selected>Select Issue Category</option>
-                <option value="damage">Property Damage</option>
-                <option value="unsatisfied">Unsatisfied with Quality of Cleaning</option>
-                <option value="late">Staff was Late/No Show</option>
-                <option value="staff_behavior">Staff Behavior/Professionalism</option>
-                <option value="billing">Billing/Payment Issue</option>
-                <option value="other">Other</option>
+                <option value="Property Damage">Property Damage</option>
+                <option value="Unsatisfied with Quality of Cleaning">Unsatisfied with Quality of Cleaning</option>
+                <option value="Staff was Late/No Show">Staff was Late/No Show</option>
+                <option value="Staff Behavior/Professionalism">Staff Behavior/Professionalism</option>
+                <option value="Billing/Payment Issue">Billing/Payment Issue</option>
+                <option value="Other">Other</option>
             </select>
             <div id="issueTypeError" class="error-message">Please complete this required field</div>
 
             <label for="issueDetails">Issue Description:</label>
-            <textarea id="issueDetails" placeholder="Please provide detailed description of the issue." oninput="clearError(this)"></textarea>
+            <textarea id="issueDetails" name="issueDetails" placeholder="Please provide detailed description of the issue." oninput="clearError(this)" required></textarea>
             <div id="issueDetailsError" class="error-message">Please complete this required field</div>
 
             <label>Attachment (up to 3 files - Photos/Videos):</label>
@@ -759,9 +1221,550 @@ function renderBookingCard($booking) {
                 Your issue report for Ref: <span id="submitted-ref-number" style="color: #B32133; font-weight: 700;"></span> has been received and is under review.
             </p>
             
-            <button onclick="closeModal('reportSuccessModal')" class="primary-btn report-confirm-btn">
+            <button onclick="closeModal('reportSuccessModal'); location.reload();" class="primary-btn report-confirm-btn">
                 Got It
             </button>
+        </div>
+    </div>
+</div>
+<script>console.log("🚀 Script loaded");
+
+// ✅ Test if element exists on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const hiddenInput = document.getElementById("reportBookingId");
+    console.log("📋 Hidden input on load:", hiddenInput);
+    
+    if (hiddenInput) {
+        console.log("   Current value:", hiddenInput.value);
+        console.log("   Name attribute:", hiddenInput.name);
+    } else {
+        console.error("❌ Hidden input #reportBookingId NOT FOUND on page!");
+    }
+    
+    // Test if modal exists
+    const modal = document.getElementById("reportIssueModal");
+    console.log("📋 Modal exists:", modal ? "YES" : "NO");
+    
+    // Find all report buttons
+    const reportButtons = document.querySelectorAll('[onclick*="showReportModal"]');
+    console.log("📋 Found", reportButtons.length, "report buttons");
+    
+    if (reportButtons.length > 0) {
+        console.log("   First button data-booking-id:", reportButtons[0].getAttribute('data-booking-id'));
+    }
+    
+    // ✅ Attach form submit handler
+    attachFormSubmitHandler();
+});
+
+// Show report modal function
+function showReportModal(button) {
+    console.log("=== showReportModal called ===");
+    console.log("Button element:", button);
+    
+    // Get booking ID from button
+    let bookingId = button.getAttribute("data-booking-id");
+    console.log("Step 1 - From button:", bookingId);
+    
+    // Try parent card if button doesn't have it
+    if (!bookingId) {
+        console.log("Step 2 - Trying parent card...");
+        const card = button.closest('.appointment-list-item') || button.closest('.issue-card');
+        console.log("   Parent card found:", card ? "YES" : "NO");
+        
+        if (card) {
+            bookingId = card.getAttribute("data-booking-id");
+            console.log("   From parent card:", bookingId);
+        }
+    }
+    
+    console.log("🔍 Final Booking ID:", bookingId);
+    console.log("   Type:", typeof bookingId);
+    console.log("   Length:", bookingId ? bookingId.length : 0);
+    
+    if (!bookingId || bookingId === '' || bookingId === 'undefined') {
+        console.error("❌ BOOKING ID IS INVALID!");
+        alert("Error: Booking ID not found! Check console for details.");
+        return;
+    }
+    
+    // Find the hidden input
+    const hiddenInput = document.getElementById("reportBookingId");
+    console.log("Hidden input element:", hiddenInput);
+    
+    if (hiddenInput) {
+        console.log("   Before setting - value:", hiddenInput.value);
+        hiddenInput.value = bookingId;
+        console.log("   After setting - value:", hiddenInput.value);
+        console.log("✅ Successfully set hidden input");
+    } else {
+        console.error("❌ Hidden input #reportBookingId NOT FOUND!");
+        alert("Form error: Hidden input element not found!");
+        return;
+    }
+    
+    // Get other data
+    let refNo = button.getAttribute("data-ref-no");
+    let date = button.getAttribute("data-date");
+    let time = button.getAttribute("data-time");
+    
+    console.log("Other data - RefNo:", refNo, "Date:", date, "Time:", time);
+    
+    // Try parent if button doesn't have them
+    if (!refNo || !date || !time) {
+        const card = button.closest('.appointment-list-item, .issue-card');
+        if (card) {
+            refNo = refNo || card.getAttribute("data-ref-no") || "N/A";
+            date = date || card.getAttribute("data-date") || "";
+            time = time || card.getAttribute("data-time") || "";
+        }
+    }
+    
+    // Populate fields
+    document.getElementById("report-ref-number").textContent = refNo;
+    document.getElementById("issueDate").value = date;
+    document.getElementById("issueTime").value = time;
+    
+    // Set submission date/time
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0];
+    const timeStr = now.toTimeString().split(' ')[0];
+    
+    document.getElementById("submissionDate").value = dateStr;
+    document.getElementById("submissionTime").value = timeStr;
+    
+    console.log("📅 All fields populated");
+    console.log("=== Opening modal ===");
+    
+    // Show modal
+    document.getElementById("reportIssueModal").style.display = "block";
+}
+
+// ✅ NEW: Form submit handler with AJAX
+function attachFormSubmitHandler() {
+    const reportForm = document.querySelector('.report-form');
+    
+    if (reportForm) {
+        console.log("✅ Form validation attached");
+        
+        reportForm.addEventListener('submit', function(e) {
+            e.preventDefault(); // Prevent normal form submission
+            
+            console.log("=== FORM SUBMITTING (AJAX) ===");
+            
+            const bookingIdInput = document.querySelector('input[name="report-booking-id"]');
+            const issueType = document.getElementById('issueType');
+            const issueDetails = document.getElementById('issueDetails');
+            
+            // Validate
+            let isValid = true;
+            
+            if (!bookingIdInput || !bookingIdInput.value.trim()) {
+                console.error("❌ Booking ID is empty!");
+                alert("❌ Error: Booking ID is missing!");
+                return false;
+            }
+            
+            if (!issueType.value) {
+                document.getElementById('issueTypeError').style.display = 'block';
+                isValid = false;
+            }
+            
+            if (!issueDetails.value.trim()) {
+                document.getElementById('issueDetailsError').style.display = 'block';
+                isValid = false;
+            }
+            
+            if (!isValid) {
+                return false;
+            }
+            
+            console.log("✅ Validation passed, submitting via AJAX...");
+            
+            // Get ref number for success modal
+            const refNumber = document.getElementById('report-ref-number').textContent;
+            
+            // Create FormData
+            const formData = new FormData(reportForm);
+            
+            // Show loading (optional)
+            const submitButton = reportForm.querySelector('button[type="submit"]');
+            const originalButtonText = submitButton.textContent;
+            submitButton.disabled = true;
+            submitButton.textContent = 'Submitting...';
+            
+            // Send AJAX request
+            fetch('report_issue_process.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Server response:", data);
+                
+                // Re-enable button
+                submitButton.disabled = false;
+                submitButton.textContent = originalButtonText;
+                
+                if (data.success) {
+                    // Close report modal
+                    closeModal('reportIssueModal');
+                    
+                    // Update success modal
+                    document.getElementById('submitted-ref-number').textContent = refNumber;
+                    
+                    // Show success modal
+                    document.getElementById('reportSuccessModal').style.display = 'block';
+                    
+                    console.log("✅ Report submitted successfully!");
+                } else {
+                    alert('Error: ' + (data.message || 'Failed to submit report'));
+                }
+            })
+            .catch(error => {
+                console.error("❌ AJAX Error:", error);
+                
+                // Re-enable button
+                submitButton.disabled = false;
+                submitButton.textContent = originalButtonText;
+                
+                alert('Network error. Please check your connection and try again.');
+            });
+            
+            return false;
+        });
+    } else {
+        console.error("❌ Form not found!");
+    }
+}
+
+// Other functions
+function clearError(element) {
+    const errorId = element.id + 'Error';
+    const errorElement = document.getElementById(errorId);
+    if (errorElement) {
+        errorElement.style.display = 'none';
+    }
+}
+
+function updateFileName(input) {
+    const fileNameId = 'file-name-' + input.id.slice(-1);
+    const fileNameDisplay = document.getElementById(fileNameId);
+    
+    if (input.files && input.files[0]) {
+        fileNameDisplay.textContent = input.files[0].name;
+    } else {
+        fileNameDisplay.textContent = 'No file chosen';
+    }
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
+    }
+    
+    if (modalId === 'reportIssueModal') {
+        const form = document.querySelector('.report-form');
+        if (form) form.reset();
+        document.querySelectorAll('.custom-file-text').forEach(el => {
+            el.textContent = 'No file chosen';
+        });
+        document.querySelectorAll('.error-message').forEach(el => {
+            el.style.display = 'none';
+        });
+    }
+    
+    // ✅ Reload page after closing success modal
+    if (modalId === 'reportSuccessModal') {
+        location.reload();
+    }
+}
+/**
+ * View Issue Details - Shows the submitted issue information
+ * @param {HTMLElement} button - The "View Details" button that was clicked
+ */
+function viewIssueDetails(button) {
+    console.log("=== viewIssueDetails called ===");
+    
+    // Get the parent issue card
+    const issueCard = button.closest('.issue-card');
+    if (!issueCard) {
+        console.error("❌ Issue card not found!");
+        alert("Error: Cannot find issue details");
+        return;
+    }
+    
+    // Extract all data from the card
+    const refNo = issueCard.getAttribute('data-ref-no') || 'N/A';
+    const serviceDate = issueCard.getAttribute('data-service-date') || 'N/A';
+    const serviceTime = issueCard.getAttribute('data-service-time') || 'N/A';
+    const submissionDate = issueCard.getAttribute('data-submission-date') || 'N/A';
+    const submissionTime = issueCard.getAttribute('data-submission-time') || 'N/A';
+    const issueType = issueCard.getAttribute('data-issue-type') || 'N/A';
+    const issueDescription = issueCard.getAttribute('data-issue-description') || 'No description provided.';
+    const photo1 = issueCard.getAttribute('data-photo1') || '';
+    const photo2 = issueCard.getAttribute('data-photo2') || '';
+    const photo3 = issueCard.getAttribute('data-photo3') || '';
+    
+    console.log("Issue data:", { refNo, issueType, issueDescription });
+    
+    // Populate the modal
+    document.getElementById('view-issue-ref').textContent = refNo;
+    
+    // Format and display dates
+    if (serviceDate !== 'N/A') {
+        const formattedServiceDate = formatDisplayDate(serviceDate);
+        document.getElementById('view-issue-service-date').textContent = formattedServiceDate;
+    } else {
+        document.getElementById('view-issue-service-date').textContent = 'N/A';
+    }
+    
+    // Format and display times
+    if (serviceTime !== 'N/A') {
+        const formattedServiceTime = formatDisplayTime(serviceTime);
+        document.getElementById('view-issue-service-time').textContent = formattedServiceTime;
+    } else {
+        document.getElementById('view-issue-service-time').textContent = 'N/A';
+    }
+    
+    if (submissionDate !== 'N/A') {
+        const formattedSubmissionDate = formatDisplayDate(submissionDate);
+        document.getElementById('view-issue-submission-date').textContent = formattedSubmissionDate;
+    } else {
+        document.getElementById('view-issue-submission-date').textContent = 'N/A';
+    }
+    
+    if (submissionTime !== 'N/A') {
+        const formattedSubmissionTime = formatDisplayTime(submissionTime);
+        document.getElementById('view-issue-submission-time').textContent = formattedSubmissionTime;
+    } else {
+        document.getElementById('view-issue-submission-time').textContent = 'N/A';
+    }
+    
+    document.getElementById('view-issue-type-detail').textContent = issueType;
+    document.getElementById('view-issue-description-detail').textContent = issueDescription;
+    
+    // Handle attachments
+    const attachmentsContainer = document.getElementById('view-issue-attachments-detail');
+    attachmentsContainer.innerHTML = ''; // Clear previous
+    
+    const photos = [photo1, photo2, photo3];
+    let hasAttachments = false;
+    
+    photos.forEach((photo, index) => {
+        if (photo && photo.trim() !== '') {
+            hasAttachments = true;
+            const attachmentDiv = document.createElement('div');
+            attachmentDiv.style.marginBottom = '8px';
+            
+            const attachmentLink = document.createElement('a');
+            attachmentLink.href = 'uploads/issues/' + photo;
+            attachmentLink.target = '_blank';
+            attachmentLink.style.display = 'inline-flex';
+            attachmentLink.style.alignItems = 'center';
+            attachmentLink.style.padding = '8px 12px';
+            attachmentLink.style.backgroundColor = '#007bff';
+            attachmentLink.style.color = '#fff';
+            attachmentLink.style.textDecoration = 'none';
+            attachmentLink.style.borderRadius = '4px';
+            attachmentLink.style.fontSize = '0.9em';
+            attachmentLink.style.transition = 'background-color 0.2s';
+            
+            attachmentLink.innerHTML = `<i class='bx bx-paperclip' style='margin-right: 5px;'></i> Attachment ${index + 1}`;
+            
+            attachmentLink.addEventListener('mouseenter', function() {
+                this.style.backgroundColor = '#0056b3';
+            });
+            attachmentLink.addEventListener('mouseleave', function() {
+                this.style.backgroundColor = '#007bff';
+            });
+            
+            attachmentDiv.appendChild(attachmentLink);
+            attachmentsContainer.appendChild(attachmentDiv);
+        }
+    });
+    
+    if (!hasAttachments) {
+        attachmentsContainer.innerHTML = '<p style="color: #999; font-style: italic; margin: 0;">No attachments</p>';
+    }
+    
+    // Show the modal
+    document.getElementById('viewIssueDetailsModal').style.display = 'block';
+    
+    console.log("✅ Issue details modal opened");
+}
+
+/**
+ * Helper function to format date from YYYY-MM-DD to readable format
+ */
+function formatDisplayDate(dateString) {
+    if (!dateString || dateString === 'N/A') return 'N/A';
+    
+    const date = new Date(dateString + 'T00:00:00');
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    return date.toLocaleDateString('en-US', options);
+}
+
+/**
+ * Helper function to format time from HH:MM:SS to 12-hour format
+ */
+function formatDisplayTime(timeString) {
+    if (!timeString || timeString === 'N/A') return 'N/A';
+    
+    const [hours, minutes] = timeString.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    
+    return `${displayHour}:${minutes} ${ampm}`;
+}
+</script>
+<!-- Report Issue Modal -->
+<div class="report-modal" id="reportIssueModal" onclick="if(event.target.id === 'reportIssueModal') closeModal('reportIssueModal')">
+    <div class="report-modal-content">
+        <span class="report-close-btn" onclick="closeModal('reportIssueModal')">&times;</span> 
+        <h3>Report an Issue</h3>
+        
+        <p class="report-ref-display">
+            Reference No: <span id="report-ref-number" class="report-ref-value"></span>
+        </p>
+
+        <form class="report-form" method="POST" action="report_issue_process.php" enctype="multipart/form-data">
+            <input type="hidden" name="report-booking-id" id="reportBookingId">
+            <input type="hidden" id="submissionDate" name="submissionDate">
+            <input type="hidden" id="submissionTime" name="submissionTime">
+            
+            <div class="report-date-time-group">
+                <div>
+                    <label for="issueDate">Date:</label>
+                    <input type="date" id="issueDate" name="issueDate" readonly required>
+                </div>
+                <div>
+                    <label for="issueTime">Time:</label>
+                    <input type="time" id="issueTime" name="issueTime" readonly required>
+                </div>
+            </div>
+
+            <label for="issueType">Type of Issue:</label>
+            <select id="issueType" name="issueType" onchange="clearError(this)" required>
+                <option value="" disabled selected>Select Issue Category</option>
+                <option value="Property Damage">Property Damage</option>
+                <option value="Unsatisfied with Quality of Cleaning">Unsatisfied with Quality of Cleaning</option>
+                <option value="Staff was Late/No Show">Staff was Late/No Show</option>
+                <option value="Staff Behavior/Professionalism">Staff Behavior/Professionalism</option>
+                <option value="Billing/Payment Issue">Billing/Payment Issue</option>
+                <option value="Other">Other</option>
+            </select>
+            <div id="issueTypeError" class="error-message">Please complete this required field</div>
+
+            <label for="issueDetails">Issue Description:</label>
+            <textarea id="issueDetails" name="issueDetails" placeholder="Please provide detailed description of the issue." oninput="clearError(this)" required></textarea>
+            <div id="issueDetailsError" class="error-message">Please complete this required field</div>
+
+            <label>Attachment (up to 3 files - Photos/Videos):</label>
+            
+            <div class="attachment-group">
+                <div class="custom-file-input-wrapper">
+                    <input type="file" id="attachment1" name="attachment1" accept="image/*,video/*" onchange="updateFileName(this)">
+                    <div class="custom-file-button">Choose File</div>
+                    <div class="custom-file-text" id="file-name-1">No file chosen</div>
+                </div>
+                <div class="custom-file-input-wrapper">
+                    <input type="file" id="attachment2" name="attachment2" accept="image/*,video/*" onchange="updateFileName(this)">
+                    <div class="custom-file-button">Choose File</div>
+                    <div class="custom-file-text" id="file-name-2">No file chosen</div>
+                </div>
+                <div class="custom-file-input-wrapper">
+                    <input type="file" id="attachment3" name="attachment3" accept="image/*,video/*" onchange="updateFileName(this)">
+                    <div class="custom-file-button">Choose File</div>
+                    <div class="custom-file-text" id="file-name-3">No file chosen</div>
+                </div>
+            </div>
+
+            <button type="submit">Submit Report</button>
+            <div style="clear: both;"></div> 
+        </form>
+    </div>
+</div>
+
+<!-- Report Success Modal -->
+<div class="report-modal" id="reportSuccessModal" onclick="if(event.target.id === 'reportSuccessModal') closeModal('reportSuccessModal')">
+    <div class="report-modal-content" style="max-width: 400px; text-align: center;">
+        <div style="padding: 20px;">
+            <i class='bx bx-check-circle' style="font-size: 4em; color: #00A86B; margin-bottom: 10px;"></i>
+            <h3 style="border-bottom: none; margin-bottom: 10px;">Report Submitted!</h3>
+            
+            <p id="success-message" style="color: #555; font-size: 1em;">
+                Your issue report for Ref: <span id="submitted-ref-number" style="color: #B32133; font-weight: 700;"></span> has been received and is under review.
+            </p>
+            
+            <button onclick="closeModal('reportSuccessModal'); location.reload();" class="primary-btn report-confirm-btn">
+                Got It
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- View Issue Details Modal -->
+<div class="report-modal" id="viewIssueDetailsModal" onclick="if(event.target.id === 'viewIssueDetailsModal') closeModal('viewIssueDetailsModal')">
+    <div class="report-modal-content" style="max-width: 600px;">
+        <span class="report-close-btn" onclick="closeModal('viewIssueDetailsModal')">&times;</span> 
+        <h3>Reported Issue Details</h3>
+        
+        <div class="issue-details-content">
+            <p class="report-ref-display">
+                <strong>Reference No:</strong> <span id="view-issue-ref" class="report-ref-value"></span>
+            </p>
+            
+            <div class="issue-details-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0;">
+                <div>
+                    <label style="font-weight: bold; color: #555; font-size: 0.9em;">Service Date</label>
+                    <p id="view-issue-service-date" style="margin: 5px 0;">N/A</p>
+                </div>
+                <div>
+                    <label style="font-weight: bold; color: #555; font-size: 0.9em;">Service Time</label>
+                    <p id="view-issue-service-time" style="margin: 5px 0;">N/A</p>
+                </div>
+                <div>
+                    <label style="font-weight: bold; color: #555; font-size: 0.9em;">Date Reported</label>
+                    <p id="view-issue-submission-date" style="margin: 5px 0;">N/A</p>
+                </div>
+                <div>
+                    <label style="font-weight: bold; color: #555; font-size: 0.9em;">Time Reported</label>
+                    <p id="view-issue-submission-time" style="margin: 5px 0;">N/A</p>
+                </div>
+            </div>
+            
+            <hr style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;">
+            
+            <div style="margin: 15px 0;">
+                <label style="font-weight: bold; color: #555; font-size: 0.9em;">Issue Type</label>
+                <p id="view-issue-type-detail" style="margin: 5px 0; padding: 8px; background: #ffeaa7; color: #d63031; border-radius: 4px; display: inline-block;">N/A</p>
+            </div>
+            
+            <div style="margin: 15px 0;">
+                <label style="font-weight: bold; color: #555; font-size: 0.9em;">Description</label>
+                <div id="view-issue-description-detail" style="margin: 5px 0; padding: 12px; background: #f7f7f7; border-left: 3px solid #007bff; border-radius: 4px; line-height: 1.6;">
+                    No description provided.
+                </div>
+            </div>
+            
+            <div style="margin: 15px 0;">
+                <label style="font-weight: bold; color: #555; font-size: 0.9em;">Attachments</label>
+                <div id="view-issue-attachments-detail" style="margin: 10px 0;">
+                    <!-- Attachments will be populated here -->
+                </div>
+            </div>
+            
+            <hr style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;">
+            
+            <div style="text-align: center; padding: 15px; background: #fff3cd; border-radius: 6px; border: 1px solid #ffc107;">
+                <i class='bx bx-info-circle' style="font-size: 1.5em; color: #856404;"></i>
+                <p style="margin: 10px 0 0 0; color: #856404; font-size: 0.95em;">
+                    <strong>Status:</strong> Under Review - Our team will contact you shortly.
+                </p>
+            </div>
         </div>
     </div>
 </div>
@@ -789,13 +1792,16 @@ function renderBookingCard($booking) {
                 </div>
                 
                 <div class="feedback-section">
-                    <p style="font-size: 1.1em; margin-bottom: 5px;"><strong>Feedback:</strong></p>
-                    <div id="viewFeedback" style="border: 1px solid #ddd; padding: 15px; border-radius: 6px; background-color: #f9f9f9; color: #333; line-height: 1.5;"></div>
-                </div>
+    <p style="font-size: 1.1em; margin-bottom: 5px;"><strong>Feedback:</strong></p>
+    <div id="viewFeedback" 
+         style="border: 1px solid #ddd; padding: 15px; border-radius: 6px; background-color: #f9f9f9; color: #333; line-height: 1.5;">
+        <em>No feedback provided yet.</em>
+    </div>
+</div>
+</div>
             </div>
             
-            <div style="text-align: right; margin-top: 30px;">
-                <a id="editRatingLinkInModal" href="#" class="primary-btn" style="background-color: #004A80;">Edit Rating</a>
+                <a id="editRatingLinkInModal" href="#" class="primary-btn" style="background-color: white;"></a>
             </div>
         </div>
     </div>

@@ -2,7 +2,7 @@
 session_start();
 require 'connection.php';
 
-// ✅ Ensure the user is logged in
+// ✅ Ensure user is logged in
 if (!isset($_SESSION['email'])) {
     echo "<script>alert('Please log in first.'); window.location.href='login.php';</script>";
     exit;
@@ -10,753 +10,331 @@ if (!isset($_SESSION['email'])) {
 
 $client_email = $_SESSION['email'];
 
-// ✅ Get booking ID from URL
-$booking_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
-
-if ($booking_id <= 0) {
-    echo "<script>alert('Invalid booking ID.'); window.location.href='client_dashboard.php';</script>";
+// ✅ Booking ID required
+if (!isset($_GET['id'])) {
+    echo "<script>alert('Invalid booking request.'); window.location.href='FR_one-time.php';</script>";
     exit;
 }
 
-// ✅ Retrieve booking details for the logged-in client
-$stmt = $conn->prepare("SELECT * FROM bookings WHERE id = ? AND email = ? LIMIT 1");
+$booking_id = intval($_GET['id']);
+
+// ✅ Fetch booking that belongs to logged-in user
+$stmt = $conn->prepare("SELECT * FROM bookings WHERE id=? AND email=? LIMIT 1");
 $stmt->bind_param("is", $booking_id, $client_email);
 $stmt->execute();
 $result = $stmt->get_result();
 
 if ($result->num_rows === 0) {
-    echo "<script>alert('Booking not found.'); window.location.href='client_dashboard.php';</script>";
+    echo "<script>alert('Booking not found or does not belong to you.'); window.location.href='FR_one-time.php';</script>";
     exit;
 }
 
 $booking = $result->fetch_assoc();
 
-// ✅ Function to generate a reference number (even without ref_no column)
-function generateRefNo($id, $service_type, $date) {
-    $prefix = match ($service_type) {
-        'Checkout Cleaning' => 'CC',
-        'In-House Cleaning' => 'IH',
-        'Refresh Cleaning' => 'RC',
-        'Deep Cleaning' => 'DC',
-        default => 'SV'
-    };
-    $dateStr = date('ym', strtotime($date));
-    return "ALZ-{$prefix}-{$dateStr}-" . str_pad($id, 4, '0', STR_PAD_LEFT);
-}
+// ✅ Parse cleaner and driver NAMES (stored as comma-separated names)
+$cleaner_names = !empty($booking['cleaners']) ? array_map('trim', explode(',', $booking['cleaners'])) : [];
+$driver_names = !empty($booking['drivers']) ? array_map('trim', explode(',', $booking['drivers'])) : [];
 
-// ✅ Calculate estimated price
-function calculateFinalPrice($booking) {
-    $duration = floatval($booking['duration'] ?? 1);
-    $materialsStr = $booking['materials_provided'] ?? '';
-    preg_match('/(\d+(\.\d+)?)\s*AED/i', $materialsStr, $matches);
-    $pricePerHour = isset($matches[1]) ? floatval($matches[1]) : 0;
-    $finalPrice = $pricePerHour * $duration;
-
-    if (stripos($materialsStr, 'yes') !== false) {
-        $finalPrice *= 2;
+// ✅ Fetch cleaner details by matching full names
+$cleaners = [];
+foreach ($cleaner_names as $full_name) {
+    if (empty($full_name)) continue;
+    
+    // Split name into parts (first name and last name)
+    $name_parts = explode(' ', $full_name, 2);
+    $first_name = $name_parts[0];
+    $last_name = isset($name_parts[1]) ? $name_parts[1] : '';
+    
+    // Try to find employee by full name match
+    $stmt_cleaner = $conn->prepare("SELECT id, first_name, last_name, position 
+        FROM employees 
+        WHERE CONCAT(first_name, ' ', last_name) = ? AND archived=0 
+        LIMIT 1");
+    $stmt_cleaner->bind_param("s", $full_name);
+    $stmt_cleaner->execute();
+    $result_cleaner = $stmt_cleaner->get_result();
+    
+    if ($result_cleaner->num_rows > 0) {
+        $cleaners[] = $result_cleaner->fetch_assoc();
+    } else {
+        // Try partial match if exact match fails
+        $like_name = "%$full_name%";
+        $stmt_cleaner2 = $conn->prepare("SELECT id, first_name, last_name, position 
+            FROM employees 
+            WHERE CONCAT(first_name, ' ', last_name) LIKE ? AND archived=0 
+            LIMIT 1");
+        $stmt_cleaner2->bind_param("s", $like_name);
+        $stmt_cleaner2->execute();
+        $result_cleaner2 = $stmt_cleaner2->get_result();
+        if ($result_cleaner2->num_rows > 0) {
+            $cleaners[] = $result_cleaner2->fetch_assoc();
+        }
     }
-
-    return $finalPrice;
 }
 
-// ✅ Define page title and action (avoid undefined variable error)
-$page_title = "Service Feedback";
-$action = "submit";
-$submit_button_text = "Submit Feedback";
+// ✅ Fetch driver details by matching full names
+$drivers = [];
+foreach ($driver_names as $full_name) {
+    if (empty($full_name)) continue;
+    
+    // Split name into parts
+    $name_parts = explode(' ', $full_name, 2);
+    $first_name = $name_parts[0];
+    $last_name = isset($name_parts[1]) ? $name_parts[1] : '';
+    
+    // Try to find employee by full name match
+    $stmt_driver = $conn->prepare("SELECT id, first_name, last_name, position 
+        FROM employees 
+        WHERE CONCAT(first_name, ' ', last_name) = ? AND archived=0 
+        LIMIT 1");
+    $stmt_driver->bind_param("s", $full_name);
+    $stmt_driver->execute();
+    $result_driver = $stmt_driver->get_result();
+    
+    if ($result_driver->num_rows > 0) {
+        $drivers[] = $result_driver->fetch_assoc();
+    } else {
+        // Try partial match if exact match fails
+        $like_name = "%$full_name%";
+        $stmt_driver2 = $conn->prepare("SELECT id, first_name, last_name, position 
+            FROM employees 
+            WHERE CONCAT(first_name, ' ', last_name) LIKE ? AND archived=0 
+            LIMIT 1");
+        $stmt_driver2->bind_param("s", $like_name);
+        $stmt_driver2->execute();
+        $result_driver2 = $stmt_driver2->get_result();
+        if ($result_driver2->num_rows > 0) {
+            $drivers[] = $result_driver2->fetch_assoc();
+        }
+    }
+}
 
-// ✅ Prepare details
-$job_details = [
-    'ref_no' => generateRefNo($booking['id'], $booking['service_type'], $booking['service_date']),
-    'date' => date('F d, Y', strtotime($booking['service_date'])),
-    'time' => date('g:i A', strtotime($booking['service_time'])),
-    'full_name' => $booking['full_name'],
-    'email' => $booking['email'],
-    'phone' => $booking['phone'],
-    'service_type' => $booking['service_type'],
-    'client_type' => $booking['client_type'],
-    'property_type' => $booking['property_type'],
-    'address' => $booking['address'],
-    'duration' => $booking['duration'] . ' Hours',
-    'materials_provided' => $booking['materials_provided'],
-    'comments' => $booking['comments'] ?? 'N/A',
-    'status' => $booking['status'],
-    'final_price' => calculateFinalPrice($booking) . ' AED',
-    'cleaners' => ['Cleaner 1', 'Cleaner 2'], // dummy data
-    'driver' => 'Driver 1'
-];
+// ✅ Handle rating submit
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-$stmt->close();
-$conn->close();
+    if (!isset($_POST['rating_stars']) || !isset($_POST['rating_comment'])) {
+        echo "<script>alert('Please provide both rating and comment.');</script>";
+    } else {
+        $stars = intval($_POST['rating_stars']);
+        $comment = trim($_POST['rating_comment']);
+
+        // ✅ Collect cleaner ratings
+        $cleaner_ratings = [];
+        foreach ($cleaners as $cleaner) {
+            $employee_id = $cleaner['id'];
+            if (isset($_POST["cleaner_rating_$employee_id"])) {
+                $cleaner_ratings[$employee_id] = intval($_POST["cleaner_rating_$employee_id"]);
+            }
+        }
+
+        // ✅ Collect driver ratings
+        $driver_ratings = [];
+        foreach ($drivers as $driver) {
+            $employee_id = $driver['id'];
+            if (isset($_POST["driver_rating_$employee_id"])) {
+                $driver_ratings[$employee_id] = intval($_POST["driver_rating_$employee_id"]);
+            }
+        }
+
+        // ✅ Run Python Sentiment Analysis
+        $escapedComment = escapeshellarg($comment);
+        $sentiment = trim(shell_exec("py sentiment.py $escapedComment"));
+
+        // ✅ Fallback if python didn't return anything
+        if (!$sentiment) {
+            $sentiment = "Unknown";
+        }
+
+        // ✅ Save rating + comment + sentiment
+        $update = $conn->prepare("UPDATE bookings 
+            SET rating_stars=?, rating_comment=?, sentiment=?
+            WHERE id=? AND email=?");
+
+        $update->bind_param("issis", $stars, $comment, $sentiment, $booking_id, $client_email);
+
+        if ($update->execute()) {
+            // ✅ Store individual cleaner ratings
+            foreach ($cleaner_ratings as $employee_id => $rating) {
+                $stmt_cleaner = $conn->prepare("INSERT INTO staff_ratings (booking_id, employee_id, staff_type, rating, created_at) 
+                    VALUES (?, ?, 'cleaner', ?, NOW())
+                    ON DUPLICATE KEY UPDATE rating=?, created_at=NOW()");
+                $stmt_cleaner->bind_param("iiii", $booking_id, $employee_id, $rating, $rating);
+                $stmt_cleaner->execute();
+            }
+
+            // ✅ Store individual driver ratings
+            foreach ($driver_ratings as $employee_id => $rating) {
+                $stmt_driver = $conn->prepare("INSERT INTO staff_ratings (booking_id, employee_id, staff_type, rating, created_at) 
+                    VALUES (?, ?, 'driver', ?, NOW())
+                    ON DUPLICATE KEY UPDATE rating=?, created_at=NOW()");
+                $stmt_driver->bind_param("iiii", $booking_id, $employee_id, $rating, $rating);
+                $stmt_driver->execute();
+            }
+
+            echo "<script>alert('Thank you! Your feedback has been submitted. Sentiment: {$sentiment}'); window.location.href='FR_one-time.php';</script>";
+            exit;
+        } else {
+            echo "<script>alert('Error saving review. Try again.');</script>";
+        }
+    }
+}
 ?>
-
-
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ALAZIMA - <?php echo $page_title; ?></title>
-    <link rel="icon" href="site_icon.png" type="image/png">
-    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    <link rel="stylesheet" href="client_db.css"> 
+    <title>Rate Your Service</title>
+    <link rel="stylesheet" href="client_db.css">
     <link rel="stylesheet" href="HIS_design.css">
-    
+
     <style>
-        /* Ensures the background matches the dashboard body background */
-        body {
-            background-color: #f4f7ff; 
-            font-family: Arial, sans-serif; 
-        }
-        
-        /* The main content wrapper. */
-        .dashboard__content {
-            padding: 20px; 
-            min-height: calc(100vh - 80px); 
-        }
-        
-        /* Form Container (Matches the card/modal look) */
+        body { background-color: #f4f7ff; font-family: Arial; }
         .form-container {
             width: 100%;
-            max-width: 500px; 
-            margin: 70px auto 30px; 
-            padding: 25px;
-            background-color: #fff;
+            max-width: 600px;
+            margin: 70px auto;
             border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            background: #fff;
+            box-shadow: 0 4px 12px rgba(0,0,0,.1);
         }
+        .form-header { text-align: center; color: #004A80; font-size: 1.8em; margin-bottom: 20px; }
+        .job-details { font-size: 1em; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #ddd; }
+        .job-details strong { color: #333; }
         
-        .form-header {
-            text-align: center;
-            color: #004A80;
-            font-size: 1.8em;
-            margin-bottom: 20px;
-        }
-
-        /* Job Details Display (COMPRESSED) */
-        .job-details {
-            font-size: 1em;
-            margin-bottom: 20px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #ddd;
-            line-height: 1.2; 
-            color: #333; 
-        }
-        .job-details strong { font-weight: 700; color: #333; }
-        .job-details__line { display: flex; justify-content: space-between; margin-bottom: 4px; }
-        .job-details__line p { flex-grow: 1; flex-basis: 50%; margin-bottom: 0; }
-        .job-details p:not(.job-details__line p) { margin-bottom: 4px; } 
-        .ref-no-line { margin-bottom: 8px; } 
-        /* Reference Number Value Style */
-        .ref-no-line .value { 
-            color: #B32133; 
-            font-weight: 700; 
-        }
+        .rating-section { margin: 25px 0; padding: 20px; background: #f9f9f9; border-radius: 5px; }
+        .rating-section h4 { color: #004A80; margin-bottom: 15px; }
         
-        /* General Rating Section (Step 1) */
-        .rating-group h4 {
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 5px; 
-        }
-        .star-rating-container {
-            padding: 0 0 20px; 
-            border-bottom: 1px solid #ddd;
-            margin: 10px 0 25px; 
-        }
-        .star-rating {
-            display: flex;
-            flex-direction: row-reverse; 
-            justify-content: center;
-            margin: 0 auto; 
-            width: fit-content; 
-        }
+        .star-rating { display: flex; flex-direction: row-reverse; justify-content: center; margin-bottom: 10px; }
         .star-rating input { display: none; }
         .star-rating label {
-            font-size: 45px;
-            color: #ccc; 
-            cursor: pointer;
-            transition: color 0.2s;
-            padding: 0 5px; 
+            font-size: 40px; color: #ccc; cursor: pointer; padding: 0 5px; transition: color 0.2s;
         }
         .star-rating input:checked ~ label,
         .star-rating label:hover,
         .star-rating label:hover ~ label { color: #FFC107; }
         
-        /* Rating Labels container for general rating */
-        .rating-labels {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.85em;
-            color: #555;
-            margin: 5px auto 0; 
-            max-width: 280px; 
-            padding: 0 5px; 
-            box-sizing: border-box;
-        }
-        .rating-labels span { white-space: nowrap; }
-        .rating-labels span:first-child { margin-left: -5px; }
-        .rating-labels span:last-child { margin-right: -5px; }
-
-        /* Feedback Textarea */
-        .input-group h4 { font-weight: 600; color: #333; margin-bottom: 10px; }
-        .input-group textarea {
-            width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ccc;
-            border-radius: 5px; resize: vertical; min-height: 100px;
-            box-sizing: border-box; font-family: inherit;
-        }
-        .input-group textarea:focus { border-color: #E87722; box-shadow: 0 0 5px rgba(232, 119, 34, .5); outline: none; }
-
-        /* Individual Rating Section (Step 2 - MAX COMPRESSION) */
-        #step2-content {
-            padding-top: 0px; 
-        }
+        .staff-rating { margin: 15px 0; padding: 15px; background: #fff; border-radius: 5px; border: 1px solid #e0e0e0; }
+        .staff-rating h5 { margin: 0 0 10px 0; color: #333; font-size: 1.1em; }
+        .staff-position { font-size: 0.9em; color: #777; margin-bottom: 8px; }
         
-        .cleaners-rating-list {
-            margin-top: 0px; 
-            margin-bottom: 15px; 
-            padding-bottom: 10px; 
-            border-bottom: 1px solid #ddd; 
+        .small-star-rating { display: flex; flex-direction: row-reverse; justify-content: center; margin-bottom: 5px; }
+        .small-star-rating input { display: none; }
+        .small-star-rating label {
+            font-size: 28px; color: #ccc; cursor: pointer; padding: 0 3px; transition: color 0.2s;
         }
-        .cleaners-rating-list h4 {
-            margin-bottom: 5px; 
-        }
-        .driver-rating-list {
-            margin-top: 5px; 
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-
-        .driver-rating-list h4 {
-            margin-bottom: 5px; 
-        }
-
-        /* Single Rating Guide for the group (cleaners/driver) - Refined Alignment */
-        .group-rating-guide {
-            display: flex;
-            justify-content: space-between; 
-            font-size: 0.75em;
-            color: #777;
-            width: 160px; 
-            margin-left: auto; 
-            margin-top: -5px; 
-            margin-bottom: 10px; 
-        }
-        .group-rating-guide span { 
-            white-space: nowrap; 
-        }
+        .small-star-rating input:checked ~ label,
+        .small-star-rating label:hover,
+        .small-star-rating label:hover ~ label { color: #FFC107; }
         
-        /* Rate All Cleaners Option (Restored to V2 Style) */
-        .rate-all-option {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: #f9f9f9;
-            padding: 5px 10px;
-            border-radius: 5px;
-            margin-bottom: 10px; 
+        textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin: 8px 0; min-height: 90px; box-sizing: border-box; }
+        .btn-submit {
+            width: 100%; background-color: #E87722; padding: 12px; border: none; color: #fff;
+            font-size: 1.1em; border-radius: 5px; cursor: pointer; margin-top: 10px;
         }
-
-        .rate-all-option span {
-            font-weight: 600;
-            color: #004A80;
-            font-size: 0.9em;
-            flex-grow: 1;
-        }
-
-        /* Reusing employee-stars for the "Rate All" option */
-        .rate-all-option .employee-stars label {
-            font-size: 24px; /* Slightly smaller stars for the overall option */
-            padding: 0 2px;
-        }
-
-        .individual-rating-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0px; 
-            padding: 2px 0; 
-            line-height: 1.2;
-        }
+        .btn-submit:hover { background-color: #d06a1d; }
         
-        .employee-name {
-            font-weight: 500; 
-            color: #333; 
-            flex-grow: 1;
-            padding-right: 15px; 
-        }
-        
-        /* Employee Stars */
-        .employee-stars {
-            display: flex;
-            flex-direction: row-reverse;
-            width: fit-content;
-        }
-        .employee-stars input {
-            display: none;
-        }
-        .employee-stars label {
-            font-size: 28px; 
-            color: #ccc; 
-            cursor: pointer;
-            transition: color 0.2s;
-            padding: 0 2px;
-        }
-        .employee-stars input:checked ~ label,
-        .employee-stars label:hover,
-        .employee-stars label:hover ~ label {
-            color: #FFC107; 
-        }
-
-        /* Button Group (Step 1) */
-        .button-group {
-            display: flex;
-            justify-content: flex-end; 
-            margin-top: 30px;
-        }
-        /* Step 2 Button Group - Aligned to the lower right */
-        .button-group-step2 {
-             justify-content: flex-end; 
-        }
-        
-        /* Back Button */
-        .btn-back {
-            padding: .5rem 2rem; 
-            background-color: #e0e0e0; 
-            color: #333;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1.0em; 
-            font-weight: 600;
-            text-align: center;
-            text-decoration: none; 
-            margin-right: 10px; 
-            transition: background-color 0.3s ease, color 0.3s ease;
-            display: inline-block; 
-        }
-        .btn-back:hover { background-color: #b0b0b0; color: #333; }
-
-        /* Submit/Next Button (Primary Button) */
-        .btn-submit, .btn-next {
-            padding: .5rem 2rem; 
-            background-color: #E87722; 
-            color: #fff;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, .2);
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1.0em; 
-            font-weight: 600;
-            text-align: center;
-            margin-left: 0; 
-            transition: background-color 0.3s;
-        }
-        .btn-submit:hover, .btn-next:hover { background-color: #D66C1E; }
-        
-        /* The Error Message Style */
-        .error-message {
-            color: red;
-            font-size: 0.9em;
-            margin-top: -5px;
-            margin-bottom: 10px;
-            display: none;
-            background-color: #ffe0e0;
-            padding: 3px 8px;
-            border-radius: 4px;
-        }
-
-        /* MODAL STYLES */
-        .report-modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.5); display: none; justify-content: center;
-            align-items: center; z-index: 1000; 
-        }
-        .report-modal-content {
-            background-color: #fff; padding: 0; border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); max-width: 400px;
-            width: 90%; animation: fadeIn 0.3s ease-out; text-align: center;
-        }
-        .primary-btn {
-            background-color: #E87722; color: #fff; padding: 10px 30px;
-            border: none; border-radius: 5px; font-size: 1.1em; font-weight: 600;
-            cursor: pointer; transition: background-color 0.3s; margin-top: 15px; 
-        }
-        .primary-btn:hover { background-color: #D66C1E; }
-
+        .no-staff { color: #777; font-style: italic; text-align: center; padding: 20px; background: #fff; border-radius: 5px; }
+        .debug-info { background: #fffacd; padding: 10px; margin: 10px 0; border-radius: 5px; font-size: 0.9em; }
     </style>
 </head>
-    
 <body>
-    
-    <header class="header" id="header">
-        <nav class="nav container">
-            <a href="client_dashboard.php?content=dashboard" class="nav__logo">
-                <img src="LOGO.png" alt="ALAZIMA Cleaning Services LLC Logo" onerror="this.onerror=null;this.src='https://placehold.co/200x50/FFFFFF/004a80?text=ALAZIMA';">
-            </a>
-            <button class="nav__toggle" id="nav-toggle" aria-label="Toggle navigation menu">
-                <i class='bx bx-menu'></i>
-            </button>
-        </nav>
-    </header>
 
-    <main class="dashboard__content">
-        
-        <div class="form-container">
-            <h2 class="form-header"><?php echo $page_title; ?></h2>
-            
-            <div class="job-details">
-                <p class="ref-no-line">
-                    <strong>Reference No:</strong> 
-                    <span class="value"><?php echo $job_details['ref_no']; ?></span>
-                </p>
+<div class="form-container">
+    <h2 class="form-header">Rate Your Service</h2>
 
-                <p><strong>Date:</strong> <?php echo $job_details['date']; ?></p>
-                
-                <div class="job-details__line">
-                    <p><strong>Time:</strong> <?php echo $job_details['time']; ?></p>
-                    <p><strong>Duration:</strong> <?php echo $job_details['duration']; ?></p>
-                </div>
-
-                <div class="job-details__line">
-                    <p><strong>Client Type:</strong> <?php echo $job_details['client_type']; ?></p>
-                    <p><strong>Service Type:</strong> <?php echo $job_details['service_type']; ?></p>
-                </div>
-                
-                <p><strong>Address:</strong> <?php echo $job_details['address']; ?></p>
-                
-            </div>
-            
-            <form action="FR_one-time.php" method="POST" id="ratingForm" onsubmit="return validateFinalSubmission(event)">
-                <input type="hidden" name="ref_no" value="<?php echo $job_details['ref_no']; ?>">
-                <input type="hidden" name="action" value="<?php echo $action; ?>">
-
-                <div id="step1-content">
-                    <div class="rating-group">
-                        <h4>How would you rate our service?</h4>
-                        <div id="ratingError" class="error-message">Please complete this required field</div>
-                        
-                        <div class="star-rating-container">
-                            <div class="star-rating">
-                                <input type="radio" id="star5" name="rating_general" value="5">
-                                <label for="star5" title="5 stars"><i class='bx bx-star'></i></label>
-                                <input type="radio" id="star4" name="rating_general" value="4">
-                                <label for="star4" title="4 stars"><i class='bx bx-star'></i></label>
-                                <input type="radio" id="star3" name="rating_general" value="3">
-                                <label for="star3" title="3 stars"><i class='bx bx-star'></i></label>
-                                <input type="radio" id="star2" name="rating_general" value="2">
-                                <label for="star2" title="2 stars"><i class='bx bx-star'></i></label>
-                                <input type="radio" id="star1" name="rating_general" value="1">
-                                <label for="star1" title="1 star"><i class='bx bx-star'></i></label>
-                            </div>
-                            <div class="rating-labels">
-                                <span>Lowest (1)</span>
-                                <span>Highest (5)</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="input-group">
-                        <h4>Tell us what you think:</h4>
-                        <div id="feedbackError" class="error-message">Please complete this required field</div>
-                        <textarea id="feedback" name="feedback_general" placeholder="Type your feedback here..."></textarea>
-                    </div>
-                    
-                    <div class="button-group">
-                        <button type="button" class="btn-back" onclick="window.location.href='FR_one-time.php'">Back</button>
-                        <button type="button" class="btn-next" onclick="validateStep1()">Next</button>
-                    </div>
-                </div>
-                <div id="step2-content" style="display: none;">
-                    
-                    <div class="rating-group cleaners-rating-list">
-                        <h4>Rate the Cleaning Team:</h4>
-                        <div id="cleanerRatingError" class="error-message">Please rate all cleaners.</div>
-                        
-                        <div class="rate-all-option">
-                            <span>Rate All Cleaners:</span>
-                            <div class="employee-stars">
-                                <input type="radio" id="bulk_star5" name="rate_all_cleaners_value" value="5" onclick="rateAllCleaners(5)">
-                                <label for="bulk_star5" title="5 stars"><i class='bx bx-star'></i></label>
-                                <input type="radio" id="bulk_star4" name="rate_all_cleaners_value" value="4" onclick="rateAllCleaners(4)">
-                                <label for="bulk_star4" title="4 stars"><i class='bx bx-star'></i></label>
-                                <input type="radio" id="bulk_star3" name="rate_all_cleaners_value" value="3" onclick="rateAllCleaners(3)">
-                                <label for="bulk_star3" title="3 stars"><i class='bx bx-star'></i></label>
-                                <input type="radio" id="bulk_star2" name="rate_all_cleaners_value" value="2" onclick="rateAllCleaners(2)">
-                                <label for="bulk_star2" title="2 stars"><i class='bx bx-star'></i></label>
-                                <input type="radio" id="bulk_star1" name="rate_all_cleaners_value" value="1" onclick="rateAllCleaners(1)">
-                                <label for="bulk_star1" title="1 star"><i class='bx bx-star'></i></label>
-                            </div>
-                        </div>
-
-                        <div class="group-rating-guide">
-                            <span>Lowest (1)</span>
-                            <span>Highest (5)</span>
-                        </div>
-
-                        <?php foreach ($job_details['cleaners'] as $index => $cleaner): ?>
-                            <?php $cleaner_key = 'rating_cleaner_' . ($index + 1); // Consistent naming scheme ?>
-                            <div class="individual-rating-item">
-                                <span class="employee-name"><?php echo htmlspecialchars($cleaner); ?></span>
-                                <div class="employee-stars">
-                                    <input type="radio" id="<?php echo $cleaner_key; ?>_star5" name="<?php echo $cleaner_key; ?>" value="5">
-                                    <label for="<?php echo $cleaner_key; ?>_star5" title="5 stars"><i class='bx bx-star'></i></label>
-                                    <input type="radio" id="<?php echo $cleaner_key; ?>_star4" name="<?php echo $cleaner_key; ?>" value="4">
-                                    <label for="<?php echo $cleaner_key; ?>_star4" title="4 stars"><i class='bx bx-star'></i></label>
-                                    <input type="radio" id="<?php echo $cleaner_key; ?>_star3" name="<?php echo $cleaner_key; ?>" value="3">
-                                    <label for="<?php echo $cleaner_key; ?>_star3" title="3 stars"><i class='bx bx-star'></i></label>
-                                    <input type="radio" id="<?php echo $cleaner_key; ?>_star2" name="<?php echo $cleaner_key; ?>" value="2">
-                                    <label for="<?php echo $cleaner_key; ?>_star2" title="2 stars"><i class='bx bx-star'></i></label>
-                                    <input type="radio" id="<?php echo $cleaner_key; ?>_star1" name="<?php echo $cleaner_key; ?>" value="1">
-                                    <label for="<?php echo $cleaner_key; ?>_star1" title="1 star"><i class='bx bx-star'></i></label>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-
-                    <div class="rating-group driver-rating-list">
-                        <h4>Rate the Driver:</h4>
-                        <div id="driverRatingError" class="error-message">Please rate the driver.</div>
-                        
-                        <div class="group-rating-guide">
-                            <span>Lowest (1)</span>
-                            <span>Highest (5)</span>
-                        </div>
-
-                        <div class="individual-rating-item">
-                            <span class="employee-name"><?php echo htmlspecialchars($job_details['driver']); ?></span>
-                            <div class="employee-stars">
-                                <input type="radio" id="rating_driver_star5" name="rating_driver" value="5">
-                                <label for="rating_driver_star5" title="5 stars"><i class='bx bx-star'></i></label>
-                                <input type="radio" id="rating_driver_star4" name="rating_driver" value="4">
-                                <label for="rating_driver_star4" title="4 stars"><i class='bx bx-star'></i></label>
-                                <input type="radio" id="rating_driver_star3" name="rating_driver" value="3">
-                                <label for="rating_driver_star3" title="3 stars"><i class='bx bx-star'></i></label>
-                                <input type="radio" id="rating_driver_star2" name="rating_driver" value="2">
-                                <label for="rating_driver_star2" title="2 stars"><i class='bx bx-star'></i></label>
-                                <input type="radio" id="rating_driver_star1" name="rating_driver" value="1">
-                                <label for="rating_driver_star1" title="1 star"><i class='bx bx-star'></i></label>
-                            </div>
-                        </div>
-                        
-                    </div>
-                    
-                    <div class="button-group button-group-step2">
-                        <button type="button" class="btn-back" onclick="showStep1()">Back</button>
-                        <button type="submit" class="btn-submit"><?php echo $submit_button_text; ?></button>
-                    </div>
-                </div>
-                </form>
-        </div>
-        
-    </main>
-
-    <div class="report-modal" id="reportSuccessModal" onclick="if(event.target.id === 'reportSuccessModal') redirectToPage()">
-        <div class="report-modal-content">
-            <div style="padding: 20px;">
-                <i class='bx bx-check-circle' style="font-size: 4em; color: #00A86B; margin-bottom: 10px;"></i>
-                <h3 id="modalTitle" style="border-bottom: none; margin-bottom: 10px;"></h3>
-                
-                <p id="success-message" style="color: #555; font-size: 1em;">
-                    <span id="modalBodyText"></span> for Ref: <span id="submitted-ref-number" style="color: #B32133; font-weight: 700;"></span> has been successfully recorded.
-                </p>
-                
-                <button onclick="redirectToPage()" class="primary-btn report-confirm-btn">
-                    Got It
-                </button>
-            </div>
-        </div>
+    <div class="job-details">
+        <p><strong>Service:</strong> <?= htmlspecialchars($booking['service_type']) ?></p>
+        <p><strong>Date:</strong> <?= htmlspecialchars($booking['service_date']) ?></p>
+        <p><strong>Time:</strong> <?= htmlspecialchars($booking['service_time']) ?></p>
     </div>
-    <script>
-        // Store PHP variables in JS constants
-        const REF_NO = "<?php echo $job_details['ref_no']; ?>";
-        const REDIRECT_URL = "FR_one-time.php"; 
-        const ACTION = "<?php echo $action; ?>"; // 'leave' or 'edit'
 
-        // List of all employee rating names
-        const employeeRatingNames = [
-            <?php foreach ($job_details['cleaners'] as $index => $cleaner): ?>
-                <?php echo "'rating_cleaner_" . ($index + 1) . "',"; ?>
+    <!-- 🔍 DEBUG INFO -->
+    <?php if (empty($cleaners) && empty($drivers) && (!empty($booking['cleaners']) || !empty($booking['drivers']))): ?>
+    <div class="debug-info">
+        <strong>⚠️ Name Matching Issue:</strong><br>
+        The names stored in the booking don't match any employees in the database.<br>
+        <strong>Cleaners:</strong> <?= htmlspecialchars($booking['cleaners'] ?? 'None') ?><br>
+        <strong>Drivers:</strong> <?= htmlspecialchars($booking['drivers'] ?? 'None') ?><br>
+        <em>Please check if these names exactly match the first_name + last_name in the employees table.</em>
+    </div>
+    <?php endif; ?>
+
+    <form method="POST">
+        <!-- Overall Service Rating -->
+        <div class="rating-section">
+            <h4>Overall Service Rating</h4>
+            <div class="star-rating">
+                <?php for ($i=5; $i>=1; $i--): ?>
+                    <input type="radio" id="star<?= $i ?>" name="rating_stars" value="<?= $i ?>" required>
+                    <label for="star<?= $i ?>">★</label>
+                <?php endfor; ?>
+            </div>
+        </div>
+
+        <!-- Cleaner Ratings -->
+        <?php if (!empty($cleaners)): ?>
+        <div class="rating-section">
+            <h4>Rate Your Cleaners</h4>
+            <?php foreach ($cleaners as $cleaner): ?>
+            <div class="staff-rating">
+                <h5><?= htmlspecialchars($cleaner['first_name'] . ' ' . $cleaner['last_name']) ?></h5>
+                <?php if (!empty($cleaner['position'])): ?>
+                <div class="staff-position">Position: <?= htmlspecialchars($cleaner['position']) ?></div>
+                <?php endif; ?>
+                <div class="small-star-rating">
+                    <?php for ($i=5; $i>=1; $i--): ?>
+                        <input type="radio" id="cleaner_star<?= $cleaner['id'] ?>_<?= $i ?>" 
+                               name="cleaner_rating_<?= $cleaner['id'] ?>" value="<?= $i ?>" required>
+                        <label for="cleaner_star<?= $cleaner['id'] ?>_<?= $i ?>">★</label>
+                    <?php endfor; ?>
+                </div>
+            </div>
             <?php endforeach; ?>
-            'rating_driver'
-        ];
+        </div>
+        <?php elseif (!empty($booking['cleaners'])): ?>
+        <div class="rating-section">
+            <h4>Rate Your Cleaners</h4>
+            <div class="no-staff">⚠️ Cleaners could not be found in employee database</div>
+        </div>
+        <?php endif; ?>
 
-        // --- Cleaners Bulk Rating Functions ---
-        
-        function rateAllCleaners(value) {
-            // Rate all cleaners based on the value clicked in the bulk rating stars
-            const cleanerNames = employeeRatingNames.slice(0, -1); 
+        <!-- Driver Ratings -->
+        <?php if (!empty($drivers)): ?>
+        <div class="rating-section">
+            <h4>Rate Your Drivers</h4>
+            <?php foreach ($drivers as $driver): ?>
+            <div class="staff-rating">
+                <h5><?= htmlspecialchars($driver['first_name'] . ' ' . $driver['last_name']) ?></h5>
+                <?php if (!empty($driver['position'])): ?>
+                <div class="staff-position">Position: <?= htmlspecialchars($driver['position']) ?></div>
+                <?php endif; ?>
+                <div class="small-star-rating">
+                    <?php for ($i=5; $i>=1; $i--): ?>
+                        <input type="radio" id="driver_star<?= $driver['id'] ?>_<?= $i ?>" 
+                               name="driver_rating_<?= $driver['id'] ?>" value="<?= $i ?>" required>
+                        <label for="driver_star<?= $driver['id'] ?>_<?= $i ?>">★</label>
+                    <?php endfor; ?>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+        <?php elseif (!empty($booking['drivers'])): ?>
+        <div class="rating-section">
+            <h4>Rate Your Drivers</h4>
+            <div class="no-staff">⚠️ Drivers could not be found in employee database</div>
+        </div>
+        <?php endif; ?>
 
-            cleanerNames.forEach(name => {
-                const radioId = `${name}_star${value}`;
-                const radio = document.getElementById(radioId);
-                
-                if (radio) {
-                    radio.checked = true;
-                }
-            });
-            
-            // Re-hide the cleaner rating error message after applying the bulk rating
-            document.getElementById('cleanerRatingError').style.display = 'none';
-        }
+        <!-- Written Feedback -->
+        <div class="rating-section">
+            <h4>Write Feedback</h4>
+            <textarea name="rating_comment" placeholder="Write your overall feedback here..." required></textarea>
+        </div>
 
-        // --- STEP NAVIGATION ---
+        <button type="submit" class="btn-submit">Submit Feedback</button>
+    </form>
+</div>
 
-        function showStep1() {
-            document.getElementById('step1-content').style.display = 'block';
-            document.getElementById('step2-content').style.display = 'none';
-        }
-
-        function showStep2() {
-            document.getElementById('step1-content').style.display = 'none';
-            document.getElementById('step2-content').style.display = 'block';
-            // Scroll to the top of the form when navigating to step 2
-             document.querySelector('.form-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-
-        // --- STEP 1 VALIDATION ---
-        function validateStep1() {
-            let isValid = true;
-
-            // 1. Validate General Star Rating
-            const ratingRadios = document.getElementsByName('rating_general');
-            let ratingChecked = false;
-            for (let i = 0; i < ratingRadios.length; i++) {
-                if (ratingRadios[i].checked) {
-                    ratingChecked = true;
-                    break;
-                }
-            }
-            const ratingError = document.getElementById('ratingError');
-            if (!ratingChecked) {
-                ratingError.style.display = 'inline-block';
-                isValid = false;
-            } else {
-                ratingError.style.display = 'none';
-            }
-
-            // 2. Validate General Feedback Textarea
-            const feedbackTextarea = document.getElementById('feedback');
-            const feedbackError = document.getElementById('feedbackError');
-            if (feedbackTextarea.value.trim() === "") {
-                feedbackError.style.display = 'inline-block';
-                isValid = false; 
-            } else {
-                feedbackError.style.display = 'none';
-            }
-            
-            if (isValid) {
-                showStep2(); // Move to the next step
-            }
-            
-            return isValid;
-        }
-
-        // --- STEP 2 VALIDATION AND FINAL SUBMISSION ---
-        function validateFinalSubmission(event) {
-            event.preventDefault(); // Prevent default submission initially
-            
-            let isValid = true;
-            let firstUnratedElement = null;
-
-            // 1. Validate All Employee Ratings
-            const cleanerError = document.getElementById('cleanerRatingError');
-            const driverError = document.getElementById('driverRatingError');
-
-            let allCleanersRated = true;
-            let driverRated = false;
-            
-            // A. Check Cleaners
-            const cleanerNames = employeeRatingNames.slice(0, -1);
-            cleanerNames.forEach(name => {
-                let ratingChecked = false;
-                const radios = document.getElementsByName(name);
-                for (let i = 0; i < radios.length; i++) {
-                    if (radios[i].checked) {
-                        ratingChecked = true;
-                        break;
-                    }
-                }
-                if (!ratingChecked) {
-                    allCleanersRated = false;
-                    if (!firstUnratedElement) {
-                        // Find the container element to scroll to
-                        firstUnratedElement = radios[0].closest('.cleaners-rating-list');
-                    }
-                }
-            });
-
-            if (!allCleanersRated) {
-                cleanerError.style.display = 'inline-block';
-                isValid = false;
-            } else {
-                cleanerError.style.display = 'none';
-            }
-            
-            // B. Check Driver
-            const driverRadios = document.getElementsByName('rating_driver');
-            for (let i = 0; i < driverRadios.length; i++) {
-                if (driverRadios[i].checked) {
-                    driverRated = true;
-                    break;
-                }
-            }
-
-            if (!driverRated) {
-                driverError.style.display = 'inline-block';
-                isValid = false;
-                if (!firstUnratedElement) {
-                    firstUnratedElement = driverRadios[0].closest('.driver-rating-list');
-                }
-            } else {
-                driverError.style.display = 'none';
-            }
-
-            // 2. Handle final submission logic
-            if (isValid) {
-                // If all good, we simulate successful submission and show modal
-
-                // Determine Modal Text based on ACTION
-                let titleText;
-                let bodyText;
-
-                if (ACTION === 'edit') {
-                    titleText = 'Rating Updated!';
-                    bodyText = 'Your updated rating';
-                } else {
-                    titleText = 'Rating Submitted!';
-                    bodyText = 'Thank you! Your rating';
-                }
-
-                // 1. Set the dynamic text inside the modal
-                document.getElementById('modalTitle').textContent = titleText;
-                document.getElementById('modalBodyText').textContent = bodyText;
-                document.getElementById('submitted-ref-number').textContent = REF_NO;
-
-                // 2. SHOW MODAL
-                const modal = document.getElementById('reportSuccessModal');
-                modal.style.display = 'flex';
-                
-                return false; 
-            }
-            
-            // If validation fails, scroll to the first unrated element/error
-            if (!isValid && firstUnratedElement) {
-                 firstUnratedElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-            
-            return false; 
-        }
-
-        // Function to hide modal and redirect the user
-        function redirectToPage() {
-             document.getElementById('reportSuccessModal').style.display = 'none';
-             // Simulating the redirect after successful submission
-             window.location.href = REDIRECT_URL + "?status=success&ref=" + REF_NO;
-        }
-    </script>
-    
-    </body>
+</body>
 </html>

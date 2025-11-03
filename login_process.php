@@ -2,7 +2,6 @@
 session_start();
 require 'connection.php';
 
-
 // Get the root URL dynamically
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://";
 $host = $_SERVER['HTTP_HOST'];
@@ -31,20 +30,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (password_verify($password, $user['password'])) {
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['user_type'] = $table; // store table name as type
-                 $_SESSION['email'] = $user['email']; // <-- add this line
+                $_SESSION['email'] = $user['email'];
 
                 // Redirect to dashboard
                 header("Location: " . $base_url . $redirectPage);
                 exit;
             } else {
-                header("Location: " . $base_url . "login.php?error=Invalid+password");
+                // Wrong password → redirect back to landing_page2.html with error
+                header("Location: " . $base_url . "landing_page2.html?error=Invalid+password");
                 exit;
             }
         }
     }
 
-    // User not found in any table
-    header("Location: " . $base_url . "login.php?error=User+not+found");
+    // User not found in any table → redirect back with error
+    header("Location: " . $base_url . "landing_page2.html?error=User+not+found");
     exit;
 }
 ?>

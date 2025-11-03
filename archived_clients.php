@@ -1,0 +1,189 @@
+<?php
+include 'connection.php';
+session_start();
+
+if (!isset($_SESSION['email'])) {
+    echo "<script>alert('Please log in first.'); window.location.href='login.php';</script>";
+    exit;
+}
+
+// Search and sort
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$sort = isset($_GET['sort']) ? $_GET['sort'] : '';
+$searchTerm = "%$search%";
+
+// Fetch archived clients
+$clientsQuery = "SELECT 'Client' AS type, id, first_name, last_name, birthday, contact_number, email FROM clients WHERE archived = 1 AND (first_name LIKE ? OR last_name LIKE ? OR email LIKE ?)";
+$clientsStmt = $conn->prepare($clientsQuery);
+$clientsStmt->bind_param('sss', $searchTerm, $searchTerm, $searchTerm);
+$clientsStmt->execute();
+$clientsResult = $clientsStmt->get_result();
+
+// Fetch archived employees
+$employeesQuery = "SELECT 'Employee' AS type, id, first_name, last_name, birthdate AS birthday, phone_number AS contact_number, email FROM employees WHERE archived = 1 AND (first_name LIKE ? OR last_name LIKE ? OR email LIKE ?)";
+$employeesStmt = $conn->prepare($employeesQuery);
+$employeesStmt->bind_param('sss', $searchTerm, $searchTerm, $searchTerm);
+$employeesStmt->execute();
+$employeesResult = $employeesStmt->get_result();
+
+// Merge results
+$archivedUsers = [];
+if($clientsResult && $clientsResult->num_rows > 0) {
+    while($row = $clientsResult->fetch_assoc()) $archivedUsers[] = $row;
+}
+if($employeesResult && $employeesResult->num_rows > 0) {
+    while($row = $employeesResult->fetch_assoc()) $archivedUsers[] = $row;
+}
+
+// Sorting
+$allowedSorts = ['first_name', 'last_name', 'type'];
+if ($sort && in_array($sort, $allowedSorts)) {
+    usort($archivedUsers, function($a, $b) use ($sort) {
+        return strcmp($a[$sort], $b[$sort]);
+    });
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Archived Users</title>
+<link rel="stylesheet" href="admin_dashboard.css">
+<link rel="stylesheet" href="admin_db.css">
+<link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+<style>
+.content-container { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 3px 10px rgba(0,0,0,0.1); margin: 20px; }
+.search-sort { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+.search-sort input, .search-sort select { padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; }
+.search-sort button { padding: 8px 16px; border: none; border-radius: 6px; background: #007bff; color: white; cursor: pointer; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 10px 12px; border-bottom: 1px solid #ddd; text-align: left; }
+th { background: #f4f4f4; }
+.actions button { padding: 6px 12px; border: none; border-radius: 5px; cursor: pointer; color: #fff; }
+.restore { background: #28a745; }
+.restore:hover { background: #1e7e34; }
+.has-dropdown .dropdown__menu { display: none; }
+.has-dropdown.open .dropdown__menu { display: block; }
+</style>
+</head>
+<body>
+
+<header class="header" id="header">
+<nav class="nav container">
+    <a href="admin_dashboard.php?content=dashboard" class="nav__logo">
+        <img src="LOGO.png" alt="ALAZIMA Logo" onerror="this.onerror=null;this.src='https://placehold.co/200x50/FFFFFF/004a80?text=ALAZIMA';">
+    </a>
+    <button class="nav__toggle" id="nav-toggle"><i class='bx bx-menu'></i></button>
+</nav>
+</header>
+
+<div class="dashboard__wrapper">
+    <!-- Sidebar -->
+    <aside class="dashboard__sidebar">
+        <ul class="sidebar__menu">
+            <li class="menu__item"><a href="admin_dashboard.php?content=dashboard" class="menu__link"><i class='bx bx-home-alt-2'></i> Dashboard</a></li>
+            <li class="menu__item has-dropdown">
+                <a href="#" class="menu__link active-parent"><i class='bx bx-user-circle'></i> User Management <i class='bx bx-chevron-down arrow-icon'></i></a>
+                <ul class="dropdown__menu">
+                    <li class="menu__item"><a href="clients.php?content=manage-clients" class="menu__link">Clients</a></li>
+                    <li class="menu__item"><a href="UM_employees.php?content=manage-employees" class="menu__link">Employees</a></li>
+                    <li class="menu__item"><a href="UM_admins.php?content=manage-admins" class="menu__link">Admins</a></li>
+                    <li class="menu__item"><a href="archived_clients.php?content=manage-archive" class="menu__link active">Archive</a></li>
+                </ul>       
+            </li>
+            <li class="menu__item has-dropdown">
+                <a href="#" class="menu__link"><i class='bx bx-calendar-check'></i> Appointment Management <i class='bx bx-chevron-down arrow-icon'></i></a>
+                <ul class="dropdown__menu">
+                    <li class="menu__item"><a href="AP_one-time.php" class="menu__link">One-time Service</a></li>
+                    <li class="menu__item"><a href="AP_recurring.php" class="menu__link">Recurring Service</a></li>
+                </ul>
+            </li>
+            <li class="menu__item"><a href="ES.php" class="menu__link"><i class='bx bx-time'></i> Employee Scheduling</a></li>
+            <li class="menu__item"><a href="FR.php" class="menu__link"><i class='bx bx-star'></i> Feedback & Ratings</a></li>
+            <li class="menu__item"><a href="Reports.php" class="menu__link"><i class='bx bx-file-text'></i> Reports</a></li>
+               <li class="menu__item"><a href="concern.php?content=profile" class="menu__link" data-content="profile"><i class='bx bx-user'></i> Issues&Concerns</a></li>
+            <li class="menu__item"><a href="admin_profile.php" class="menu__link"><i class='bx bx-user'></i> Profile</a></li>
+            <li class="menu__item"><a href="javascript:void(0)" class="menu__link" onclick="showLogoutModal()"><i class='bx bx-log-out'></i> Logout</a></li>
+        </ul>
+    </aside>
+
+    <!-- Main content -->
+    <main class="dashboard__content">
+        <section class="content__section active">
+            <div class="content-container">
+                <h2>Archived Users</h2>
+
+                <form method="GET" class="search-sort">
+                    <input type="text" name="search" placeholder="Search by name or email" value="<?= htmlspecialchars($search) ?>">
+                    <select name="sort">
+                        <option value="">Sort by</option>
+                        <option value="first_name" <?= $sort=='first_name'?'selected':'' ?>>First Name</option>
+                        <option value="last_name" <?= $sort=='last_name'?'selected':'' ?>>Last Name</option>
+                        <option value="type" <?= $sort=='type'?'selected':'' ?>>Type</option>
+                    </select>
+                    <button type="submit">Apply</button>
+                </form>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>First Name</th>
+                            <th>Last Name</th>
+                            <th>Birthday</th>
+                            <th>Contact</th>
+                            <th>Email</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if(!empty($archivedUsers)): ?>
+                            <?php foreach($archivedUsers as $row): ?>
+                                <tr>
+                                    <td><?= $row['type'] ?></td>
+                                    <td><?= htmlspecialchars($row['first_name']) ?></td>
+                                    <td><?= htmlspecialchars($row['last_name']) ?></td>
+                                    <td><?= htmlspecialchars($row['birthday']) ?></td>
+                                    <td><?= htmlspecialchars($row['contact_number']) ?></td>
+                                    <td><?= htmlspecialchars($row['email']) ?></td>
+                                    <td class="actions">
+                                        <button class="restore" onclick="restoreUser('<?= strtolower($row['type']) ?>', <?= $row['id'] ?>)">Restore</button>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr><td colspan="7" style="text-align:center;">No archived users found</td></tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script>
+function restoreUser(type, id) {
+    let url = type === 'client' ? 'restore_client.php?id=' + id : 'restore_employee.php?id=' + id;
+    if(confirm('Are you sure you want to restore this ' + type + '?')) {
+        window.location.href = url;
+    }
+}
+
+// Sidebar dropdown
+(function(){
+  const nav = document.querySelector('.sidebar__menu');
+  if (!nav) return;
+  const dropdownParents = nav.querySelectorAll('.has-dropdown');
+  dropdownParents.forEach(parent => {
+    const parentLink = parent.querySelector('.menu__link');
+    if (!parentLink) return;
+    parentLink.addEventListener('click', function(e){
+      e.preventDefault();
+      parent.classList.toggle('open');
+    });
+  });
+})();
+</script>
+</body>
+</html>

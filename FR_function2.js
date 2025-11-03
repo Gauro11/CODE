@@ -143,6 +143,7 @@
         document.getElementById('viewReportedIssueModal').style.display = 'block';
     }
     
+    
     // START: NEW FUNCTION viewAppointmentFromIssue (Walang ibang pinalitan sa code maliban sa itaas at ito)
     function viewAppointmentFromIssue(buttonElement) {
         const issueItem = buttonElement.closest('.issue-list-item');
@@ -279,3 +280,42 @@
         }
     }
     // END: ADDED NEW JAVASCRIPT FUNCTION FOR RATINGS SUMMARY FILTERING
+
+//     function showReportModal(element) {
+//     const appointmentItem = element.closest('.appointment-list-item');
+//     const refNumber = appointmentItem.querySelector('.appointment-ref-number').textContent;
+    
+//     // Get the actual booking ID from a data attribute (we'll add this)
+//     const bookingId = appointmentItem.getAttribute('data-booking-id');
+    
+//     // Set the reference number in the modal (for display)
+//     document.getElementById('report-ref-number').textContent = refNumber;
+    
+//     // Store the booking ID in a hidden field
+//     document.getElementById('report-booking-id').value = bookingId;
+    
+//     // Set current date and time
+//     const now = new Date();
+//     const dateStr = now.toISOString().split('T')[0];
+//     const timeStr = now.toTimeString().split(' ')[0].substring(0, 5);
+    
+//     document.getElementById('issueDate').value = dateStr;
+//     document.getElementById('issueTime').value = timeStr;
+//     document.getElementById('submissionDate').value = dateStr;
+//     document.getElementById('submissionTime').value = timeStr;
+    
+//     // Reset form
+//     document.getElementById('issueType').value = '';
+//     document.getElementById('issueDetails').value = '';
+    
+//     // Clear file inputs
+//     document.getElementById('attachment1').value = '';
+//     document.getElementById('attachment2').value = '';
+//     document.getElementById('attachment3').value = '';
+//     document.getElementById('file-name-1').textContent = 'No file chosen';
+//     document.getElementById('file-name-2').textContent = 'No file chosen';
+//     document.getElementById('file-name-3').textContent = 'No file chosen';
+    
+//     // Show modal
+//     document.getElementById('reportIssueModal').style.display = 'flex';
+// }

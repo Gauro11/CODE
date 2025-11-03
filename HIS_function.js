@@ -297,20 +297,24 @@ function showDetailsModal(itemElement) {
         html += `<div style="${materialsReqStyle}; margin-bottom: 10px;">${materialsRequired}</div>`;
 
         // ROW 9: If yes, what materials are needed? (Boxed content)
-        html += `<p style="font-size: 0.95em; margin-bottom: 5px;"><strong>If yes, what materials are needed?:</strong></p>`;
-        let materialsContent = ''; 
-        
-        if (materialsRequired.toLowerCase() === 'yes' && materialDescription && materialDescription.toLowerCase() !== 'n/a' && materialDescription.toLowerCase() !== 'none') {
-             // Use the standard content box style
-             materialsContent = `<div style="${contentBoxStyle}">${materialDescription}</div>`;
-        } else if (materialsRequired.toLowerCase() === 'no') {
-             // Use the N/A box style (grey, italic)
-             materialsContent = `<div style="${naBoxStyle}">N/A (Client provides materials)</div>`; 
-        } else {
-             // If the data is N/A but required is Yes (fallback)
-             materialsContent = `<div style="${naBoxStyle}">N/A or Description Not Provided</div>`;
-        }
-        html += materialsContent;
+      // ROW 9: If yes, what materials are needed? (Boxed content)
+html += `<p style="font-size: 0.95em; margin-bottom: 5px;">
+            <strong>If yes, what materials are needed?:</strong>
+         </p>`;
+
+let materialsContent = '';
+
+// Show materials_needed only if client said "Yes"
+if (materialsRequired.toLowerCase().includes('yes')) {
+    // Display the actual DB value or fallback to "N/A" if empty
+    materialsContent = `<div style="${contentBoxStyle}">${materialDescription && materialDescription.trim() !== '' ? materialDescription : 'N/A'}</div>`;
+} else {
+    // If "No", grey box
+    materialsContent = `<div style="${naBoxStyle}">N/A (Client provides materials)</div>`;
+}
+
+html += materialsContent;
+
         
         // ROW 10: Additional Request (Boxed content)
         html += `<p style="font-size: 0.95em; margin-top: 15px; margin-bottom: 5px;"><strong>Additional Request:</strong></p>`;
@@ -321,13 +325,13 @@ function showDetailsModal(itemElement) {
         html += dividerHtml;
 
         // ************ ROW 11: Estimated/Final Price Logic (MODAL VERSION) ************
-        let priceLabel = 'Estimated Price:';
+        // let priceLabel = 'Estimated Price:';
         // Gagamitin na ang brand color para sa lahat ng presyo (maliban kung Final)
-        let priceDisplay = `<span style="color: #B32133; font-weight: bold;">${priceValue}</span>`; 
+        let priceDisplay = `<span style="color: #fefefeff; font-weight: bold;">${priceValue}</span>`; 
         
         // Check status (case-insensitive)
         if (status.toLowerCase() === 'completed') {
-            priceLabel = 'Final Price:';
+            priceLabel = '';
             // Final Price uses the same AED style
         } 
         
@@ -563,25 +567,25 @@ function showRecurringDetailsModal(itemElement) {
         // --- Separator 2 ---
         html += dividerHtml;
 
-        // ************ ROW 8: Materials Required (Boxed Content with Conditional Style) ************
-        html += `<p style="font-size: 0.95em; margin-bottom: 5px;"><strong>Does the client require cleaning materials? (Yes or No):</strong></p>`;
+       // ************ ROW 8: Materials Required (Boxed Content with Conditional Style) ************
+html += `<p style="font-size: 0.95em; margin-bottom: 5px;"><strong>Does the client require cleaning materials? (Yes or No):</strong></p>`;
 
-        let materialsReqStyle = materialsRequired.toLowerCase() === 'yes' ? contentBoxStyle : naBoxStyle;
+let materialsReqStyle = materialsRequired.toLowerCase().includes('yes') ? contentBoxStyle : naBoxStyle;
 
-        html += `<div style="${materialsReqStyle}; margin-bottom: 10px;">${materialsRequired}</div>`;
+html += `<div style="${materialsReqStyle}; margin-bottom: 10px;">${materialsRequired}</div>`;
 
-        // ROW 9: If yes, what materials are needed? (Boxed content)
-        html += `<p style="font-size: 0.95em; margin-bottom: 5px;"><strong>If yes, what materials are needed?:</strong></p>`;
-        let materialsContent = ''; 
-        
-        if (materialsRequired.toLowerCase() === 'yes' && materialDescription && materialDescription.toLowerCase() !== 'n/a' && materialDescription.toLowerCase() !== 'none') {
-             materialsContent = `<div style="${contentBoxStyle}">${materialDescription}</div>`;
-        } else if (materialsRequired.toLowerCase() === 'no') {
-             materialsContent = `<div style="${naBoxStyle}">N/A (Client provides materials)</div>`; 
-        } else {
-             materialsContent = `<div style="${naBoxStyle}">N/A or Description Not Provided</div>`;
-        }
-        html += materialsContent;
+// ROW 9: If yes, what materials are needed? (Boxed content)
+html += `<p style="font-size: 0.95em; margin-bottom: 5px;"><strong>If yes, what materials are needed?:</strong></p>`;
+let materialsContent = ''; 
+
+if (materialsRequired.toLowerCase().includes('yes') && materialDescription && materialDescription.trim() !== '') {
+     materialsContent = `<div style="${contentBoxStyle}">${materialDescription}</div>`;
+} else if (materialsRequired.toLowerCase().includes('no')) {
+     materialsContent = `<div style="${naBoxStyle}">N/A (Client provides materials)</div>`; 
+} else {
+     materialsContent = `<div style="${naBoxStyle}">Not Provided</div>`;
+}
+html += materialsContent;
         
         // ************ ROW 10: Additional Request (Boxed content) ************
         html += `<p style="font-size: 0.95em; margin-top: 15px; margin-bottom: 5px;"><strong>Additional Request:</strong></p>`;
@@ -591,12 +595,12 @@ function showRecurringDetailsModal(itemElement) {
         html += dividerHtml;
 
         // ************ ROW 11: Total Plan Price Logic (MODAL VERSION) ************
-        let priceLabel = 'Total Plan Price:';
-        let priceDisplay = `<span style="color: #B32133; font-weight: bold;">${priceValue}</span>`; 
+        // let priceLabel = 'Total Plan Price:';
+        // let priceDisplay = `<span style="color: #B32133; font-weight: bold;">${priceValue}</span>`; 
         
-        html += `<div style="text-align: right; margin-top: 10px; color: #333;">`; 
-            html += `<strong style="font-size: 1.2em;">${priceLabel} ${priceDisplay}</strong>`;
-        html += `</div>`;
+        // html += `<div style="text-align: right; margin-top: 10px; color: #333;">`; 
+        //     html += `<strong style="font-size: 1.2em;">${priceLabel} ${priceDisplay}</strong>`;
+        // html += `</div>`;
 
 
         // --- 3. Finalize Modal Display ---
@@ -1035,78 +1039,6 @@ function submitReport() {
  * Note: This function is duplicated/overridden in the original code. I will keep the final version.
  * @param {HTMLElement} element - The 'Report Issue' link element (from dropdown) or button (from details modal).
  */
-function showReportModal(element) {
-    // 1. Determine the source of the reference number and date/time.
-    let refNo, dateText, timeText;
-    
-    // Check if the trigger is the button inside the details modal
-    if (element.classList.contains('report-btn')) {
-        // Get data from the details modal content (Recurrence Details Modal)
-        const detailGroup = element.closest('#detailsModal').querySelector('.modal-content');
-        refNo = detailGroup.querySelector('.ref-no-value').textContent.trim();
-        
-        // Use the jQuery textEquals selector utility (defined at the end of the original file)
-        // to find the original list item using the refNo
-        const originalListItem = document.querySelector(`.appointment-list-item .ref-no-value:textEquals('${refNo}')`);
-        
-        if (originalListItem) {
-            const listItem = originalListItem.closest('.appointment-list-item');
-            dateText = listItem.dataset.date || ''; // YYYY-MM-DD (Start Date ISO)
-            timeText = listItem.dataset.time || ''; // HH:MM
-        } else {
-             // Fallback for one-time service ref-no (if structure is different)
-             const oneTimeListItem = element.closest('.appointment-list-item');
-             if (oneTimeListItem) {
-                refNo = oneTimeListItem.querySelector('.ref-no-value').textContent.trim();
-                dateText = oneTimeListItem.getAttribute('data-date') || '';
-                timeText = oneTimeListItem.querySelector('.bx-time').closest('p').textContent.replace('Time:', '').trim(); 
-             } else {
-                 return; // Cannot find data
-             }
-        }
-        
-    } else {
-        // Triggered directly from the appointment list dropdown (one-time service)
-        let listItem = element.closest('.appointment-list-item');
-        if (!listItem) return; 
-        
-        refNo = listItem.querySelector('.ref-no-value').textContent.trim();
-        dateText = listItem.getAttribute('data-date') || ''; // YYYY-MM-DD
-        // This is a guess for the time extraction for one-time services if data-time isn't present
-        timeText = listItem.querySelector('.bx-time').closest('p').textContent.replace('Time:', '').trim(); 
-    }
-
-    // 2. Populate the modal content and Reset form fields
-    document.getElementById('report-ref-number').textContent = refNo;
-    document.getElementById('issueDate').value = dateText;
-    document.getElementById('issueTime').value = timeText;
-    
-    document.getElementById('issueType').selectedIndex = 0;
-    document.getElementById('issueDetails').value = '';
-    
-    // Hide individual error messages when opening the modal
-    document.getElementById('issueTypeError').style.display = 'none';
-    document.getElementById('issueDetailsError').style.display = 'none';
-    
-    // Reset file inputs and their display text
-    for (let i = 1; i <= 3; i++) {
-        document.getElementById(`attachment${i}`).value = '';
-        document.getElementById(`file-name-${i}`).textContent = 'No file chosen';
-    }
-    
-    // 3. Show the modal
-    closeModal('detailsModal'); // Close details modal if open
-    let modal = document.getElementById('reportIssueModal');
-    if (modal) {
-        modal.style.display = 'block';
-        
-        // Close any open dropdown menu (only relevant if triggered from list)
-        let openDropdown = document.querySelector('.dropdown-menu-container .dropdown-menu.show');
-        if (openDropdown) {
-            openDropdown.classList.remove('show');
-        }
-    }
-}
 
 
 // ==============================================================================
@@ -1422,52 +1354,3 @@ function submitReport() {
  * Shows the Report Issue modal and populates data from the list item.
  * @param {HTMLElement} element - The 'Report Issue' link element.
  */
-function showReportModal(element) {
-    // 1. Find the parent appointment-list-item
-    let listItem = element.closest('.appointment-list-item');
-    if (!listItem) return; 
-
-    // 2. Get the required data attributes (Reference No, Date, Time)
-    let refNoElement = listItem.querySelector('.ref-no-value');
-    let refNo = refNoElement ? refNoElement.textContent.trim() : 'N/A';
-    
-    // Get the values from the appointment details 
-    // These are in the required ISO format (YYYY-MM-DD for date, HH:MM for time) from data attributes.
-    let dateText = listItem.dataset.date || ''; // Get ISO date (YYYY-MM-DD) from data-date
-    let timeText = listItem.dataset.time || ''; // Get ISO time (HH:MM) from data-time 
-    
-    // 3. Populate the modal content
-    document.getElementById('report-ref-number').textContent = refNo;
-    
-    // Populate Date and Time with ISO format from data attributes
-    document.getElementById('issueDate').value = dateText;
-    document.getElementById('issueTime').value = timeText;
-    
-    // Reset form fields
-    document.getElementById('issueType').selectedIndex = 0;
-    document.getElementById('issueDetails').value = '';
-    
-    // NEW: Hide individual error messages when opening the modal
-    document.getElementById('issueTypeError').style.display = 'none';
-    document.getElementById('issueDetailsError').style.display = 'none';
-    
-    // Reset file inputs and their display text
-    document.getElementById('attachment1').value = '';
-    document.getElementById('file-name-1').textContent = 'No file chosen';
-    document.getElementById('attachment2').value = '';
-    document.getElementById('file-name-2').textContent = 'No file chosen';
-    document.getElementById('attachment3').value = '';
-    document.getElementById('file-name-3').textContent = 'No file chosen';
-    
-    // 4. Show the modal
-    let modal = document.getElementById('reportIssueModal');
-    if (modal) {
-        modal.style.display = 'block';
-        
-        // Close any open dropdown menu
-        let openDropdown = document.querySelector('.dropdown-menu-container .dropdown-menu.show');
-        if (openDropdown) {
-            openDropdown.classList.remove('show');
-        }
-    }
-}
