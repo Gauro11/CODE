@@ -440,13 +440,10 @@ background-color: #303099;
 <li class="menu__item"><a href="AU_cleaners.php" class="menu__link">Cleaner Accounts</a></li>
 </ul>
 </li>
-
+ <li class="menu__item"><a href="admin_feedback_dashboard.php" class="menu__link "><i class='bx bx-star'></i> Feedback Overview</a></li>
+ <li class="menu__item"><a href="FR.php" class="menu__link"><i class='bx bx-star'></i> Feedback & Ratings</a></li>
 <li class="menu__item has-dropdown">
-<a href="#" class="menu__link" data-content="feedback-parent"><i class='bx bx-star'></i> View Feedback <i class='bx bx-chevron-down arrow-icon'></i></a>
-<ul class="dropdown__menu">
-<li class="menu__item"><a href="AF_one-time.php" class="menu__link">One-Time Service</a></li>
-<li class="menu__item"><a href="AF_recurring.php" class="menu__link">Recurring Service</a></li>
-</ul>
+
 </li>
 <li class="menu__item"><a href="Reports.php?content=reports" class="menu__link" data-content="reports"><i class='bx bx-file-text'></i> Reports</a></li>
    <li class="menu__item"><a href="concern.php?content=profile" class="menu__link" data-content="profile"><i class='bx bx-user'></i> Issues&Concerns</a></li>

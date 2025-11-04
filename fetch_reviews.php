@@ -1,17 +1,11 @@
 <?php
 header('Content-Type: application/json');
 
-
-$servername = "localhost";
-$username = "u665838367_alazimaa";
-$password = '6$HvZ#Vd'; // safer
-
-$dbname = "u665838367_alazima";
-
-$conn = new mysqli($servername, $username, $password, $dbname);
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+// Database configuration
+$host = 'localhost';
+$dbname = 'alazima';
+$username = 'root';
+$password = '';
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);

@@ -8,27 +8,50 @@ $client_email = $_SESSION['email'] ?? null;
 $client_name = $_SESSION['full_name'] ?? 'Client';
 
 // Fetch One-Time bookings
-$one_time_query = "SELECT * FROM bookings WHERE booking_type = 'One-Time' ";
+$one_time_query = "SELECT * FROM bookings WHERE booking_type = 'One-Time' AND status IN ('Pending','Confirmed','Ongoing') ";
 if ($client_email) {
     $one_time_query .= "AND email = '$client_email' ";
 }
 $one_time_query .= "ORDER BY service_date DESC";
+
 $one_time_result = $conn->query($one_time_query);
 $one_time_count = $one_time_result ? $one_time_result->num_rows : 0;
 
 // Fetch Recurring bookings for summary
-$recurring_query = "SELECT COUNT(*) as recurring_count FROM bookings WHERE booking_type = 'Recurring' ";
+// Fetch Recurring bookings
+$recurring_query = "
+    SELECT * FROM bookings 
+    WHERE booking_type = 'Recurring'
+    AND status IN ('Pending', 'Active', 'Paused')
+";
+
 if ($client_email) {
-    $recurring_query .= "AND email = '$client_email' ";
+    $recurring_query .= " AND email = '$client_email' ";
 }
+
+$recurring_query .= " ORDER BY start_date DESC";
+
 $recurring_result = $conn->query($recurring_query);
-$recurring_count = $recurring_result->fetch_assoc()['recurring_count'] ?? 0;
+$recurring_count = $recurring_result ? $recurring_result->num_rows : 0;
+
 
 // Count total services
 $total_services = $one_time_result->num_rows + $recurring_count;
 
 // Since your table has no feedback/status, we can remove pending feedback completely
 $pending_feedback_count = 0; // default
+// Fetch client first name from clients table
+$client_name = "Client"; // default
+
+if ($client_email) {
+    $query = "SELECT first_name FROM clients WHERE email = '$client_email' LIMIT 1";
+    $result = $conn->query($query);
+
+    if ($result && $result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        $client_name = $row['first_name'];
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -757,6 +780,10 @@ margin-bottom: 20px;
     color: #555;
 } */
 /* --- END Staff Details CSS --- */
+/* Remove the span and show only the value */
+
+
+
 
 </style>
 
@@ -890,7 +917,8 @@ if ($one_time_result->num_rows > 0) {
     while ($row = $one_time_result->fetch_assoc()) {
 
         // Generate reference number for display
-        $ref_number = "ALZ-OT-" . date("ymd") . "-" . str_pad($row['id'], 4, "0", STR_PAD_LEFT);
+        $ref_number = "ALZ-OT-" . date("ymd", strtotime($row['service_date'])) . "-" . str_pad($row['id'], 4, "0", STR_PAD_LEFT);
+
 
         $service_date = date("F d, Y", strtotime($row['service_date']));
         $service_time = date("g:i A", strtotime($row['service_time']));
@@ -949,14 +977,7 @@ $materials_needed = $row['materials_needed'] ?? ""; // fetch from DB
         <strong>Status:</strong>
         <span class="status-tag '.strtolower($status).'"><i class="bx bx-hourglass"></i> '.$status.'</span>
     </p>
-    <p class="full-width-detail">
-        <strong>Does the client require cleaning materials? (Yes or No):</strong> 
-        '.htmlspecialchars($materials_provided).'
-    </p>
-    <p class="full-width-detail">
-    <strong>If yes, what materials are needed?:</strong> 
-    '.htmlspecialchars($materials_needed).'
-</p>
+    
 
 </div>
 
@@ -966,22 +987,25 @@ $materials_needed = $row['materials_needed'] ?? ""; // fetch from DB
     echo '<p class="no-appointments-message">No upcoming one-time appointments found.</p>';
 }
 ?>
-
 <?php
 // Fetch Recurring bookings
-$recurring_query = "SELECT * FROM bookings WHERE booking_type = 'Recurring' ";
+$recurring_query = "
+    SELECT * FROM bookings 
+    WHERE booking_type = 'Recurring'
+    AND status IN ('Pending','Active','Paused')
+";
+
 if ($client_email) {
-    $recurring_query .= "AND email = '$client_email' ";
+    $recurring_query .= " AND email = '$client_email' ";
 }
-$recurring_query .= "ORDER BY start_date DESC";
+
+$recurring_query .= " ORDER BY start_date DESC";
+
 $recurring_result = $conn->query($recurring_query);
 
-$recurring_result->data_seek(0); // Reset pointer
-
-if ($recurring_result->num_rows > 0) {
+if ($recurring_result && $recurring_result->num_rows > 0) {
     while ($row = $recurring_result->fetch_assoc()) {
 
-        // Generate reference number
         $ref_number = "ALZ-RC-" . date("ymd") . "-" . str_pad($row['id'], 4, "0", STR_PAD_LEFT);
 
         $start_date = date("F d, Y", strtotime($row['start_date']));
@@ -991,8 +1015,8 @@ if ($recurring_result->num_rows > 0) {
         $service_type = $row['service_type'] ?? "Service";
         $client_type = $row['client_type'] ?? "N/A";
         $address = $row['address'] ?? "";
-        $materials_needed = $row['materials_needed'] ?? "Not Provided"; // Description
-        $materials_provided = $row['materials_provided'] ?? "No";        // Yes/No
+        $materials_needed = $row['materials_needed'] ?? "Not Provided";
+        $materials_provided = $row['materials_provided'] ?? "No";
         $comments = $row['comments'] ?? "";
         $service_time = $row['service_time'] ?? "N/A";
         $duration = $row['duration'] ?? "N/A";
@@ -1000,46 +1024,37 @@ if ($recurring_result->num_rows > 0) {
         $media2 = $row['media2'] ?? "";
         $media3 = $row['media3'] ?? "";
 
-        // ------------------------
-        // Calculate number of sessions based on frequency
-        // ------------------------
+        // frequency → count sessions
         $start_dt = new DateTime($row['start_date']);
         $end_dt = new DateTime($row['end_date']);
         $freq_lower = strtolower($frequency);
-        if ($freq_lower === 'weekly') {
-            $interval = new DateInterval('P1W');
-        } elseif ($freq_lower === 'bi-weekly') {
-            $interval = new DateInterval('P2W');
-        } elseif ($freq_lower === 'monthly') {
-            $interval = new DateInterval('P1M');
-        } else {
-            $interval = new DateInterval('P1W'); // default to weekly
-        }
+
+        if ($freq_lower === 'weekly')       $interval = new DateInterval('P1W');
+        elseif ($freq_lower === 'bi-weekly') $interval = new DateInterval('P2W');
+        elseif ($freq_lower === 'monthly')  $interval = new DateInterval('P1M');
+        else                                $interval = new DateInterval('P1W');
 
         $period = new DatePeriod($start_dt, $interval, $end_dt->modify('+1 day'));
         $no_of_sessions = iterator_count($period);
 
-        // ------------------------
-        // Output the recurring appointment item
-        // ------------------------
-        echo '<div class="appointment-list-item"
-                data-start-date="'.htmlspecialchars($row['start_date']).'"
-                data-end-date="'.htmlspecialchars($row['end_date']).'"
-                data-time="'.htmlspecialchars($service_time).'"
-                data-duration="'.htmlspecialchars($duration).'"
-                data-frequency="'.htmlspecialchars($frequency).'"
-                data-sessions-count="'.htmlspecialchars($no_of_sessions).'"
-                data-status="'.htmlspecialchars($status).'"
-                data-property-layout="'.htmlspecialchars($client_type).'"
-                data-materials-required="'.htmlspecialchars($materials_provided).'"
-                data-materials-description="'.htmlspecialchars($materials_needed).'"
-                data-additional-request="'.htmlspecialchars($comments).'"
-                data-image-1="'.htmlspecialchars($media1).'"
-                data-image-2="'.htmlspecialchars($media2).'"
-                data-image-3="'.htmlspecialchars($media3).'"
-                
-                
-            >
+        echo '
+        <div class="appointment-list-item"
+            data-start-date="'.htmlspecialchars($row['start_date']).'"
+            data-end-date="'.htmlspecialchars($row['end_date']).'"
+            data-time="'.htmlspecialchars($service_time).'"
+            data-duration="'.htmlspecialchars($duration).'"
+            data-frequency="'.htmlspecialchars($frequency).'"
+            data-sessions-count="'.htmlspecialchars($no_of_sessions).'"
+             data-plan-status="'.htmlspecialchars($status).'"
+            data-property-layout="'.htmlspecialchars($client_type).'"
+           
+            data-materials-required="'.htmlspecialchars($materials_provided).'"
+            data-materials-description="'.htmlspecialchars($materials_needed).'"
+            data-additional-request="'.htmlspecialchars($comments).'"
+            data-image-1="'.htmlspecialchars($media1).'"
+            data-image-2="'.htmlspecialchars($media2).'"
+            data-image-3="'.htmlspecialchars($media3).'"
+        >
             <div class="button-group-top">
                 <a href="javascript:void(0)" class="action-btn view-details-btn" onclick="showRecurringDetailsModal(this.closest(\'.appointment-list-item\'))"><i class="bx bx-show"></i> View Details</a>
                 <a href="EDIT_recurring.php?booking_id='.$row['id'].'" class="action-btn edit-btn"><i class="bx bx-edit"></i> Edit</a>
@@ -1083,11 +1098,7 @@ if ($recurring_result->num_rows > 0) {
 
 
 
-</div>
-<div class="view-all-container">
-    <a href="HIS_recurring.php" class="view-all-link">See More...</a>
-</div>
-</div>
+
 </section>
 </main>
 
@@ -1250,6 +1261,7 @@ if ($recurring_result->num_rows > 0) {
 </div>
 
 <script>
+    
 /**
  * Function to display the Cancel Confirmation Modal.
  * It sets the reference number in the modal content.
@@ -1476,6 +1488,8 @@ function initializeStatusSortingOnLoad() {
         sortAppointmentsByStatus(id, 'default');
     });
 }
+
+        
 
 // Call the initialization function when the page loads
 document.addEventListener('DOMContentLoaded', initializeStatusSortingOnLoad);

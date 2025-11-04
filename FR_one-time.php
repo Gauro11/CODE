@@ -266,18 +266,15 @@ function formatTime($time) {
     return empty($time) ? 'N/A' : date('g:i A', strtotime($time));
 }
 
-function generateRefNo($id, $service_type, $date) {
-    $prefix = '';
-    switch($service_type) {
-        case 'Checkout Cleaning': $prefix = 'CC'; break;
-        case 'In-House Cleaning': $prefix = 'IH'; break;
-        case 'Refresh Cleaning': $prefix = 'RC'; break;
-        case 'Deep Cleaning': $prefix = 'DC'; break;
-        default: $prefix = 'SV';
-    }
-    $dateStr = date('ym', strtotime($date));
-    return "ALZ-{$prefix}-{$dateStr}-" . str_pad($id, 4, '0', STR_PAD_LEFT);
+function generateRefNo($booking_id, $date) {
+    $dateStr = date('ymd', strtotime($date));
+    $sequence = str_pad($booking_id, 4, '0', STR_PAD_LEFT);
+
+    return "ALZ-OT-{$dateStr}-{$sequence}";
 }
+
+
+
 
 ?>
 
@@ -576,7 +573,8 @@ function generateRefNo($id, $service_type, $date) {
       
 function renderBookingCard($booking) {
     // Generate reference number if not exists
-    $refNo = generateRefNo($booking['id'], $booking['service_type'], $booking['service_date']);
+   $refNo = generateRefNo($booking['id'], $booking['service_date']);
+
 
     // Check if has rating
     $hasRating = isset($booking['rating_stars']) && !empty($booking['rating_stars']);

@@ -712,7 +712,7 @@ margin-bottom: 20px;
                 </li>
                 
                 <li class="menu__item"><a href="ES.php?content=employee-scheduling" class="menu__link" data-content="employee-scheduling"><i class='bx bx-time'></i> Employee Scheduling</a></li>
-
+ <li class="menu__item"><a href="admin_feedback_dashboard.php" class="menu__link "><i class='bx bx-star'></i> Feedback Overview</a></li>
                 <li class="menu__item"><a href="FR.php?content=feedback-ratings" class="menu__link" data-content="feedback-ratings"><i class='bx bx-star'></i> Feedback & Ratings</a></li>
                 
                 <li class="menu__item"><a href="Reports.php?content=reports" class="menu__link" data-content="reports"><i class='bx bx-file-text'></i> Reports</a></li>

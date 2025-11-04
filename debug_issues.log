@@ -338,3 +338,19 @@
 [03-Nov-2025 01:32:56 Europe/Berlin] PHP Warning:  Undefined variable $bookings in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
 [03-Nov-2025 01:32:56 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
 [03-Nov-2025 01:32:56 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 654
+[04-Nov-2025 04:56:50 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 279
+[04-Nov-2025 04:56:50 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 279
+[04-Nov-2025 04:56:50 Europe/Berlin] PHP Deprecated:  str_pad(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 279
+[04-Nov-2025 04:57:48 Europe/Berlin] PHP Warning:  Undefined variable $row in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 279
+[04-Nov-2025 04:57:48 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 279
+[04-Nov-2025 04:57:48 Europe/Berlin] PHP Deprecated:  str_pad(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 279
+[04-Nov-2025 04:57:48 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 621
+[04-Nov-2025 04:57:48 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 663
+[04-Nov-2025 04:57:48 Europe/Berlin] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 675
+[04-Nov-2025 05:04:41 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 280
+[04-Nov-2025 05:04:41 Europe/Berlin] PHP Deprecated:  str_pad(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 280
+[04-Nov-2025 05:04:41 Europe/Berlin] PHP Fatal error:  Uncaught Error: Call to undefined function generateRefNo() in C:\Users\asus\Downloads\CODE\FR_one-time.php:582
+Stack trace:
+#0 C:\Users\asus\Downloads\CODE\FR_one-time.php(749): renderBookingCard(Array)
+#1 {main}
+  thrown in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 582

@@ -47,14 +47,15 @@ if ($result && $result->num_rows > 0) {
         // ✅ Push the booking into its respective service type array
         $serviceTypes[$service_type][] = [
             'booking_id' => $row['id'],
-            'reference_no' => 'ALZ-' . str_pad($row['id'], 6, '0', STR_PAD_LEFT),
+           'reference_no' => "ALZ-OT-" . date("ymd", strtotime($row['service_date'])) . "-" . str_pad($row['id'], 4, "0", STR_PAD_LEFT),
+
             'booking_date' => $row['service_date'] ?? '',
             'booking_time' => $row['service_time'] ?? '',
             'duration' => $row['duration'] ?? '0',
             'address' => $row['address'] ?? '',
             'client_type' => $row['client_type'] ?? 'N/A',
             'status' => strtoupper($row['status'] ?? 'PENDING'),
-            'service_type' => $row['booking_type'] ?? 'One-Time',
+            'service_type' => $row['service_type'] ?? 'One-Time',
             'property_layout' => $row['property_type'] ?? '',
             'materials_required' => $row['materials_provided'] ?? 'No - 35 AED / hr', // ✅ FIXED: Now uses materials_provided
             'materials_description' => $row['materials_needed'] ?? '', // ✅ FIXED: Now uses materials_needed

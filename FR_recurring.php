@@ -475,9 +475,9 @@ $conn->close();
                 <button class="tab-button" onclick="openTab(event, 'monthly-cleaning')">
                     <i class='bx bx-calendar-event'></i> Monthly Cleaning
                 </button>
-                 <button class="tab-button" onclick="openTab(event, 'issues-concern')">
+                 <!-- <button class="tab-button" onclick="openTab(event, 'issues-concern')">
                     <i class='bx bx-error-alt'></i> Issues and Concern
-                </button>
+                </button> -->
             </div>
         </div>
 

@@ -86,13 +86,13 @@ function getOneTimeStatusIcon(status) {
 
     switch (normalizedStatus) {
         // --- SHARED / RECURRING ICONS, using ONE-TIME's preferred versions ---
-        case 'ACTIVE':
+        case 'Active':
             return 'bx-play-circle'; 
         case 'COMPLETED':
             return 'bx-check-circle'; // <--- FIXED: Tamang icon para sa One-Time
-        case 'PAUSED':
+        case 'Paused':
             return 'bx-pause-circle';
-        case 'PENDING':
+        case 'Pending':
             return 'bx-hourglass'; // <--- FIXED: Tamang icon para sa One-Time
         case 'TERMINATED':
             return 'bx-x-circle'; 
@@ -100,9 +100,9 @@ function getOneTimeStatusIcon(status) {
         // --- ONE-TIME SPECIFIC STATUSES (Para sa showDetailsModal) ---
         case 'CONFIRMED':
             return 'bx-calendar-check'; 
-        case 'ONGOING':
+        case 'Ongoing':
             return 'bx-loader-circle';
-        case 'CANCELLED':
+        case 'Pending ':
             return 'bx-x-circle'; 
         case 'NO SHOW':
             return 'bx-user-minus';
@@ -158,6 +158,9 @@ const getMediaLink = (url, label) => {
  * Uses the complex Flexbox/CSS layout for modal content.
  * @param {HTMLElement} itemElement - The parent .appointment-list-item element.
  */
+
+
+
 function showDetailsModal(itemElement) {
     const detailsModal = document.getElementById('detailsModal');
     const modalContent = document.getElementById('modal-details-content');
@@ -325,9 +328,19 @@ html += materialsContent;
         html += dividerHtml;
 
         // ************ ROW 11: Estimated/Final Price Logic (MODAL VERSION) ************
-        // let priceLabel = 'Estimated Price:';
+        let priceLabel = 'Estimated Price:';
         // Gagamitin na ang brand color para sa lahat ng presyo (maliban kung Final)
-        let priceDisplay = `<span style="color: #fefefeff; font-weight: bold;">${priceValue}</span>`; 
+       const currentPage = window.location.pathname.split("/").pop();
+
+let priceDisplay;
+
+if (currentPage !== "client_dashboard.php") {
+    priceDisplay = `<span style="color: #9b1313ff; font-weight: bold;">${priceValue}</span>`;
+} else {
+    // What to show in client_dashboard.php
+    priceDisplay = priceValue; // plain text only
+}
+
         
         // Check status (case-insensitive)
         if (status.toLowerCase() === 'completed') {
@@ -336,7 +349,7 @@ html += materialsContent;
         } 
         
         // Applied color #333 (Dark Grey) here
-        html += `<div style="text-align: right; margin-top: 10px; color: #333;">`; 
+        html += `<div style="text-align: right; margin-top: 10px; color: #fffdfdff;">`; 
             // Gamitin ang dynamic na priceLabel at priceDisplay
             html += `<strong style="font-size: 1.2em;">${priceLabel} ${priceDisplay}</strong>`;
         html += `</div>`;
@@ -392,9 +405,9 @@ function getRecurringStatusIcon(status) {
     switch (normalizedStatus) {
         case 'ACTIVE':
             return 'bx-play-circle'; // Recurring Icon
-        case 'COMPLETED':
+        case 'Pending':
             return 'bx-check-double'; // Recurring Icon
-        case 'PAUSED':
+        case 'Paused':
             return 'bx-pause-circle'; // Recurring Icon
         case 'PENDING':
             return 'bx-time-five'; // Recurring Icon
@@ -420,6 +433,7 @@ function getRecurringStatusIcon(status) {
  * @param {HTMLElement} itemElement - The parent .appointment-list-item element.
  */
 function showRecurringDetailsModal(itemElement) {
+    
     const detailsModal = document.getElementById('detailsModal');
     const modalContent = document.getElementById('modal-details-content');
 
