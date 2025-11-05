@@ -153,7 +153,7 @@ if ($search) {
             </li>
             <li class="menu__item"><a href="ES.php" class="menu__link">Employee Scheduling</a></li>
              <li class="menu__item"><a href="admin_feedback_dashboard.php" class="menu__link "><i class='bx bx-star'></i> Feedback Overview</a></li>
-            <li class="menu__item"><a href="FR.php" class="menu__link">Feedback & Ratings</a></li>
+            <!-- <li class="menu__item"><a href="FR.php" class="menu__link">Feedback & Ratings</a></li> -->
             <li class="menu__item"><a href="Reports.php" class="menu__link">Reports</a></li>
             <li class="menu__item"><a href="concern.php" class="menu__link active">Issues & Concerns</a></li>
             <li class="menu__item"><a href="admin_profile.php" class="menu__link">Profile</a></li>

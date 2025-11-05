@@ -154,7 +154,7 @@ th:nth-child(4) { width: 20%; }  /* Sentiment */
             
             <li class="menu__item"><a href="ES.php" class="menu__link"><i class='bx bx-time'></i> Employee Scheduling</a></li>
              <li class="menu__item"><a href="admin_feedback_dashboard.php" class="menu__link "><i class='bx bx-star'></i> Feedback Overview</a></li>
-            <li class="menu__item"><a href="FR.php" class="menu__link active"><i class='bx bx-star'></i> Feedback & Ratings</a></li>
+            <!-- <li class="menu__item"><a href="FR.php" class="menu__link active"><i class='bx bx-star'></i> Feedback & Ratings</a></li> -->
             <li class="menu__item"><a href="Reports.php" class="menu__link"><i class='bx bx-file-text'></i> Reports</a></li>
                <li class="menu__item"><a href="concern.php?content=profile" class="menu__link" data-content="profile"><i class='bx bx-user'></i> Issues&Concerns</a></li>
             <li class="menu__item"><a href="admin_profile.php" class="menu__link"><i class='bx bx-user'></i> Profile</a></li>
