@@ -961,6 +961,11 @@ $materials_needed = $row['materials_needed'] ?? ""; // fetch from DB
                                <i class="bx bx-x-circle" style="color: #B32133;"></i> Cancel
                             </a>
                         </li>
+                          <li>
+                        <a href="https://wa.me/971529009188" target="_blank" class="whatsapp-chat-link">
+                            <i class="bx bxl-whatsapp"></i> Chat on WhatsApp
+                        </a>
+                    </li>
                     </ul>
                 </div>
             </div>
@@ -1068,6 +1073,11 @@ if ($recurring_result && $recurring_result->num_rows > 0) {
                                <i class="bx bx-x-circle" style="color: #B32133;"></i> Cancel
                             </a>
                         </li>
+                          <li>
+                        <a href="https://wa.me/971529009188" target="_blank" class="whatsapp-chat-link">
+                            <i class="bx bxl-whatsapp"></i> Chat on WhatsApp
+                        </a>
+                    </li>
                     </ul>
                 </div>
             </div>
