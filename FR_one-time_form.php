@@ -28,6 +28,13 @@ if ($result->num_rows === 0) {
 }
 
 $booking = $result->fetch_assoc();
+// ✅ Detect Edit Mode and Pre-Fill Rating
+$isEdit = isset($_GET['edit_rating']) && $_GET['edit_rating'] == 1;
+
+// When editing, existing rating + comment will automatically show
+$existing_stars = isset($booking['rating_stars']) ? $booking['rating_stars'] : '';
+$existing_comment = isset($booking['rating_comment']) ? $booking['rating_comment'] : '';
+
 
 $cleaner_names = !empty($booking['cleaners']) ? array_map('trim', explode(',', $booking['cleaners'])) : [];
 $driver_names = !empty($booking['drivers']) ? array_map('trim', explode(',', $booking['drivers'])) : [];

@@ -501,7 +501,8 @@ $conn->close();
         function renderAppointmentItem($booking) {
             $formatted_date = date('F d, Y', strtotime($booking['booking_date']));
             $formatted_time = date('g:i A', strtotime($booking['booking_time']));
-            
+            // Add this at the beginning of the function, after the formatted date/time
+$has_report = !empty($booking['issue_type']) || !empty($booking['issue_description']);
             $search_terms = implode(' ', [
                 $booking['reference_no'],
                 $formatted_date,
@@ -574,35 +575,45 @@ switch ($booking['status']) {
         break;
 
     case 'COMPLETED':
-        $buttons = '
-            <a href="javascript:void(0)" class="action-btn view-details-btn" 
-               onclick="showDetailsModal(this.closest(\'.appointment-list-item\'))">
-               <i class="bx bx-show"></i> View Details</a>
+    $report_button_text = $has_report ? 'Edit Report' : 'Report Issue';
+    $report_icon = $has_report ? 'bx-edit-alt' : 'bx-error-alt';
+    
+    $buttons = '
+        <a href="javascript:void(0)" class="action-btn view-details-btn" 
+           onclick="showDetailsModal(this.closest(\'.appointment-list-item\'))">
+           <i class="bx bx-show"></i> View Details</a>
 
-            <a href="FR_one-time.php?booking_id=' . $booking['booking_id'] . '" 
-               class="action-btn feedback-btn">
-               <i class="bx bx-star"></i> Leave Feedback</a>
+        <a href="FR_one-time.php?booking_id=' . $booking['booking_id'] . '" 
+           class="action-btn feedback-btn">
+           <i class="bx bx-star"></i> Leave Feedback</a>
 
-            <div class="dropdown-menu-container">
-                <button class="more-options-btn" onclick="toggleDropdown(this)">
-                    <i class="bx bx-dots-vertical-rounded"></i>
-                </button>
-                <ul class="dropdown-menu">
-                    <li>
-                        <a href="https://wa.me/971529009188" target="_blank" class="whatsapp-link">
-                            <i class="bx bxl-whatsapp"></i> Chat on WhatsApp
-                        </a>
-                    </li>
-                    <li>
-                        <a href="javascript:void(0)" class="report-link" 
-                           onclick="showReportModal(this)">
-                           <i class="bx bx-error-alt"></i> Report Issue
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        ';
-        break;
+        <div class="dropdown-menu-container">
+            <button class="more-options-btn" onclick="toggleDropdown(this)">
+                <i class="bx bx-dots-vertical-rounded"></i>
+            </button>
+            <ul class="dropdown-menu">
+                <li>
+                    <a href="https://wa.me/971529009188" target="_blank" class="whatsapp-link">
+                        <i class="bx bxl-whatsapp"></i> Chat on WhatsApp
+                    </a>
+                </li>
+                <li>
+                    <a href="javascript:void(0)" class="report-link" 
+                       data-booking-id="'.$booking['booking_id'].'"
+                       data-ref-no="'.$booking['reference_no'].'"
+                       data-date="'.$booking['booking_date'].'"
+                       data-time="'.$booking['booking_time'].'"
+                       data-has-report="'.($has_report ? 'true' : 'false').'"
+                       data-issue-type="'.htmlspecialchars($booking['issue_type'] ?? '').'"
+                       data-issue-description="'.htmlspecialchars($booking['issue_description'] ?? '').'"
+                       onclick="showReportModal(this)">
+                       <i class="bx '.$report_icon.'"></i> '.$report_button_text.'
+                    </a>
+                </li>
+            </ul>
+        </div>
+    ';
+    break;
 
     default:
         $buttons = '
@@ -625,11 +636,15 @@ switch ($booking['status']) {
                         </a>
                     </li>
                     <li>
-                        <a href="javascript:void(0)" class="report-link" 
-                           onclick="showReportModal(this)">
-                           <i class="bx bx-error-alt"></i> Report Issue
-                        </a>
-                    </li>
+    <a href="javascript:void(0)" class="report-link" 
+       data-booking-id="'.$booking['booking_id'].'"
+       data-ref-no="'.$booking['reference_no'].'"
+       data-date="'.$booking['booking_date'].'"
+       data-time="'.$booking['booking_time'].'"
+       onclick="showReportModal(this)">
+       <i class="bx bx-error-alt"></i> Report Issue
+    </a>
+</li>
                 </ul>
             </div>
         ';
@@ -660,10 +675,11 @@ switch ($booking['status']) {
             $price = $booking['status'] === 'COMPLETED' && $booking['final_price'] ? $booking['final_price'] : $booking['estimated_price'];
             
             echo '
-            <div class="appointment-list-item" 
-                data-date="'.$booking['booking_date'].'" 
-                data-time="'.$booking['booking_time'].'"
-                data-status="'.$booking['status'].'"
+<div class="appointment-list-item" 
+    data-booking-id="'.$booking['booking_id'].'"
+    data-date="'.$booking['booking_date'].'" 
+    data-time="'.$booking['booking_time'].'"
+    data-status="'.$booking['status'].'"
                 data-search-terms="'.$search_terms.'"
                 data-property-layout="'.htmlspecialchars($booking['property_layout']).'"
                 data-materials-required="'.$booking['materials_required'].'"
@@ -791,16 +807,29 @@ switch ($booking['status']) {
     </div>
 </div>
 
-<div class="report-modal" id="reportIssueModal" onclick="if(event.target.id === 'reportIssueModal') closeModal('reportIssueModal')">
+
+<!-- REPORT ISSUE MODAL -->
+<!-- ================= REPORT ISSUE MODAL ================= -->
+<div class="report-modal" id="reportIssueModal" onclick="backdropClose(event, 'reportIssueModal')">
     <div class="report-modal-content">
-        <span class="report-close-btn" onclick="closeModal('reportIssueModal')">&times;</span> 
+        <!-- Close button -->
+        <span class="report-close-btn" onclick="closeModal('reportIssueModal')">&times;</span>
+
         <h3>Report an Issue</h3>
+
+        <!-- Reference display -->
         <p class="report-ref-display">
             Reference No: <span id="report-ref-number" class="report-ref-value"></span>
         </p>
-        <form class="report-form" onsubmit="return submitReport();">
+
+        <!-- Form -->
+        <form class="report-form" enctype="multipart/form-data" method="POST" action="report_issue_process.php">
+            <!-- Hidden inputs -->
+            <input type="hidden" id="reportBookingId" name="report-booking-id">
             <input type="hidden" id="submissionDate" name="submissionDate">
             <input type="hidden" id="submissionTime" name="submissionTime">
+
+            <!-- Date & Time -->
             <div class="report-date-time-group">
                 <div>
                     <label for="issueDate">Date:</label>
@@ -811,21 +840,27 @@ switch ($booking['status']) {
                     <input type="time" id="issueTime" name="issueTime" readonly required>
                 </div>
             </div>
+
+            <!-- Issue Type -->
             <label for="issueType">Type of Issue:</label>
-            <select id="issueType" onchange="clearError(this)">
+            <select id="issueType" name="issueType" onchange="clearError(this)" required>
                 <option value="" disabled selected>Select Issue Category</option>
-                <option value="damage">Property Damage</option>
-                <option value="unsatisfied">Unsatisfied with Quality of Cleaning</option>
-                <option value="late">Staff was Late/No Show</option>
-                <option value="staff_behavior">Staff Behavior/Professionalism</option>
-                <option value="billing">Billing/Payment Issue</option>
-                <option value="other">Other</option>
+                <option value="Property Damage">Property Damage</option>
+                <option value="Unsatisfied with Quality of Cleaning">Unsatisfied with Quality of Cleaning</option>
+                <option value="Staff was Late/No Show">Staff was Late/No Show</option>
+                <option value="Staff Behavior/Professionalism">Staff Behavior/Professionalism</option>
+                <option value="Billing/Payment Issue">Billing/Payment Issue</option>
+                <option value="Other">Other</option>
             </select>
             <div id="issueTypeError" class="error-message">Please complete this required field</div>
+
+            <!-- Issue Description -->
             <label for="issueDetails">Issue Description:</label>
-            <textarea id="issueDetails" placeholder="Please provide detailed description of the issue." oninput="clearError(this)"></textarea>
+            <textarea id="issueDetails" name="issueDetails" placeholder="Please provide detailed description of the issue." oninput="clearError(this)" required></textarea>
             <div id="issueDetailsError" class="error-message">Please complete this required field</div>
-            <label>Attachment (up to 3 files - Photos/Videos):</label>
+
+            <!-- Attachments -->
+            <label>Attachments (up to 3 files - Photos/Videos):</label>
             <div class="attachment-group">
                 <div class="custom-file-input-wrapper">
                     <input type="file" id="attachment1" name="attachment1" accept="image/*,video/*" onchange="updateFileName(this)">
@@ -843,24 +878,119 @@ switch ($booking['status']) {
                     <div class="custom-file-text" id="file-name-3">No file chosen</div>
                 </div>
             </div>
-            <button type="submit">Submit Report</button>
-            <div style="clear: both;"></div> 
+
+            <!-- Submit button -->
+            <div class="form-submit-wrapper">
+                <button type="submit">Submit Report</button>
+            </div>
         </form>
     </div>
 </div>
 
-<div class="report-modal" id="reportSuccessModal" onclick="if(event.target.id === 'reportSuccessModal') closeModal('reportSuccessModal')">
+<!-- ================= STYLES ================= -->
+<style>
+.report-modal {
+    display: none; /* hidden by default */
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.report-modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    width: 500px;
+    max-width: 95%;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    position: relative;
+}
+
+.report-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.report-date-time-group {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 10px;
+}
+
+.attachment-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.custom-file-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.custom-file-button {
+    padding: 5px 10px;
+    background-color: #eee;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.custom-file-text {
+    font-size: 0.9em;
+    color: #555;
+}
+
+.error-message {
+    color: red;
+    font-size: 0.85em;
+    display: none;
+}
+
+.form-submit-wrapper {
+    display: flex;
+    justify-content: flex-end;
+}
+
+button[type="submit"] {
+    padding: 8px 16px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+</style>
+
+
+<!-- SUCCESS MODAL -->
+<div class="report-modal" id="reportSuccessModal" onclick="backdropClose(event, 'reportSuccessModal')">
     <div class="report-modal-content" style="max-width: 400px; text-align: center;">
         <div style="padding: 20px;">
             <i class='bx bx-check-circle' style="font-size: 4em; color: #00A86B; margin-bottom: 10px;"></i>
             <h3 style="border-bottom: none; margin-bottom: 10px;">Report Submitted!</h3>
             <p id="success-message" style="color: #555; font-size: 1em;">
-                Your issue report for Ref: <span id="submitted-ref-number" style="color: #B32133; font-weight: 700;"></span> has been received and is under review.
+                Your issue report for Ref: <span id="submitted-ref-number"
+                style="color: #B32133; font-weight: 700;"></span> has been received and is under review.
+                
             </p>
-            <button onclick="closeModal('reportSuccessModal')" class="primary-btn report-confirm-btn">Got It</button>
+           <button onclick="closeModal('reportSuccessModal')" class="primary-btn report-confirm-btn">Got It</button>
         </div>
     </div>
 </div>
+
 
 <div id="cancelSuccessModal" class="cancel-appointment-modal" onclick="if(event.target.id === 'cancelSuccessModal') closeModal('cancelSuccessModal')">
     <div class="cancel-modal-content">
@@ -905,6 +1035,316 @@ switch ($booking['status']) {
         </div>
     </div>
 </div>
+<script>
+// ============================================
+// REPORT ISSUE FUNCTIONALITY
+// ============================================// ============================================
+// REPORT ISSUE FUNCTIONALITY
+// ============================================
+
+console.log("🚀 Script loaded");
+
+document.addEventListener('DOMContentLoaded', function() {
+    attachFormSubmitHandler();
+});
+
+// Show report modal function
+function showReportModal(button) {
+    console.log("=== showReportModal called ===");
+    
+    // Get booking ID from button
+    let bookingId = button.getAttribute("data-booking-id");
+    
+    // Try parent card if button doesn't have it
+    if (!bookingId) {
+        const card = button.closest('.appointment-list-item');
+        if (card) {
+            bookingId = card.getAttribute("data-booking-id");
+        }
+    }
+    
+    console.log("🔍 Booking ID:", bookingId);
+    
+    if (!bookingId || bookingId === '' || bookingId === 'undefined') {
+        console.error("❌ BOOKING ID IS INVALID!");
+        alert("Error: Booking ID not found!");
+        return;
+    }
+    
+    // Find the hidden input
+    const hiddenInput = document.getElementById("reportBookingId");
+    if (hiddenInput) {
+        hiddenInput.value = bookingId;
+        console.log("✅ Set hidden input:", bookingId);
+    } else {
+        console.error("❌ Hidden input not found!");
+        return;
+    }
+    
+    // Get other data
+    let refNo = button.getAttribute("data-ref-no");
+    let date = button.getAttribute("data-date");
+    let time = button.getAttribute("data-time");
+    let hasReport = button.getAttribute("data-has-report") === 'true';
+    
+    // Try parent if button doesn't have them
+    if (!refNo || !date || !time) {
+        const card = button.closest('.appointment-list-item');
+        if (card) {
+            refNo = refNo || card.querySelector('.ref-no-value')?.textContent || "N/A";
+            date = date || card.getAttribute("data-date") || "";
+            time = time || card.getAttribute("data-time") || "";
+        }
+    }
+    
+    // Update modal title
+    const modalTitle = document.querySelector('#reportIssueModal h3');
+    if (modalTitle) {
+        modalTitle.textContent = hasReport ? 'Edit Issue Report' : 'Report an Issue';
+    }
+    
+    // Populate fields
+    document.getElementById("report-ref-number").textContent = refNo;
+    document.getElementById("issueDate").value = date;
+    document.getElementById("issueTime").value = time;
+    
+    // If editing, populate existing data
+    if (hasReport) {
+        const issueType = button.getAttribute("data-issue-type");
+        const issueDescription = button.getAttribute("data-issue-description");
+        
+        if (issueType) document.getElementById("issueType").value = issueType;
+        if (issueDescription) document.getElementById("issueDetails").value = issueDescription;
+        
+        // Change submit button text
+        const submitBtn = document.querySelector('.report-form button[type="submit"]');
+        if (submitBtn) submitBtn.textContent = 'Update Report';
+    } else {
+        // Reset form for new report
+        document.querySelector('.report-form').reset();
+        document.getElementById("issueDate").value = date;
+        document.getElementById("issueTime").value = time;
+        
+        const submitBtn = document.querySelector('.report-form button[type="submit"]');
+        if (submitBtn) submitBtn.textContent = 'Submit Report';
+    }
+    
+    // Set submission date/time
+    const now = new Date();
+    document.getElementById("submissionDate").value = now.toISOString().split('T')[0];
+    document.getElementById("submissionTime").value = now.toTimeString().split(' ')[0];
+    
+    // Show modal
+    document.getElementById("reportIssueModal").style.display = "flex";
+}
+
+// Function to update report button after successful submission
+function updateReportButton(bookingId, issueType, issueDescription) {
+    console.log("🔄 Updating report button for booking:", bookingId);
+    
+    // Find ALL report links with this booking ID across ALL tabs
+    const reportLinks = document.querySelectorAll(`a.report-link[data-booking-id="${bookingId}"]`);
+    
+    console.log(`📍 Found ${reportLinks.length} report link(s) to update`);
+    
+    reportLinks.forEach((link, index) => {
+        console.log(`Updating link ${index + 1}...`);
+        
+        // Update ALL data attributes
+        link.setAttribute('data-has-report', 'true');
+        link.setAttribute('data-issue-type', issueType || '');
+        link.setAttribute('data-issue-description', issueDescription || '');
+        
+        // Update the icon and text
+        const icon = link.querySelector('i');
+        if (icon) {
+            icon.className = 'bx bx-edit-alt'; // Change to edit icon
+        }
+        
+        // Update the text content (keeping the icon)
+        const textNode = Array.from(link.childNodes).find(node => node.nodeType === Node.TEXT_NODE);
+        if (textNode) {
+            textNode.textContent = ' Edit Report';
+        } else {
+            // If no text node found, update the entire innerHTML
+            link.innerHTML = '<i class="bx bx-edit-alt"></i> Edit Report';
+        }
+        
+        console.log(`✅ Link ${index + 1} updated successfully`);
+    });
+    
+    console.log("✅ All report buttons updated across all tabs");
+}
+
+// Form submit handler with AJAX
+function attachFormSubmitHandler() {
+    const reportForm = document.querySelector('.report-form');
+    
+    if (reportForm) {
+        console.log("✅ Form handler attached");
+        
+        reportForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            console.log("=== FORM SUBMITTING ===");
+            
+            const bookingIdInput = document.querySelector('input[name="report-booking-id"]');
+            const issueType = document.getElementById('issueType');
+            const issueDetails = document.getElementById('issueDetails');
+            
+            // Validate
+            let isValid = true;
+            
+            if (!bookingIdInput || !bookingIdInput.value.trim()) {
+                console.error("❌ Booking ID is empty!");
+                alert("Error: Booking ID is missing!");
+                return false;
+            }
+            
+            console.log("📋 Booking ID being submitted:", bookingIdInput.value);
+            
+            if (!issueType.value) {
+                document.getElementById('issueTypeError').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('issueTypeError').style.display = 'none';
+            }
+            
+            if (!issueDetails.value.trim()) {
+                document.getElementById('issueDetailsError').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('issueDetailsError').style.display = 'none';
+            }
+            
+            if (!isValid) {
+                return false;
+            }
+            
+            console.log("✅ Validation passed, submitting...");
+            
+            // Store booking ID for later use
+            const currentBookingId = bookingIdInput.value;
+            
+            // Disable submit button
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+            
+            // Create FormData from the form
+            const formData = new FormData(this);
+            
+            // Log what's being sent (for debugging)
+            console.log("📤 FormData contents:");
+            for (let pair of formData.entries()) {
+                console.log(pair[0] + ': ' + pair[1]);
+            }
+            
+            // Submit via AJAX
+            fetch('submit_report.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                console.log("📥 Response received:", response);
+                return response.json();
+            })
+            .then(data => {
+                console.log("📊 Data received:", data);
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+                
+                if (data.success) {
+                    console.log("✅ Report submitted successfully");
+                    
+                    // Get the issue data to update buttons
+                    const issueTypeValue = document.getElementById('issueType').value;
+                    const issueDetailsValue = document.getElementById('issueDetails').value;
+                    
+                    // Update the report button BEFORE closing modal
+                    updateReportButton(currentBookingId, issueTypeValue, issueDetailsValue);
+                    
+                    // Close report modal
+                    closeModal('reportIssueModal');
+                    
+                    // Show success modal
+                    const refNo = document.getElementById("report-ref-number").textContent;
+                    document.getElementById('submitted-ref-number').textContent = refNo;
+                    document.getElementById('reportSuccessModal').style.display = 'flex';
+                } else {
+                    console.error("❌ Submission failed:", data.message);
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('❌ Fetch error:', error);
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+                alert('An error occurred while submitting the report. Please try again.');
+            });
+            
+            return false;
+        });
+    } else {
+        console.error("❌ Report form not found!");
+    }
+}
+
+// Clear error messages when user types
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("🔄 DOM loaded, attaching form handler...");
+    attachFormSubmitHandler();
+    
+    const issueType = document.getElementById('issueType');
+    const issueDetails = document.getElementById('issueDetails');
+    
+    if (issueType) {
+        issueType.addEventListener('change', function() {
+            document.getElementById('issueTypeError').style.display = 'none';
+        });
+    }
+    
+    if (issueDetails) {
+        issueDetails.addEventListener('input', function() {
+            document.getElementById('issueDetailsError').style.display = 'none';
+        });
+    }
+});
+
+// Close modal function
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
+    }
+    
+    if (modalId === 'reportIssueModal') {
+        const form = document.querySelector('.report-form');
+        if (form) {
+            form.reset();
+            // Re-attach the form handler after reset
+            attachFormSubmitHandler();
+        }
+        document.querySelectorAll('.error-message').forEach(el => {
+            el.style.display = 'none';
+        });
+    }
+    
+    // DON'T reload page after closing success modal
+    // Just close it so the updated button is visible
+    if (modalId === 'reportSuccessModal') {
+        console.log("✅ Success modal closed, button should now show 'Edit Report'");
+    }
+}
+
+// Backdrop close
+function backdropClose(event, modalId) {
+    if (event.target.id === modalId) {
+        closeModal(modalId);
+    }
+}
+</script>
+
 
 <script>
 
@@ -1025,6 +1465,7 @@ function initializeStatusSortingOnLoad() {
         sortAppointmentsByStatus(id, 'default');
     });
 }
+
 
 document.addEventListener('DOMContentLoaded', initializeStatusSortingOnLoad);
 </script> 

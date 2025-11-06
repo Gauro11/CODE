@@ -927,7 +927,7 @@ if ($one_time_result->num_rows > 0) {
         $service_type = $row['service_type'] ?? "Service";
         $client_type = $row['client_type'] ?? "N/A";
         $address = $row['address'] ?? "";
-       
+        $property_type = $row['property_type'] ?? "N/A";
 
         $materials_provided = $row['materials_provided'] ?? "No";
         $comments = $row['comments'] ?? "";
@@ -940,7 +940,7 @@ $materials_needed = $row['materials_needed'] ?? ""; // fetch from DB
             data-time="'.htmlspecialchars($row['service_time']).'"
             data-status="'.htmlspecialchars($status).'"
             data-search-terms="'.htmlspecialchars("$ref_number $service_date $service_time $address $client_type $status").'"
-            data-property-layout="'.htmlspecialchars($client_type).'"
+            data-property-layout="'.htmlspecialchars($property_type).'"
             data-materials-required="'.htmlspecialchars($materials_provided).'"
             
             data-additional-request="'.htmlspecialchars($comments).'"
@@ -1015,6 +1015,7 @@ if ($recurring_result && $recurring_result->num_rows > 0) {
         $service_type = $row['service_type'] ?? "Service";
         $client_type = $row['client_type'] ?? "N/A";
         $address = $row['address'] ?? "";
+         $property_type = $row['property_type'] ?? "N/A";
         $materials_needed = $row['materials_needed'] ?? "Not Provided";
         $materials_provided = $row['materials_provided'] ?? "No";
         $comments = $row['comments'] ?? "";
@@ -1046,7 +1047,7 @@ if ($recurring_result && $recurring_result->num_rows > 0) {
             data-frequency="'.htmlspecialchars($frequency).'"
             data-sessions-count="'.htmlspecialchars($no_of_sessions).'"
              data-plan-status="'.htmlspecialchars($status).'"
-            data-property-layout="'.htmlspecialchars($client_type).'"
+            data-property-layout="'.htmlspecialchars($property_type).'"
            
             data-materials-required="'.htmlspecialchars($materials_provided).'"
             data-materials-description="'.htmlspecialchars($materials_needed).'"

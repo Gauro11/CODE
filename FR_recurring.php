@@ -229,7 +229,7 @@ function renderRecurringBookingCard($booking) {
         <?php endif; ?>
 
         <p class="price-detail">
-            Estimated Price: <span class="aed-color">AED <?= number_format($estimatedPrice, 2) ?></span>
+            Estimated Price: <span class="aed-color">AED <?= number_format($estimatedPrice, ) ?></span>
         </p>
     </div>
     </div>

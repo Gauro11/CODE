@@ -313,6 +313,7 @@ function isChecked($key, $value) {
             color: #856404;
             font-weight: 500;
         }
+        
     </style>
 </head>
 <body>
@@ -442,6 +443,7 @@ function isChecked($key, $value) {
                             <div class="form-group">
                                 <label for="startDate">Start Date</label>
                                 <input type="text" id="startDate" name="startDate" value="<?php echo e('startDate'); ?>" required>
+
                                 <div id="startDateErrorMessage" class="error-message"></div>
                             </div>
                             <div class="form-group">
@@ -574,7 +576,7 @@ function isChecked($key, $value) {
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize all form elements with existing data
+    // Initialize all form elements
     const serviceTypeHidden = document.getElementById("serviceTypeHiddenRecurring");
     const generalCleaningBtn = document.getElementById("generalCleaningBtn");
     const clientTypeSelect = document.getElementById("clientTypeRecurring");
@@ -589,9 +591,47 @@ document.addEventListener('DOMContentLoaded', () => {
     const materialsNo = document.getElementById('materialsNoRecurring');
     const materialsNeededContainer = document.getElementById("materialsNeededContainer");
     const materialsNeededInput = document.getElementById("materialsNeeded");
-    const propertyLayoutTextarea = document.getElementById('propertyLayout');
-    const addressInput = document.getElementById('addressRecurring');
     
+    // ✅ OVERRIDE: Force duration to always be enabled
+    function forceEnableDuration() {
+        if (durationSelect) {
+            durationSelect.disabled = false;
+            durationSelect.removeAttribute('disabled');
+            durationSelect.style.pointerEvents = 'auto';
+            durationSelect.style.opacity = '1';
+            durationSelect.style.backgroundColor = 'white';
+            durationSelect.style.cursor = 'pointer';
+        }
+    }
+    
+    // Force enable immediately
+    forceEnableDuration();
+    
+    // ✅ Override General Cleaning button click
+    if (generalCleaningBtn) {
+        generalCleaningBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            forceEnableDuration();
+        });
+    }
+    
+    // ✅ Use MutationObserver to watch for attribute changes on duration
+    if (durationSelect) {
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'disabled') {
+                    console.log('Duration was disabled, forcing enable...');
+                    forceEnableDuration();
+                }
+            });
+        });
+        
+        observer.observe(durationSelect, {
+            attributes: true,
+            attributeFilter: ['disabled']
+        });
+    }
     
     // Initialize Flatpickr
     const fpStart = flatpickr(startDateInput, {
@@ -677,7 +717,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Materials radio logic with price update
+    // Materials radio logic
     materialsRadios.forEach(radio => {
         radio.addEventListener('change', () => {
             if (materialsYes.checked) {
@@ -687,22 +727,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 materialsNeededContainer.style.display = 'none';
                 materialsNeededInput.required = false;
             }
-            updateEstimatedPrice(); // Recalculate price when materials change
+            updateEstimatedPrice();
         });
     });
 
-    // Trigger initial display of materials container
     if (materialsYes.checked) {
         materialsNeededContainer.style.display = 'flex';
     }
 
-    // Duration change event - Update both time and price
+    // Duration change event
     durationSelect.addEventListener("change", () => {
         updateEstimatedPrice();
         updateEstimatedTime();
     });
+    
+    durationSelect.addEventListener("click", forceEnableDuration);
 
-    // Frequency change event - Update price
+    // Frequency change event
     frequencySelect.addEventListener('change', updateEstimatedPrice);
 
     // Time validation
@@ -712,33 +753,35 @@ document.addEventListener('DOMContentLoaded', () => {
         const totalMinutes = hours * 60 + minutes;
         const timeErrorMessage = document.getElementById("bookingTimeErrorMessage");
         
-        timeErrorMessage.textContent = "";
-        timeErrorMessage.classList.remove("show");
-        
-        if (totalMinutes < 540 || totalMinutes > 1080) {
-            timeErrorMessage.textContent = "Please choose between 9 AM and 6 PM";
-            timeErrorMessage.classList.add("show");
+        if (timeErrorMessage) {
+            timeErrorMessage.textContent = "";
+            timeErrorMessage.classList.remove("show");
+            
+            if (totalMinutes < 540 || totalMinutes > 1080) {
+                timeErrorMessage.textContent = "Please choose between 9 AM and 6 PM";
+                timeErrorMessage.classList.add("show");
+            }
         }
         
-        updateEstimatedTime(); // Update estimated end time when start time changes
+        updateEstimatedTime();
     });
 
-    // Form validation before submit
+    // Form validation
     document.querySelector('form').addEventListener('submit', function(e) {
         let isValid = true;
         
-        // Validate time range
         const timeValue = bookingTimeInput.value;
-        const [hours, minutes] = timeValue.split(':').map(Number);
-        const totalMinutes = hours * 60 + minutes;
-        
-        if (totalMinutes < 540 || totalMinutes > 1080) {
-            e.preventDefault();
-            alert('Please select a time between 9 AM and 6 PM');
-            isValid = false;
+        if (timeValue) {
+            const [hours, minutes] = timeValue.split(':').map(Number);
+            const totalMinutes = hours * 60 + minutes;
+            
+            if (totalMinutes < 540 || totalMinutes > 1080) {
+                e.preventDefault();
+                alert('Please select a time between 9 AM and 6 PM');
+                isValid = false;
+            }
         }
         
-        // Validate materials if "Yes" is selected
         if (materialsYes.checked && materialsNeededInput.value.trim() === '') {
             e.preventDefault();
             alert('Please specify what materials are needed');
@@ -748,10 +791,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return isValid;
     });
 
-    // Initial price calculation on page load
+    // Initial calculations
     updateEstimatedPrice();
+    updateEstimatedTime();
     
-}); // End of DOMContentLoaded
+    // Final check with longer delay
+    setTimeout(forceEnableDuration, 200);
+    setTimeout(forceEnableDuration, 500);
+});
 </script>
 </body>
 </html>

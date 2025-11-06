@@ -16,6 +16,9 @@ $user_email = trim($_SESSION['email']);
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['booking_id'])) {
     $booking_id = intval($_POST['booking_id']);
 
+    // DEBUG: Log all POST data
+    error_log("POST Data: " . print_r($_POST, true));
+
     // Form data
     $serviceType = $_POST['serviceType'] ?? '';
     $clientType = $_POST['clientType'] ?? '';
@@ -35,6 +38,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['booking_id'])) {
 
     if (isset($_FILES['mediaUpload']) && is_array($_FILES['mediaUpload']['name'])) {
         $upload_dir = 'uploads/';
+        if (!file_exists($upload_dir)) {
+            mkdir($upload_dir, 0777, true);
+        }
+        
         for ($i = 0; $i < 3; $i++) {
             if (!empty($_FILES['mediaUpload']['name'][$i]) && $_FILES['mediaUpload']['error'][$i] === UPLOAD_ERR_OK) {
                 $tmp_name = $_FILES['mediaUpload']['tmp_name'][$i];
@@ -49,61 +56,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['booking_id'])) {
         }
     }
 
+    // DEBUG: Log update values
+    error_log("Update Values - Service: $serviceType, Client: $clientType, Date: $bookingDate");
+
     // ✅ Update booking
- // ✅ Update booking - Use 'comments' column instead of 'additional_request'
-$sql = "UPDATE bookings SET 
-    service_type = ?,
-    client_type = ?,
-    service_date = ?,
-    service_time = ?,
-    duration = ?,
-    address = ?,
-    property_type = ?,
-    materials_provided = ?,
-    materials_needed = ?,
-    comments = ?,
-    media1 = ?,
-    media2 = ?,
-    media3 = ?
-    WHERE id = ? AND email = ?";
+    $sql = "UPDATE bookings SET 
+        service_type = ?,
+        client_type = ?,
+        service_date = ?,
+        service_time = ?,
+        duration = ?,
+        address = ?,
+        property_type = ?,
+        materials_provided = ?,
+        materials_needed = ?,
+        comments = ?,
+        media1 = ?,
+        media2 = ?,
+        media3 = ?
+        WHERE id = ? AND email = ?";
 
-$stmt = $conn->prepare($sql);
+    $stmt = $conn->prepare($sql);
 
-if (!$stmt) {
-    die("SQL Error: " . $conn->error);
-}
+    if (!$stmt) {
+        die("SQL Error: " . $conn->error);
+    }
 
-// ✅ 15 parameters total (13 data fields + id + email)
-$stmt->bind_param(
-    "sssssssssssssis",
-    $serviceType,
-    $clientType,
-    $bookingDate,
-    $bookingTime,
-    $duration,
-    $address,
-    $propertyLayout,
-    $cleaningMaterials,
-    $materialsNeeded,
-    $additionalRequest,  // This will go to 'comments' column
-    $media1,
-    $media2,
-    $media3,
-    $booking_id,
-    $user_email
-);
+    $stmt->bind_param(
+        "sssssssssssssis",
+        $serviceType,
+        $clientType,
+        $bookingDate,
+        $bookingTime,
+        $duration,
+        $address,
+        $propertyLayout,
+        $cleaningMaterials,
+        $materialsNeeded,
+        $additionalRequest,
+        $media1,
+        $media2,
+        $media3,
+        $booking_id,
+        $user_email
+    );
 
-if ($stmt->execute()) {
+    if ($stmt->execute()) {
+        $affected_rows = $stmt->affected_rows;
+        error_log("Update successful. Affected rows: $affected_rows");
+        $stmt->close();
+        $conn->close();
+        echo "<script>alert('Booking updated successfully!'); window.location.href='HIS_one-time.php';</script>";
+        exit;
+    } else {
+        error_log("Update failed: " . $stmt->error);
+        echo "<script>alert('Error updating booking: " . htmlspecialchars($stmt->error) . "');</script>";
+    }
+
     $stmt->close();
-    $conn->close();
-    echo "<script>alert('Booking updated successfully!'); window.location.href='HIS_one-time.php';</script>";
-    exit; // ✅ Stop script execution here
-} else {
-    echo "<script>alert('Error updating booking: " . $stmt->error . "');</script>";
-}
-
-$stmt->close();
-
 }
 
 // ===================================================================
@@ -125,6 +135,10 @@ $result = $stmt->get_result();
 
 if ($result && $result->num_rows > 0) {
     $row = $result->fetch_assoc();
+    
+    // DEBUG: Log fetched data
+    error_log("Fetched booking data: " . print_r($row, true));
+    
     $booking_data = [
         'booking_id' => $row['id'],
         'serviceType' => $row['service_type'] ?? '',
@@ -136,13 +150,13 @@ if ($result && $result->num_rows > 0) {
         'propertyLayout' => $row['property_type'] ?? '',
         'cleaningMaterials' => $row['materials_provided'] ?? '',
         'materialsNeeded' => $row['materials_needed'] ?? '',
-        'additionalRequest' => $row['comments'] ?? '',  // ✅ Changed from 'additional_request'
+        'additionalRequest' => $row['comments'] ?? '',
         'media1' => $row['media1'] ?? '',
         'media2' => $row['media2'] ?? '',
         'media3' => $row['media3'] ?? '',
     ];
-
 } else {
+    error_log("No booking found for ID: $booking_id, Email: $user_email");
     echo "<script>alert('Booking not found.'); window.location.href='HIS_one-time.php';</script>";
     exit;
 }
@@ -163,7 +177,6 @@ function isChecked($key, $value) {
     return isset($booking_data[$key]) && $booking_data[$key] === $value ? 'checked' : '';
 }
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -239,6 +252,18 @@ function isChecked($key, $value) {
             border-color: #007bff;
             background-color: #e7f3ff;
         }
+        
+        /* Debug info styling */
+        .debug-info {
+            background: #f0f0f0;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body>
@@ -291,13 +316,28 @@ function isChecked($key, $value) {
         <main class="dashboard__content">
             <section id="one-time-service-content" class="content__section active">
                 <h2 class="section__title">Edit One-Time Booking</h2>
+                
+                <!-- DEBUG INFO - Remove this after fixing -->
+                <!-- <div class="debug-info">
+                    <strong>DEBUG INFO:</strong><br>
+                    Booking ID: <?php echo e('booking_id'); ?><br>
+                    Service Type: <?php echo e('serviceType'); ?><br>
+                    Client Type: <?php echo e('clientType'); ?><br>
+                    Date: <?php echo e('bookingDate'); ?><br>
+                    Time: <?php echo e('bookingTime'); ?><br>
+                    Duration: <?php echo e('duration'); ?><br>
+                    Address: <?php echo e('address'); ?><br>
+                    Materials: <?php echo e('cleaningMaterials'); ?><br>
+                    Media1: <?php echo e('media1'); ?><br>
+                </div> -->
+                
                 <div class="booking__form">
                     
                     <form id="oneTimeBookingForm" action="" method="POST" enctype="multipart/form-data">
                        <input type="hidden" name="booking_id" value="<?php echo e('booking_id'); ?>">
-                        <input type="hidden" name="existing_media1" value="<?php e('media1'); ?>">
-                        <input type="hidden" name="existing_media2" value="<?php e('media2'); ?>">
-                        <input type="hidden" name="existing_media3" value="<?php e('media3'); ?>">
+                        <input type="hidden" name="existing_media1" value="<?php echo e('media1'); ?>">
+                        <input type="hidden" name="existing_media2" value="<?php echo e('media2'); ?>">
+                        <input type="hidden" name="existing_media3" value="<?php echo e('media3'); ?>">
                         
                         <div class="form-row">
                             <div class="form-group full-width">
@@ -324,7 +364,7 @@ function isChecked($key, $value) {
                                         <p>An intensive and thorough clean for units that are in "disaster" or very dirty conditions.</p>
                                     </button>
                                 </div>
-                                <input type="hidden" id="serviceTypeHidden" name="serviceType" value="<?php e('serviceType'); ?>" required>
+                                <input type="hidden" id="serviceTypeHidden" name="serviceType" value="<?php echo e('serviceType'); ?>" required>
                             </div>
                         </div>
                         
@@ -340,11 +380,11 @@ function isChecked($key, $value) {
                             </div>
                             <div class="form-group">
                                 <label for="bookingDate">Date</label>
-                                <input type="date" id="bookingDate" name="bookingDate" value="<?php e('bookingDate'); ?>" required>
+                                <input type="date" id="bookingDate" name="bookingDate" value="<?php echo htmlspecialchars($booking_data['bookingDate'] ?? ''); ?>" required>
                             </div>
                             <div class="form-group">
                                 <label for="bookingTime">Time</label>
-                                <input type="time" id="bookingTime" name="bookingTime" value="<?php e('bookingTime'); ?>" required>
+                                <input type="time" id="bookingTime" name="bookingTime" value="<?php echo htmlspecialchars($booking_data['bookingTime'] ?? ''); ?>" required>
                             </div>
                             <div class="form-group">
                                 <label for="duration">Duration (Hours)</label>
@@ -364,7 +404,7 @@ function isChecked($key, $value) {
                         
                         <div class="form-group full-width">
                             <label for="address">Address</label>
-                            <input type="text" id="address" name="address" value="<?php e('address'); ?>" placeholder="Enter full address" required>
+                            <input type="text" id="address" name="address" value="<?php echo e('address'); ?>" placeholder="Enter full address" required>
                         </div>
                         
                         <div class="form-row form-section-gap">
@@ -373,7 +413,7 @@ function isChecked($key, $value) {
                                 <small class="form-text text-muted">Please specify the unit size/type, number of floors, and room breakdown per floor, and upload up to 3 images/videos to help us understand the actual layout.</small>
                                 
                                 <div class="side-by-side-container">
-                                    <textarea id="propertyLayout" name="propertyLayout" rows="8" placeholder="Ex. Studio Type – 1 Floor: 1 Room, 1 Bathroom" required><?php e('propertyLayout'); ?></textarea>
+                                    <textarea id="propertyLayout" name="propertyLayout" rows="8" placeholder="Ex. Studio Type – 1 Floor: 1 Room, 1 Bathroom" required><?php echo e('propertyLayout'); ?></textarea>
                                     
                                     <div class="media-upload-container">
                                         <div class="upload-field">
@@ -417,14 +457,14 @@ function isChecked($key, $value) {
                         <div class="form-row hidden-materials-input" style="<?php echo strpos($booking_data['cleaningMaterials'] ?? '', 'Yes') !== false ? 'display: flex;' : ''; ?>">
                             <div class="form-group full-width">
                                 <label for="materialsNeeded">If yes, what materials are needed?</label>
-                                <input type="text" id="materialsNeeded" name="materialsNeeded" value="<?php e('materialsNeeded'); ?>" placeholder="e.g., mop, disinfectant, vacuum cleaner">
+                                <input type="text" id="materialsNeeded" name="materialsNeeded" value="<?php echo e('materialsNeeded'); ?>" placeholder="e.g., mop, disinfectant, vacuum cleaner">
                             </div>
                         </div>
 
                         <div class="form-row">
                             <div class="form-group full-width">
                                 <label for="additionalRequest">Additional Request (Optional)</label>
-                                <textarea id="additionalRequest" name="additionalRequest" rows="4" placeholder="e.g., Use organic products, focus on kitchen"><?php e('additionalRequest'); ?></textarea>
+                                <textarea id="additionalRequest" name="additionalRequest" rows="4" placeholder="e.g., Use organic products, focus on kitchen"><?php echo e('additionalRequest'); ?></textarea>
                             </div>
                         </div>
 
@@ -455,6 +495,11 @@ function isChecked($key, $value) {
     
     <script>
         document.addEventListener("DOMContentLoaded", () => {
+            // Log loaded data for debugging
+            console.log("Page loaded with booking data");
+            console.log("Service Type:", document.getElementById('serviceTypeHidden').value);
+            console.log("Client Type:", document.getElementById('clientType').value);
+            
             const materialsNeededContainer = document.querySelector('.hidden-materials-input');
             const materialsYes = document.getElementById('materialsYes');
             const materialsNo = document.getElementById('materialsNo');
@@ -623,7 +668,7 @@ function isChecked($key, $value) {
                     const selectedServiceType = card.dataset.serviceType;
                     serviceTypeHiddenInput.value = selectedServiceType;
                     
-                                       if (clientTypeSelect) {
+                    if (clientTypeSelect) {
                         populateClientType(selectedServiceType);
                     }
                     updateEstimatedCompletion();

@@ -447,6 +447,69 @@ function generateRefNo($booking_id, $date) {
     from { opacity: 0; transform: translateY(-15px); }
     to { opacity: 1; transform: translateY(0); }
 }
+.report-modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.report-modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    width: 500px;
+    max-width: 95%;
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* space between inputs */
+    position: relative;
+}
+
+.attachment-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.custom-file-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.custom-file-button {
+    padding: 5px 10px;
+    background-color: #eee;
+    border: 1px solid #ccc;
+    cursor: pointer;
+}
+
+.custom-file-text {
+    font-size: 0.9em;
+    color: #555;
+}
+
+/* make sure submit button is properly inside modal */
+.form-submit-wrapper {
+    margin-top: 15px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+button[type="submit"] {
+    padding: 8px 16px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
 
 
 
@@ -647,11 +710,24 @@ data-photo3="<?= htmlspecialchars($booking['issue_photo3'] ?? '') ?>"
         
         <?php endif; ?>
         <li><a href="https://wa.me/971529009188" target="_blank" class="whatsapp-link"><i class='bx bxl-whatsapp'></i> Chat on WhatsApp</a></li>
-        <?php 
-        $hasIssue = isset($booking['issue_type']) && !empty($booking['issue_type']);
-        if ($hasIssue): 
-        ?>
-        <li><a href="javascript:void(0)" class="report-link view-issue-link" onclick="viewReportedIssue(this.closest('.appointment-list-item'))"><i class='bx bx-error-alt'></i> Reported Issue</a></li>
+       <?php 
+$hasIssue = isset($booking['issue_type']) && !empty($booking['issue_type']);
+if ($hasIssue): 
+?>
+<li>
+    <a href="#" 
+       class="report-link" 
+       onclick="event.preventDefault(); showReportModal(this); return false;"
+       data-booking-id="<?= htmlspecialchars($booking['id']) ?>"
+       data-ref-no="<?= htmlspecialchars($refNo) ?>"
+       data-date="<?= htmlspecialchars($booking['service_date']) ?>"
+       data-time="<?= htmlspecialchars($booking['service_time']) ?>"
+       data-has-issue="true"
+       data-issue-type="<?= htmlspecialchars($booking['issue_type']) ?>"
+       data-issue-description="<?= htmlspecialchars($booking['issue_description']) ?>">
+       <i class='bx bx-edit-alt'></i> Edit Report
+    </a>
+</li>
         <?php else: ?>
         <li>
             <a href="#" 
@@ -703,7 +779,7 @@ data-photo3="<?= htmlspecialchars($booking['issue_photo3'] ?? '') ?>"
             <?php endif; ?>
 
             <p class="price-detail">
-    Final Price: <span class="aed-color">AED <?= number_format($booking['final_price'], 2) ?></span>
+    Final Price: <span class="aed-color">AED <?= number_format($booking['final_price'], ) ?></span>
 </p>
 
 
@@ -1126,7 +1202,7 @@ data-photo3="<?= htmlspecialchars($booking['issue_photo3'] ?? '') ?>"
 
 <!-- Details Modal -->
 <div class="modal" id="detailsModal" onclick="if(event.target.id === 'detailsModal') closeModal('detailsModal')">
-    <div class="modal-content">
+     <div class="modal-content" style="width:600px;">
         <span class="close-btn" onclick="closeModal('detailsModal')">&times;</span> 
         <h3><i class='bx bx-file-text'></i> Appointment Details</h3>
         <div id="modal-details-content"></div>
@@ -1144,17 +1220,11 @@ data-photo3="<?= htmlspecialchars($booking['issue_photo3'] ?? '') ?>"
             Reference No: <span id="report-ref-number" class="report-ref-value"></span>
         </p>
 
-   <form class="report-form" method="POST" action="report_issue_process.php" enctype="multipart/form-data">
+        <form class="report-form" method="POST" action="report_issue_process.php" enctype="multipart/form-data">
+            <input type="hidden" name="report-booking-id" id="reportBookingId">
+            <input type="hidden" id="submissionDate" name="submissionDate">
+            <input type="hidden" id="submissionTime" name="submissionTime">
 
-
-
-
-  <input type="hidden" name="report-booking-id" id="reportBookingId">
-
-
-
-    <input type="hidden" id="submissionDate" name="submissionDate">
-    <input type="hidden" id="submissionTime" name="submissionTime">
             <div class="report-date-time-group">
                 <div>
                     <label for="issueDate">Date:</label>
@@ -1183,7 +1253,6 @@ data-photo3="<?= htmlspecialchars($booking['issue_photo3'] ?? '') ?>"
             <div id="issueDetailsError" class="error-message">Please complete this required field</div>
 
             <label>Attachment (up to 3 files - Photos/Videos):</label>
-            
             <div class="attachment-group">
                 <div class="custom-file-input-wrapper">
                     <input type="file" id="attachment1" name="attachment1" accept="image/*,video/*" onchange="updateFileName(this)">
@@ -1202,11 +1271,13 @@ data-photo3="<?= htmlspecialchars($booking['issue_photo3'] ?? '') ?>"
                 </div>
             </div>
 
-            <button type="submit">Submit Report</button>
-            <div style="clear: both;"></div> 
+            <div class="form-submit-wrapper">
+                <button type="submit">Submit Report</button>
+            </div>
         </form>
     </div>
 </div>
+
 
 <!-- Report Success Modal -->
 <div class="report-modal" id="reportSuccessModal" onclick="if(event.target.id === 'reportSuccessModal') closeModal('reportSuccessModal')">
@@ -1224,121 +1295,161 @@ data-photo3="<?= htmlspecialchars($booking['issue_photo3'] ?? '') ?>"
             </button>
         </div>
     </div>
-</div>
-<script>console.log("🚀 Script loaded");
+</div><script>
+console.log("🚀 Script loaded");
 
-// ✅ Test if element exists on page load
 document.addEventListener('DOMContentLoaded', function() {
-    const hiddenInput = document.getElementById("reportBookingId");
-    console.log("📋 Hidden input on load:", hiddenInput);
-    
-    if (hiddenInput) {
-        console.log("   Current value:", hiddenInput.value);
-        console.log("   Name attribute:", hiddenInput.name);
-    } else {
-        console.error("❌ Hidden input #reportBookingId NOT FOUND on page!");
-    }
-    
-    // Test if modal exists
-    const modal = document.getElementById("reportIssueModal");
-    console.log("📋 Modal exists:", modal ? "YES" : "NO");
-    
-    // Find all report buttons
-    const reportButtons = document.querySelectorAll('[onclick*="showReportModal"]');
-    console.log("📋 Found", reportButtons.length, "report buttons");
-    
-    if (reportButtons.length > 0) {
-        console.log("   First button data-booking-id:", reportButtons[0].getAttribute('data-booking-id'));
-    }
-    
-    // ✅ Attach form submit handler
     attachFormSubmitHandler();
 });
+
+// Function to update report button after successful submission
+function updateReportButtonToEdit(bookingId, issueType, issueDescription) {
+    console.log("🔄 Updating report button for booking:", bookingId);
+    
+    // Find ALL report links with this booking ID across ALL tabs
+    const reportLinks = document.querySelectorAll(`a.report-link[data-booking-id="${bookingId}"]`);
+    
+    console.log(`📍 Found ${reportLinks.length} report link(s) to update`);
+    
+    reportLinks.forEach((link, index) => {
+        console.log(`Updating link ${index + 1}...`);
+        
+        // Find parent card to update its data attributes too
+        const parentCard = link.closest('.appointment-list-item');
+        if (parentCard) {
+            parentCard.setAttribute('data-has-issue', 'true');
+            parentCard.setAttribute('data-issue-type', issueType);
+            parentCard.setAttribute('data-issue-description', issueDescription);
+        }
+        
+        // Update link data attributes
+        link.setAttribute('data-has-issue', 'true');
+        link.setAttribute('data-issue-type', issueType);
+        link.setAttribute('data-issue-description', issueDescription);
+        
+        // ⭐ CHANGED: Keep the same onclick to allow editing
+        // DON'T add view-issue-link class
+        // DON'T change onclick to viewReportedIssue
+        
+        // Update icon (keep same icon)
+        const icon = link.querySelector('i');
+        if (icon) {
+            icon.className = 'bx bx-edit-alt'; // ⭐ Change to edit icon
+        }
+        
+        // ⭐ CHANGED: Update text to "Edit Report"
+        link.innerHTML = '<i class="bx bx-edit-alt"></i> Edit Report';
+        
+        console.log(`✅ Link ${index + 1} updated to "Edit Report"`);
+    });
+    
+    console.log("✅ All report buttons updated across all tabs");
+}
 
 // Show report modal function
 function showReportModal(button) {
     console.log("=== showReportModal called ===");
-    console.log("Button element:", button);
-    
-    // Get booking ID from button
+
+    // Get booking ID
     let bookingId = button.getAttribute("data-booking-id");
-    console.log("Step 1 - From button:", bookingId);
-    
-    // Try parent card if button doesn't have it
     if (!bookingId) {
-        console.log("Step 2 - Trying parent card...");
-        const card = button.closest('.appointment-list-item') || button.closest('.issue-card');
-        console.log("   Parent card found:", card ? "YES" : "NO");
-        
-        if (card) {
-            bookingId = card.getAttribute("data-booking-id");
-            console.log("   From parent card:", bookingId);
-        }
-    }
-    
-    console.log("🔍 Final Booking ID:", bookingId);
-    console.log("   Type:", typeof bookingId);
-    console.log("   Length:", bookingId ? bookingId.length : 0);
-    
-    if (!bookingId || bookingId === '' || bookingId === 'undefined') {
-        console.error("❌ BOOKING ID IS INVALID!");
-        alert("Error: Booking ID not found! Check console for details.");
-        return;
-    }
-    
-    // Find the hidden input
-    const hiddenInput = document.getElementById("reportBookingId");
-    console.log("Hidden input element:", hiddenInput);
-    
-    if (hiddenInput) {
-        console.log("   Before setting - value:", hiddenInput.value);
-        hiddenInput.value = bookingId;
-        console.log("   After setting - value:", hiddenInput.value);
-        console.log("✅ Successfully set hidden input");
-    } else {
-        console.error("❌ Hidden input #reportBookingId NOT FOUND!");
-        alert("Form error: Hidden input element not found!");
-        return;
-    }
-    
-    // Get other data
-    let refNo = button.getAttribute("data-ref-no");
-    let date = button.getAttribute("data-date");
-    let time = button.getAttribute("data-time");
-    
-    console.log("Other data - RefNo:", refNo, "Date:", date, "Time:", time);
-    
-    // Try parent if button doesn't have them
-    if (!refNo || !date || !time) {
         const card = button.closest('.appointment-list-item, .issue-card');
-        if (card) {
-            refNo = refNo || card.getAttribute("data-ref-no") || "N/A";
-            date = date || card.getAttribute("data-date") || "";
-            time = time || card.getAttribute("data-time") || "";
-        }
+        if (card) bookingId = card.getAttribute("data-booking-id");
+    }
+
+    if (!bookingId) {
+        alert("Error: Booking ID missing.");
+        return;
     }
     
-    // Populate fields
+
+    // Set hidden input
+    const hiddenInput = document.getElementById("reportBookingId");
+    if (!hiddenInput) {
+        console.error("❌ Hidden input not found!");
+        alert("Error: Form configuration error");
+        return;
+    }
+    hiddenInput.value = bookingId;
+    console.log("✅ Set booking ID:", bookingId);
+
+    // Get reference data
+    let refNo = button.getAttribute("data-ref-no") || "";
+    let date = button.getAttribute("data-date") || "";
+    let time = button.getAttribute("data-time") || "";
+
+    const card = button.closest('.appointment-list-item, .issue-card');
+    if (card) {
+        if (!refNo) refNo = card.getAttribute("data-ref-no") || "N/A";
+        if (!date) date = card.getAttribute("data-date") || "";
+        if (!time) time = card.getAttribute("data-time") || "";
+    }
+
     document.getElementById("report-ref-number").textContent = refNo;
     document.getElementById("issueDate").value = date;
     document.getElementById("issueTime").value = time;
-    
-    // Set submission date/time
+
+    // Submission datetime
     const now = new Date();
-    const dateStr = now.toISOString().split('T')[0];
-    const timeStr = now.toTimeString().split(' ')[0];
-    
-    document.getElementById("submissionDate").value = dateStr;
-    document.getElementById("submissionTime").value = timeStr;
-    
-    console.log("📅 All fields populated");
-    console.log("=== Opening modal ===");
-    
-    // Show modal
-    document.getElementById("reportIssueModal").style.display = "block";
+    document.getElementById("submissionDate").value = now.toISOString().slice(0, 10);
+    document.getElementById("submissionTime").value = now.toTimeString().slice(0, 8);
+
+    // ⭐ Check if button has data-has-issue="true" OR if parent card has issue data
+    const submitBtn = document.querySelector('.report-form button[type="submit"]');
+    let hasIssue = false;
+
+    // Check button's data-has-issue attribute
+    if (button.getAttribute('data-has-issue') === 'true') {
+        hasIssue = true;
+    }
+
+    // OR check parent card
+    if (!hasIssue && card) {
+        const cardHasIssue = card.getAttribute('data-has-issue');
+        const issueType = card.getAttribute("data-issue-type");
+        const issueDesc = card.getAttribute("data-issue-description");
+        
+        if (cardHasIssue === 'true' || issueType || issueDesc) {
+            hasIssue = true;
+        }
+    }
+
+    if (hasIssue) {
+        console.log("🔁 Edit Report Mode - Prefilling existing data");
+        submitBtn.textContent = "Update Report";
+
+        if (card) {
+            const issueTypeVal = card.getAttribute("data-issue-type") || button.getAttribute('data-issue-type') || "";
+            const issueDescVal = card.getAttribute("data-issue-description") || button.getAttribute('data-issue-description') || "";
+            
+            document.getElementById("issueType").value = issueTypeVal;
+            document.getElementById("issueDetails").value = issueDescVal;
+            
+            const issueReportDate = card.getAttribute("data-submission-date");
+            const issueReportTime = card.getAttribute("data-submission-time");
+            
+            if (issueReportDate) document.getElementById("issueDate").value = issueReportDate;
+            if (issueReportTime) document.getElementById("issueTime").value = issueReportTime;
+        }
+    } else {
+        console.log("🆕 New Report Mode");
+        submitBtn.textContent = "Submit Report";
+
+        document.getElementById("issueType").value = "";
+        document.getElementById("issueDetails").value = "";
+        
+        const fileInputs = document.querySelectorAll('input[type="file"]');
+        fileInputs.forEach(input => input.value = '');
+        document.querySelectorAll('.custom-file-text').forEach(el => {
+            el.textContent = 'No file chosen';
+        });
+    }
+
+    document.getElementById("reportIssueModal").style.display = "flex";
+    console.log("✅ Modal opened");
 }
 
-// ✅ NEW: Form submit handler with AJAX
+// Form submit handler with AJAX
 function attachFormSubmitHandler() {
     const reportForm = document.querySelector('.report-form');
     
@@ -1346,7 +1457,7 @@ function attachFormSubmitHandler() {
         console.log("✅ Form validation attached");
         
         reportForm.addEventListener('submit', function(e) {
-            e.preventDefault(); // Prevent normal form submission
+            e.preventDefault();
             
             console.log("=== FORM SUBMITTING (AJAX) ===");
             
@@ -1362,6 +1473,8 @@ function attachFormSubmitHandler() {
                 alert("❌ Error: Booking ID is missing!");
                 return false;
             }
+            
+            console.log("📋 Booking ID being submitted:", bookingIdInput.value);
             
             if (!issueType.value) {
                 document.getElementById('issueTypeError').style.display = 'block';
@@ -1379,13 +1492,16 @@ function attachFormSubmitHandler() {
             
             console.log("✅ Validation passed, submitting via AJAX...");
             
-            // Get ref number for success modal
+            // Store values for button update
+            const bookingId = bookingIdInput.value;
+            const issueTypeValue = issueType.value;
+            const issueDetailsValue = issueDetails.value;
             const refNumber = document.getElementById('report-ref-number').textContent;
             
             // Create FormData
             const formData = new FormData(reportForm);
             
-            // Show loading (optional)
+            // Show loading
             const submitButton = reportForm.querySelector('button[type="submit"]');
             const originalButtonText = submitButton.textContent;
             submitButton.disabled = true;
@@ -1398,13 +1514,18 @@ function attachFormSubmitHandler() {
             })
             .then(response => response.json())
             .then(data => {
-                console.log("Server response:", data);
+                console.log("📥 Server response:", data);
                 
                 // Re-enable button
                 submitButton.disabled = false;
                 submitButton.textContent = originalButtonText;
                 
                 if (data.success) {
+                    console.log("✅ Report submitted successfully!");
+                    
+                    // ⭐ UPDATE THE BUTTON IMMEDIATELY
+                    updateReportButtonToEdit(bookingId, issueTypeValue, issueDetailsValue);
+                    
                     // Close report modal
                     closeModal('reportIssueModal');
                     
@@ -1412,9 +1533,7 @@ function attachFormSubmitHandler() {
                     document.getElementById('submitted-ref-number').textContent = refNumber;
                     
                     // Show success modal
-                    document.getElementById('reportSuccessModal').style.display = 'block';
-                    
-                    console.log("✅ Report submitted successfully!");
+                    document.getElementById('reportSuccessModal').style.display = 'flex';
                 } else {
                     alert('Error: ' + (data.message || 'Failed to submit report'));
                 }
@@ -1422,7 +1541,6 @@ function attachFormSubmitHandler() {
             .catch(error => {
                 console.error("❌ AJAX Error:", error);
                 
-                // Re-enable button
                 submitButton.disabled = false;
                 submitButton.textContent = originalButtonText;
                 
@@ -1436,7 +1554,7 @@ function attachFormSubmitHandler() {
     }
 }
 
-// Other functions
+// Helper functions
 function clearError(element) {
     const errorId = element.id + 'Error';
     const errorElement = document.getElementById(errorId);
@@ -1473,236 +1591,14 @@ function closeModal(modalId) {
         });
     }
     
-    // ✅ Reload page after closing success modal
+    // DON'T reload page - let the button update show
     if (modalId === 'reportSuccessModal') {
-        location.reload();
+        console.log("✅ Success modal closed, button should now show 'Edit Report'");
     }
-}
-/**
- * View Issue Details - Shows the submitted issue information
- * @param {HTMLElement} button - The "View Details" button that was clicked
- */
-function viewIssueDetails(button) {
-    console.log("=== viewIssueDetails called ===");
-    
-    // Get the parent issue card
-    const issueCard = button.closest('.issue-card');
-    if (!issueCard) {
-        console.error("❌ Issue card not found!");
-        alert("Error: Cannot find issue details");
-        return;
-    }
-    
-    // Extract all data from the card
-    const refNo = issueCard.getAttribute('data-ref-no') || 'N/A';
-    const serviceDate = issueCard.getAttribute('data-service-date') || 'N/A';
-    const serviceTime = issueCard.getAttribute('data-service-time') || 'N/A';
-    const submissionDate = issueCard.getAttribute('data-submission-date') || 'N/A';
-    const submissionTime = issueCard.getAttribute('data-submission-time') || 'N/A';
-    const issueType = issueCard.getAttribute('data-issue-type') || 'N/A';
-    const issueDescription = issueCard.getAttribute('data-issue-description') || 'No description provided.';
-    const photo1 = issueCard.getAttribute('data-photo1') || '';
-    const photo2 = issueCard.getAttribute('data-photo2') || '';
-    const photo3 = issueCard.getAttribute('data-photo3') || '';
-    
-    console.log("Issue data:", { refNo, issueType, issueDescription });
-    
-    // Populate the modal
-    document.getElementById('view-issue-ref').textContent = refNo;
-    
-    // Format and display dates
-    if (serviceDate !== 'N/A') {
-        const formattedServiceDate = formatDisplayDate(serviceDate);
-        document.getElementById('view-issue-service-date').textContent = formattedServiceDate;
-    } else {
-        document.getElementById('view-issue-service-date').textContent = 'N/A';
-    }
-    
-    // Format and display times
-    if (serviceTime !== 'N/A') {
-        const formattedServiceTime = formatDisplayTime(serviceTime);
-        document.getElementById('view-issue-service-time').textContent = formattedServiceTime;
-    } else {
-        document.getElementById('view-issue-service-time').textContent = 'N/A';
-    }
-    
-    if (submissionDate !== 'N/A') {
-        const formattedSubmissionDate = formatDisplayDate(submissionDate);
-        document.getElementById('view-issue-submission-date').textContent = formattedSubmissionDate;
-    } else {
-        document.getElementById('view-issue-submission-date').textContent = 'N/A';
-    }
-    
-    if (submissionTime !== 'N/A') {
-        const formattedSubmissionTime = formatDisplayTime(submissionTime);
-        document.getElementById('view-issue-submission-time').textContent = formattedSubmissionTime;
-    } else {
-        document.getElementById('view-issue-submission-time').textContent = 'N/A';
-    }
-    
-    document.getElementById('view-issue-type-detail').textContent = issueType;
-    document.getElementById('view-issue-description-detail').textContent = issueDescription;
-    
-    // Handle attachments
-    const attachmentsContainer = document.getElementById('view-issue-attachments-detail');
-    attachmentsContainer.innerHTML = ''; // Clear previous
-    
-    const photos = [photo1, photo2, photo3];
-    let hasAttachments = false;
-    
-    photos.forEach((photo, index) => {
-        if (photo && photo.trim() !== '') {
-            hasAttachments = true;
-            const attachmentDiv = document.createElement('div');
-            attachmentDiv.style.marginBottom = '8px';
-            
-            const attachmentLink = document.createElement('a');
-            attachmentLink.href = 'uploads/issues/' + photo;
-            attachmentLink.target = '_blank';
-            attachmentLink.style.display = 'inline-flex';
-            attachmentLink.style.alignItems = 'center';
-            attachmentLink.style.padding = '8px 12px';
-            attachmentLink.style.backgroundColor = '#007bff';
-            attachmentLink.style.color = '#fff';
-            attachmentLink.style.textDecoration = 'none';
-            attachmentLink.style.borderRadius = '4px';
-            attachmentLink.style.fontSize = '0.9em';
-            attachmentLink.style.transition = 'background-color 0.2s';
-            
-            attachmentLink.innerHTML = `<i class='bx bx-paperclip' style='margin-right: 5px;'></i> Attachment ${index + 1}`;
-            
-            attachmentLink.addEventListener('mouseenter', function() {
-                this.style.backgroundColor = '#0056b3';
-            });
-            attachmentLink.addEventListener('mouseleave', function() {
-                this.style.backgroundColor = '#007bff';
-            });
-            
-            attachmentDiv.appendChild(attachmentLink);
-            attachmentsContainer.appendChild(attachmentDiv);
-        }
-    });
-    
-    if (!hasAttachments) {
-        attachmentsContainer.innerHTML = '<p style="color: #999; font-style: italic; margin: 0;">No attachments</p>';
-    }
-    
-    // Show the modal
-    document.getElementById('viewIssueDetailsModal').style.display = 'block';
-    
-    console.log("✅ Issue details modal opened");
-}
-
-/**
- * Helper function to format date from YYYY-MM-DD to readable format
- */
-function formatDisplayDate(dateString) {
-    if (!dateString || dateString === 'N/A') return 'N/A';
-    
-    const date = new Date(dateString + 'T00:00:00');
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return date.toLocaleDateString('en-US', options);
-}
-
-/**
- * Helper function to format time from HH:MM:SS to 12-hour format
- */
-function formatDisplayTime(timeString) {
-    if (!timeString || timeString === 'N/A') return 'N/A';
-    
-    const [hours, minutes] = timeString.split(':');
-    const hour = parseInt(hours);
-    const ampm = hour >= 12 ? 'PM' : 'AM';
-    const displayHour = hour % 12 || 12;
-    
-    return `${displayHour}:${minutes} ${ampm}`;
 }
 </script>
-<!-- Report Issue Modal -->
-<div class="report-modal" id="reportIssueModal" onclick="if(event.target.id === 'reportIssueModal') closeModal('reportIssueModal')">
-    <div class="report-modal-content">
-        <span class="report-close-btn" onclick="closeModal('reportIssueModal')">&times;</span> 
-        <h3>Report an Issue</h3>
-        
-        <p class="report-ref-display">
-            Reference No: <span id="report-ref-number" class="report-ref-value"></span>
-        </p>
 
-        <form class="report-form" method="POST" action="report_issue_process.php" enctype="multipart/form-data">
-            <input type="hidden" name="report-booking-id" id="reportBookingId">
-            <input type="hidden" id="submissionDate" name="submissionDate">
-            <input type="hidden" id="submissionTime" name="submissionTime">
-            
-            <div class="report-date-time-group">
-                <div>
-                    <label for="issueDate">Date:</label>
-                    <input type="date" id="issueDate" name="issueDate" readonly required>
-                </div>
-                <div>
-                    <label for="issueTime">Time:</label>
-                    <input type="time" id="issueTime" name="issueTime" readonly required>
-                </div>
-            </div>
 
-            <label for="issueType">Type of Issue:</label>
-            <select id="issueType" name="issueType" onchange="clearError(this)" required>
-                <option value="" disabled selected>Select Issue Category</option>
-                <option value="Property Damage">Property Damage</option>
-                <option value="Unsatisfied with Quality of Cleaning">Unsatisfied with Quality of Cleaning</option>
-                <option value="Staff was Late/No Show">Staff was Late/No Show</option>
-                <option value="Staff Behavior/Professionalism">Staff Behavior/Professionalism</option>
-                <option value="Billing/Payment Issue">Billing/Payment Issue</option>
-                <option value="Other">Other</option>
-            </select>
-            <div id="issueTypeError" class="error-message">Please complete this required field</div>
-
-            <label for="issueDetails">Issue Description:</label>
-            <textarea id="issueDetails" name="issueDetails" placeholder="Please provide detailed description of the issue." oninput="clearError(this)" required></textarea>
-            <div id="issueDetailsError" class="error-message">Please complete this required field</div>
-
-            <label>Attachment (up to 3 files - Photos/Videos):</label>
-            
-            <div class="attachment-group">
-                <div class="custom-file-input-wrapper">
-                    <input type="file" id="attachment1" name="attachment1" accept="image/*,video/*" onchange="updateFileName(this)">
-                    <div class="custom-file-button">Choose File</div>
-                    <div class="custom-file-text" id="file-name-1">No file chosen</div>
-                </div>
-                <div class="custom-file-input-wrapper">
-                    <input type="file" id="attachment2" name="attachment2" accept="image/*,video/*" onchange="updateFileName(this)">
-                    <div class="custom-file-button">Choose File</div>
-                    <div class="custom-file-text" id="file-name-2">No file chosen</div>
-                </div>
-                <div class="custom-file-input-wrapper">
-                    <input type="file" id="attachment3" name="attachment3" accept="image/*,video/*" onchange="updateFileName(this)">
-                    <div class="custom-file-button">Choose File</div>
-                    <div class="custom-file-text" id="file-name-3">No file chosen</div>
-                </div>
-            </div>
-
-            <button type="submit">Submit Report</button>
-            <div style="clear: both;"></div> 
-        </form>
-    </div>
-</div>
-
-<!-- Report Success Modal -->
-<div class="report-modal" id="reportSuccessModal" onclick="if(event.target.id === 'reportSuccessModal') closeModal('reportSuccessModal')">
-    <div class="report-modal-content" style="max-width: 400px; text-align: center;">
-        <div style="padding: 20px;">
-            <i class='bx bx-check-circle' style="font-size: 4em; color: #00A86B; margin-bottom: 10px;"></i>
-            <h3 style="border-bottom: none; margin-bottom: 10px;">Report Submitted!</h3>
-            
-            <p id="success-message" style="color: #555; font-size: 1em;">
-                Your issue report for Ref: <span id="submitted-ref-number" style="color: #B32133; font-weight: 700;"></span> has been received and is under review.
-            </p>
-            
-            <button onclick="closeModal('reportSuccessModal'); location.reload();" class="primary-btn report-confirm-btn">
-                Got It
-            </button>
-        </div>
-    </div>
-</div>
 
 <!-- View Issue Details Modal -->
 <div class="report-modal" id="viewIssueDetailsModal" onclick="if(event.target.id === 'viewIssueDetailsModal') closeModal('viewIssueDetailsModal')">
@@ -1795,11 +1691,20 @@ function formatDisplayTime(timeString) {
          style="border: 1px solid #ddd; padding: 15px; border-radius: 6px; background-color: #f9f9f9; color: #333; line-height: 1.5;">
         <em>No feedback provided yet.</em>
     </div>
+    
 </div>
 </div>
             </div>
             
-                <a id="editRatingLinkInModal" href="#" class="primary-btn" style="background-color: white;"></a>
+          <a id="editRatingLinkInModal"
+   href="FR_one-time_form.php?id=<?= $booking['id'] ?>&edit_rating=1"
+   class="primary-btn"
+   style="background-color: white;">
+   Edit Rating
+</a>
+
+
+
             </div>
         </div>
     </div>

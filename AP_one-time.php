@@ -991,17 +991,17 @@ $status_colors = [
                 </button>
                 <div class="dropdown-content">
                     <!-- View always available -->
-                    <button class="btn btn-view" onclick='openModal(<?= $rowData ?>)'>
+                    <!-- <button class="btn btn-view" onclick='openModal(<?= $rowData ?>)'>
                         <i class='bx bx-show'></i> View
-                    </button>
+                    </button> -->
 
                     <?php if ($status === 'Pending'): ?>
                         <button class="btn btn-call" onclick="callClient('<?= htmlspecialchars($row['phone']) ?>')">
                             <i class='bx bx-phone'></i> Call
                         </button>
-                        <button class="btn btn-edit" onclick='openEditModal(<?= $rowData ?>)'>
+                        <!-- <button class="btn btn-edit" onclick='openEditModal(<?= $rowData ?>)'>
                             <i class='bx bx-edit'></i> Edit
-                        </button>
+                        </button> -->
                         <button class="btn btn-assign" onclick='openAssignModal(<?= $rowData ?>)'>
     <i class='bx bx-user-plus'></i> Assign Staff
 </button>
@@ -1014,16 +1014,16 @@ $status_colors = [
                         <button class="btn btn-call" onclick="callClient('<?= htmlspecialchars($row['phone']) ?>')">
                             <i class='bx bx-phone'></i> Call
                         </button>
-                        <button class="btn btn-edit" onclick='openEditModal(<?= $rowData ?>)'>
+                        <!-- <button class="btn btn-edit" onclick='openEditModal(<?= $rowData ?>)'>
                             <i class='bx bx-edit'></i> Edit
-                        </button>
+                        </button> -->
                        <button class="btn btn-assign" onclick='openAssignModal(<?= $rowData ?>)'>
     <i class='bx bx-user-plus'></i> Assign Staff
 </button>
 
-                        <button class="btn btn-reschedule" onclick='openRescheduleModal(<?= $rowData ?>)'>
+                        <!-- <button class="btn btn-reschedule" onclick='openRescheduleModal(<?= $rowData ?>)'>
                             <i class='bx bx-calendar-edit'></i> Reschedule
-                        </button>
+                        </button> -->
                         <button class="btn btn-cancel" onclick="confirmCancel(<?= $row['id'] ?>)">
                             <i class='bx bx-x'></i> Cancel
                         </button>
@@ -1032,9 +1032,9 @@ $status_colors = [
                         <button class="btn btn-call" onclick="callClient('<?= htmlspecialchars($row['phone']) ?>')">
                             <i class='bx bx-phone'></i> Call
                         </button>
-                        <button class="btn btn-edit" onclick='openEditModal(<?= $rowData ?>)'>
+                        <!-- <button class="btn btn-edit" onclick='openEditModal(<?= $rowData ?>)'>
                             <i class='bx bx-edit'></i> Edit
-                        </button>
+                        </button> -->
                         <button class="btn btn-assign" onclick='openAssignModal(<?= $rowData ?>)'>
                             <i class='bx bx-user-plus'></i> Assign Staff
                         </button>
@@ -1043,12 +1043,12 @@ $status_colors = [
                         <button class="btn btn-call" onclick="callClient('<?= htmlspecialchars($row['phone']) ?>')">
                             <i class='bx bx-phone'></i> Call
                         </button>
-                        <button class="btn btn-report" onclick='openCompletionReport(<?= $rowData ?>)'>
+                        <!-- <button class="btn btn-report" onclick='openCompletionReport(<?= $rowData ?>)'>
                             <i class='bx bx-file'></i> Report
                         </button>
                         <button class="btn btn-invoice" onclick='openInvoiceModal(<?= $rowData ?>)'>
                             <i class='bx bx-receipt'></i> Invoice
-                        </button>
+                        </button> -->
                     <?php endif; ?>
 
                     <!-- Update Status Dropdown -->
