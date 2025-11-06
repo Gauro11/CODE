@@ -494,7 +494,7 @@ function showRecurringDetailsModal(itemElement) {
         // NEWLY REQUIRED FIELDS (Assuming data attributes exist on the list item)
         const time = itemElement.getAttribute('data-time') || 'N/A'; 
         const duration = itemElement.getAttribute('data-duration') || 'N/A';
-        const noOfSessions = itemElement.getAttribute('data-sessions-count') || 'N/A';
+       const noOfSessions = itemElement.getAttribute('data-sessions') || 'N/A';
         
         // Other one-time details
         const layout = itemElement.getAttribute('data-property-layout') || 'N/A';

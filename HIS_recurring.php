@@ -707,7 +707,7 @@ $staff_details = '';
             $staff_details .= '<p class="full-width-detail"><i class=\'bx bx-group\'></i> <strong>Cleaners:</strong> '.htmlspecialchars($booking['cleaners_names']).'</p>';
         }
     }
-    $estimated_sessions = 0;
+    $estimated_sessions = $booking['estimated_sessions'] ?? 0;
 if (!empty($booking['start_date']) && !empty($booking['end_date']) && !empty($booking['frequency'])) {
     $start = new DateTime($booking['start_date']);
     $end = new DateTime($booking['end_date']);
@@ -764,19 +764,22 @@ if (!empty($booking['start_date']) && !empty($booking['end_date']) && !empty($bo
     $price = ($plan_status === 'COMPLETED' && !empty($booking['final_price'])) ? $booking['final_price'] : $booking['estimated_price'];
 
     echo '
-    <div class="appointment-list-item" 
-        data-date="'.$booking['start_date'].'" 
-        data-end-date="'.($booking['end_date'] ?? '2025-12-31').'" 
-        data-time="'.$booking['booking_time'].'"
-        data-plan-status="'.$plan_status.'"
-        data-search-terms="'.$search_terms.'"
-        data-property-layout="'.htmlspecialchars($booking['property_layout'] ?? '').'"
-        data-materials-required="'.($booking['materials_required'] ?? '').'"
-        data-materials-description="'.htmlspecialchars($booking['materials_description'] ?? '').'"
-        data-additional-request="'.htmlspecialchars($booking['additional_request'] ?? '').'"
-        data-image-1="'.($booking['image_1'] ?? '').'"
-        data-image-2="'.($booking['image_2'] ?? '').'"
-        data-image-3="'.($booking['image_3'] ?? '').'">
+   <div class="appointment-list-item" 
+   data-start-date="'.$booking['start_date'].'"  
+    data-end-date="'.($booking['end_date'] ?? '2025-12-31').'" 
+    data-time="'.$booking['booking_time'].'"
+    data-duration="'.$booking['duration'].'"
+    data-frequency="'.$frequency.'"
+    data-sessions="'.$estimated_sessions.'"
+    data-plan-status="'.$plan_status.'"
+    data-search-terms="'.$search_terms.'"
+    data-property-layout="'.htmlspecialchars($booking['property_layout'] ?? '').'"
+    data-materials-required="'.($booking['materials_required'] ?? '').'"
+    data-materials-description="'.htmlspecialchars($booking['materials_description'] ?? '').'"
+    data-additional-request="'.htmlspecialchars($booking['additional_request'] ?? '').'"
+    data-image-1="'.($booking['image_1'] ?? '').'"
+    data-image-2="'.($booking['image_2'] ?? '').'"
+    data-image-3="'.($booking['image_3'] ?? '').'">
         
         <div class="button-group-top">
             '.$buttons.'
