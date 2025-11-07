@@ -1,9 +1,9 @@
 <?php
 include 'connection.php'; // ✅ DB Connection
 
-// ✅ Function to get employees by position (only available ones)
+// ✅ Function to get employees by position (ALL employees, ignore status field)
 function getEmployeesByPosition($conn, $position) {
-    $stmt = $conn->prepare("SELECT id, first_name, last_name, status FROM employees WHERE position = ? ORDER BY first_name, last_name");
+    $stmt = $conn->prepare("SELECT id, first_name, last_name FROM employees WHERE position = ? AND archived = 0 ORDER BY first_name, last_name");
     $stmt->bind_param("s", $position);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -15,21 +15,35 @@ function getEmployeesByPosition($conn, $position) {
     return $employees;
 }
 
-// ✅ Function to update employee status
-function updateEmployeeStatus($conn, $employee_ids, $status) {
-    if (empty($employee_ids)) return;
+// ✅ NEW HELPER: Convert duration string to hours
+function durationToHours($duration) {
+    preg_match('/(\d+\.?\d*)/', $duration, $matches);
+    return isset($matches[1]) ? floatval($matches[1]) : 0;
+}
+
+// ✅ NEW HELPER: Check if two time ranges overlap
+function timeRangesOverlap($start1, $end1, $start2, $end2) {
+    $s1 = strtotime($start1);
+    $e1 = strtotime($end1);
+    $s2 = strtotime($start2);
+    $e2 = strtotime($end2);
     
-    $id_array = array_filter($employee_ids);
-    if (empty($id_array)) return;
+    // Two ranges overlap if: start1 < end2 AND start2 < end1
+    return ($s1 < $e2) && ($s2 < $e1);
+}
+
+// ✅ NEW HELPER: Check if time falls in UAE prayer/lunch break (1:00 PM - 2:00 PM)
+function hasBreakTimeConflict($start_time, $duration) {
+    $start = strtotime($start_time);
+    $duration_hours = durationToHours($duration);
+    $end = $start + ($duration_hours * 3600);
     
-    $placeholders = str_repeat('?,', count($id_array) - 1) . '?';
-    $stmt = $conn->prepare("UPDATE employees SET status = ? WHERE id IN ($placeholders)");
+    // Break time: 1:00 PM (13:00) to 2:00 PM (14:00)
+    $break_start = strtotime('13:00:00');
+    $break_end = strtotime('14:00:00');
     
-    $types = 's' . str_repeat('i', count($id_array));
-    $params = array_merge([$status], $id_array);
-    $stmt->bind_param($types, ...$params);
-    $stmt->execute();
-    $stmt->close();
+    // Check if work overlaps with break time
+    return ($start < $break_end) && ($end > $break_start);
 }
 
 // ✅ Function to get employee IDs from names
@@ -63,52 +77,32 @@ function getEmployeeIdsByNames($conn, $names) {
     return $ids;
 }
 
-// ✅ Function to clear employee status when booking is completed
-function clearEmployeeStatusForBooking($conn, $booking_id) {
-    // Get the booking details
-    $stmt = $conn->prepare("SELECT cleaners, drivers FROM bookings WHERE id = ?");
-    $stmt->bind_param("i", $booking_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $booking = $result->fetch_assoc();
-    $stmt->close();
+// ✅ UPDATED Function - Check conflicts ONLY based on bookings table (ignore employee status)
+function getUnavailableStaff($conn, $service_date, $service_time, $duration, $current_booking_id = null) {
+    // Calculate end time for the new booking
+    $duration_hours = durationToHours($duration);
+    $new_start = strtotime($service_time);
+    $new_end = $new_start + ($duration_hours * 3600);
+    $new_end_time = date('H:i:s', $new_end);
     
-    if (!$booking) return;
-    
-    // Get employee IDs from names
-    $cleaner_ids = getEmployeeIdsByNames($conn, $booking['cleaners']);
-    $driver_ids = getEmployeeIdsByNames($conn, $booking['drivers']);
-    
-    $all_employee_ids = array_merge($cleaner_ids, $driver_ids);
-    
-    // Update their status to 'Available'
-    if (!empty($all_employee_ids)) {
-        updateEmployeeStatus($conn, $all_employee_ids, 'Available');
-    }
-}
-
-// ✅ NEW Function to get unavailable staff for a specific date and time
-function getUnavailableStaff($conn, $service_date, $service_time, $current_booking_id = null) {
-    // Get all bookings on the same date and time (excluding current booking being edited)
+    // Get all bookings on the same date (excluding current booking and cancelled/completed)
     if ($current_booking_id) {
         $stmt = $conn->prepare("
-            SELECT cleaners, drivers 
+            SELECT cleaners, drivers, service_time, duration 
             FROM bookings 
             WHERE service_date = ? 
-            AND service_time = ? 
             AND id != ?
             AND status NOT IN ('Cancelled', 'Completed')
         ");
-        $stmt->bind_param("ssi", $service_date, $service_time, $current_booking_id);
+        $stmt->bind_param("si", $service_date, $current_booking_id);
     } else {
         $stmt = $conn->prepare("
-            SELECT cleaners, drivers 
+            SELECT cleaners, drivers, service_time, duration 
             FROM bookings 
             WHERE service_date = ? 
-            AND service_time = ? 
             AND status NOT IN ('Cancelled', 'Completed')
         ");
-        $stmt->bind_param("ss", $service_date, $service_time);
+        $stmt->bind_param("s", $service_date);
     }
     
     $stmt->execute();
@@ -116,25 +110,104 @@ function getUnavailableStaff($conn, $service_date, $service_time, $current_booki
     
     $unavailable = [];
     while ($row = $result->fetch_assoc()) {
-        // Split cleaner names and add to unavailable list
-        if (!empty($row['cleaners'])) {
-            $cleaners = explode(',', $row['cleaners']);
-            foreach ($cleaners as $cleaner) {
-                $unavailable[] = trim($cleaner);
-            }
-        }
+        // Calculate end time for existing booking
+        $existing_start = $row['service_time'];
+        $existing_duration_hours = durationToHours($row['duration']);
+        $existing_end = strtotime($existing_start) + ($existing_duration_hours * 3600);
+        $existing_end_time = date('H:i:s', $existing_end);
         
-        // Split driver names and add to unavailable list
-        if (!empty($row['drivers'])) {
-            $drivers = explode(',', $row['drivers']);
-            foreach ($drivers as $driver) {
-                $unavailable[] = trim($driver);
+        // Check if time ranges overlap
+        if (timeRangesOverlap($service_time, $new_end_time, $existing_start, $existing_end_time)) {
+            // Add cleaners to unavailable list
+            if (!empty($row['cleaners'])) {
+                $cleaners = explode(',', $row['cleaners']);
+                foreach ($cleaners as $cleaner) {
+                    $unavailable[] = trim($cleaner);
+                }
+            }
+            
+            // Add drivers to unavailable list
+            if (!empty($row['drivers'])) {
+                $drivers = explode(',', $row['drivers']);
+                foreach ($drivers as $driver) {
+                    $unavailable[] = trim($driver);
+                }
             }
         }
     }
     $stmt->close();
     
     return array_unique($unavailable); // Remove duplicates
+}
+
+// ✅ NEW FUNCTION: Check conflicts for RECURRING bookings based on preferred_day
+function getUnavailableStaffRecurring($conn, $preferred_day, $service_time, $duration, $current_booking_id = null) {
+    $duration_hours = durationToHours($duration);
+    $new_start = strtotime($service_time);
+    $new_end = $new_start + ($duration_hours * 3600);
+    $new_end_time = date('H:i:s', $new_end);
+    
+    if ($current_booking_id) {
+        $stmt = $conn->prepare("
+            SELECT cleaners, drivers, service_time, duration 
+            FROM bookings 
+            WHERE booking_type = 'Recurring'
+            AND preferred_day = ? 
+            AND id != ?
+            AND status NOT IN ('Cancelled', 'Completed')
+        ");
+        $stmt->bind_param("si", $preferred_day, $current_booking_id);
+    } else {
+        $stmt = $conn->prepare("
+            SELECT cleaners, drivers, service_time, duration 
+            FROM bookings 
+            WHERE booking_type = 'Recurring'
+            AND preferred_day = ? 
+            AND status NOT IN ('Cancelled', 'Completed')
+        ");
+        $stmt->bind_param("s", $preferred_day);
+    }
+    
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $unavailable = [];
+    $conflicts = [];
+    
+    while ($row = $result->fetch_assoc()) {
+        $existing_start = $row['service_time'];
+        $existing_duration_hours = durationToHours($row['duration']);
+        $existing_end = strtotime($existing_start) + ($existing_duration_hours * 3600);
+        $existing_end_time = date('H:i:s', $existing_end);
+        
+        if (timeRangesOverlap($service_time, $new_end_time, $existing_start, $existing_end_time)) {
+            $conflict_time = date('H:i', strtotime($existing_start)) . ' - ' . date('H:i', $existing_end);
+            
+            if (!empty($row['cleaners'])) {
+                $cleaners = explode(',', $row['cleaners']);
+                foreach ($cleaners as $cleaner) {
+                    $name = trim($cleaner);
+                    $unavailable[] = $name;
+                    $conflicts[$name] = $conflict_time;
+                }
+            }
+            
+            if (!empty($row['drivers'])) {
+                $drivers = explode(',', $row['drivers']);
+                foreach ($drivers as $driver) {
+                    $name = trim($driver);
+                    $unavailable[] = $name;
+                    $conflicts[$name] = $conflict_time;
+                }
+            }
+        }
+    }
+    $stmt->close();
+    
+    return [
+        'unavailable_staff' => array_unique($unavailable),
+        'conflicts' => $conflicts
+    ];
 }
 
 // ✅ Function to get employee full names from IDs
@@ -167,74 +240,141 @@ function getEmployeeNames($conn, $names) {
     return $names;
 }
 
-// ✅ Fetch cleaners and drivers
+// ✅ NEW: Get groups filtered by area/location
+function getGroupsByArea($conn, $address) {
+    $groups_query = "SELECT eg.*, 
+        eg.preferred_area,
+        CONCAT(e1.first_name, ' ', e1.last_name) as cleaner1_name,
+        CONCAT(e2.first_name, ' ', e2.last_name) as cleaner2_name,
+        CONCAT(e3.first_name, ' ', e3.last_name) as cleaner3_name,
+        CONCAT(e4.first_name, ' ', e4.last_name) as cleaner4_name,
+        CONCAT(e5.first_name, ' ', e5.last_name) as cleaner5_name,
+        CONCAT(d.first_name, ' ', d.last_name) as driver_name
+    FROM employee_groups eg
+    LEFT JOIN employees e1 ON eg.cleaner1_id = e1.id
+    LEFT JOIN employees e2 ON eg.cleaner2_id = e2.id
+    LEFT JOIN employees e3 ON eg.cleaner3_id = e3.id
+    LEFT JOIN employees e4 ON eg.cleaner4_id = e4.id
+    LEFT JOIN employees e5 ON eg.cleaner5_id = e5.id
+    LEFT JOIN employees d ON eg.driver_id = d.id
+    ORDER BY 
+        CASE 
+            WHEN eg.preferred_area IS NOT NULL AND ? LIKE CONCAT('%', eg.preferred_area, '%') THEN 0
+            ELSE 1
+        END,
+        eg.group_name";
+    
+    $stmt = $conn->prepare($groups_query);
+    $stmt->bind_param("s", $address);
+    $stmt->execute();
+    return $stmt->get_result();
+}
+
+// ✅ Fetch cleaners and drivers (NO status filtering)
 $cleaners = getEmployeesByPosition($conn, 'Cleaner');
 $drivers = getEmployeesByPosition($conn, 'Driver');
 
-// ✅ Handle Staff Assignment
+// ✅ Handle Staff Assignment - RECURRING VERSION
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assign_staff'])) {
     $booking_id = $_POST['booking_id'];
+    $group_id = isset($_POST['group_id']) ? $_POST['group_id'] : null;
     
-    // Get booking details to check date and time
-    $check_stmt = $conn->prepare("SELECT service_date, service_time, cleaners, drivers FROM bookings WHERE id = ?");
+    if (!$group_id) {
+        echo "<script>alert('⚠️ Please select a group!'); window.history.back();</script>";
+        exit;
+    }
+    
+    $group_stmt = $conn->prepare("SELECT cleaner1_id, cleaner2_id, cleaner3_id, cleaner4_id, cleaner5_id, driver_id FROM employee_groups WHERE id = ?");
+    $group_stmt->bind_param("i", $group_id);
+    $group_stmt->execute();
+    $group_result = $group_stmt->get_result();
+    $group_data = $group_result->fetch_assoc();
+    $group_stmt->close();
+    
+    if (!$group_data) {
+        echo "<script>alert('❌ Group not found!'); window.history.back();</script>";
+        exit;
+    }
+    
+    $selected_cleaner_ids = array_filter([
+        $group_data['cleaner1_id'],
+        $group_data['cleaner2_id'],
+        $group_data['cleaner3_id'],
+        $group_data['cleaner4_id'],
+        $group_data['cleaner5_id']
+    ]);
+    
+    $selected_driver_ids = array_filter([$group_data['driver_id']]);
+    
+    if (count($selected_cleaner_ids) < 5) {
+        echo "<script>alert('⚠️ This group does not have 5 cleaners assigned!'); window.history.back();</script>";
+        exit;
+    }
+    
+    if (count($selected_driver_ids) !== 1) {
+        echo "<script>alert('⚠️ This group does not have a driver assigned!'); window.history.back();</script>";
+        exit;
+    }
+    
+    // ✅ Get booking details including preferred_day for RECURRING bookings
+    $check_stmt = $conn->prepare("SELECT preferred_day, service_time, duration, cleaners, drivers FROM bookings WHERE id = ?");
     $check_stmt->bind_param("i", $booking_id);
     $check_stmt->execute();
     $booking_result = $check_stmt->get_result();
     $booking_data = $booking_result->fetch_assoc();
     $check_stmt->close();
     
-    // Get selected IDs and convert to names
-    $selected_cleaner_ids = isset($_POST['cleaners']) ? $_POST['cleaners'] : [];
-    $selected_driver_ids = isset($_POST['drivers']) ? $_POST['drivers'] : [];
+    if (hasBreakTimeConflict($booking_data['service_time'], $booking_data['duration'])) {
+        $break_warning = "⚠️ WARNING: This booking overlaps with UAE Prayer/Lunch Break (1:00 PM - 2:00 PM).\\n\\nEmployees should not work during this time.";
+    }
     
     $cleaner_names = getEmployeeFullNames($conn, $selected_cleaner_ids);
     $driver_names = getEmployeeFullNames($conn, $selected_driver_ids);
     
-    // Check if any selected staff is already assigned
-    $unavailable = getUnavailableStaff($conn, $booking_data['service_date'], $booking_data['service_time'], $booking_id);
+    // ✅ Check conflicts based on preferred_day instead of service_date
+    $availability_result = getUnavailableStaffRecurring(
+        $conn, 
+        $booking_data['preferred_day'], 
+        $booking_data['service_time'], 
+        $booking_data['duration'], 
+        $booking_id
+    );
+    
+    $unavailable = $availability_result['unavailable_staff'];
+    $conflicts = $availability_result['conflicts'];
     
     $selected_names = array_merge(
         $cleaner_names ? explode(', ', $cleaner_names) : [],
         $driver_names ? explode(', ', $driver_names) : []
     );
     
-    $conflicts = array_intersect($selected_names, $unavailable);
+    $conflicting_staff = array_intersect($selected_names, $unavailable);
     
-    if (!empty($conflicts)) {
-        $conflict_list = implode(', ', $conflicts);
-        echo "<script>alert('The following staff are already assigned to another booking at this time: $conflict_list'); window.history.back();</script>";
+    if (!empty($conflicting_staff)) {
+        $conflict_list = implode(', ', $conflicting_staff);
+        $duration_hours = durationToHours($booking_data['duration']);
+        $end_time = date('H:i', strtotime($booking_data['service_time']) + ($duration_hours * 3600));
+        
+        $conflict_details = [];
+        foreach ($conflicting_staff as $staff) {
+            $conflict_details[] = "$staff: {$conflicts[$staff]}";
+        }
+        $conflict_info = implode("\\n", $conflict_details);
+        
+        echo "<script>alert('⚠️ RECURRING CONFLICT!\\n\\nThe following staff are already assigned every {$booking_data['preferred_day']}:\\n\\n$conflict_info\\n\\nYour booking: Every {$booking_data['preferred_day']} at {$booking_data['service_time']} - {$end_time}\\n\\nPlease select different staff or adjust the time.'); window.history.back();</script>";
         exit;
     }
     
-    // Clear status of previously assigned employees (if any)
-    if (!empty($booking_data['cleaners']) || !empty($booking_data['drivers'])) {
-        $old_cleaner_ids = getEmployeeIdsByNames($conn, $booking_data['cleaners']);
-        $old_driver_ids = getEmployeeIdsByNames($conn, $booking_data['drivers']);
-        $old_employee_ids = array_merge($old_cleaner_ids, $old_driver_ids);
-        
-        if (!empty($old_employee_ids)) {
-            updateEmployeeStatus($conn, $old_employee_ids, 'Available');
-        }
-    }
-    
-    // Update bookings with full names
-    $stmt = $conn->prepare("UPDATE bookings SET cleaners = ?, drivers = ? WHERE id = ?");
+    $stmt = $conn->prepare("UPDATE bookings SET cleaners = ?, drivers = ?, status = 'Active' WHERE id = ?");
     $stmt->bind_param("ssi", $cleaner_names, $driver_names, $booking_id);
     
     if ($stmt->execute()) {
         $stmt->close();
-        
-        // Set status to 'Assigned' for newly assigned employees
-        $all_selected_ids = array_merge($selected_cleaner_ids, $selected_driver_ids);
-        if (!empty($all_selected_ids)) {
-            updateEmployeeStatus($conn, $all_selected_ids, 'Assigned');
-        }
-        
-        echo "<script>alert('Staff assigned successfully!'); window.location.href='AP_recurring.php';</script>";
+        echo "<script>alert('✅ Staff assigned successfully!'); window.location.href='AP_recurring.php';</script>";
         exit;
     } else {
         $stmt->close();
-        echo "<script>alert('Error assigning staff');</script>";
+        echo "<script>alert('❌ Error assigning staff: " . $conn->error . "');</script>";
     }
 }
 
@@ -247,11 +387,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     $update->bind_param("si", $status, $id);
     $update->execute();
     $update->close();
-
-    // If status is changed to 'Completed', clear employee status
-    if ($status === 'Completed') {
-        clearEmployeeStatusForBooking($conn, $id);
-    }
 
     echo "<script>alert('Status updated successfully!'); window.location='AP_recurring.php';</script>";
     exit;
@@ -282,9 +417,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_booking'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_booking'])) {
     $id = $_POST['booking_id'];
     
-    // Clear employee status before cancelling
-    clearEmployeeStatusForBooking($conn, $id);
-    
     $update = $conn->prepare("UPDATE bookings SET status = 'Cancelled' WHERE id = ?");
     $update->bind_param("i", $id);
     $update->execute();
@@ -294,10 +426,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_booking'])) {
     exit;
 }
 
-// ✅ Get Status Filter
-$status_filter = isset($_GET['status']) ? $_GET['status'] : 'All';
-
-// ✅ Fetch One-Time Bookings with Filter
 // ✅ Get Status Filter
 $status_filter = isset($_GET['status']) ? $_GET['status'] : 'All';
 
@@ -320,7 +448,6 @@ $status_colors = [
     'Paused' => '#ffc107',
     'Completed' => '#28a745',
     'Cancelled' => '#dc3545',
-   
 ];
 ?>
 <!DOCTYPE html>
@@ -1081,81 +1208,125 @@ $status_colors = [
     </section>
 </main>
 
-<!-- ASSIGN STAFF MODAL --><!-- ASSIGN STAFF MODAL -->
+
+<!-- ASSIGN STAFF MODAL WITH INTELLIGENT SCHEDULING -->
 <div id="assignModal" class="modal">
-    <div class="modal-content" style="max-width: 600px;">
+    <div class="modal-content" style="max-width: 800px;">
         <span class="close-btn" onclick="closeAssignModal()">&times;</span>
         <h3><i class='bx bx-user-plus'></i> Assign Staff to Booking</h3>
-        <form method="POST" action="" style="padding: 20px;">
+        
+        <form method="POST" action="" id="assignStaffForm">
             <input type="hidden" name="booking_id" id="assign_booking_id">
-            <input type="hidden" id="assign_service_date_hidden" value="">
-            <input type="hidden" id="assign_service_time_hidden" value="">
+            <input type="hidden" id="assign_duration_hidden" value="">
+            <input type="hidden" name="group_id" id="selected_group_id"> 
             
             <!-- Booking Info Display -->
             <div class="booking-info" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                <p style="margin: 8px 0;"><strong>Client:</strong> <span id="assign_client_name"></span></p>
-                <p style="margin: 8px 0;"><strong>Service:</strong> <span id="assign_service_type"></span></p>
-                <p style="margin: 8px 0;"><strong>Date:</strong> <span id="assign_service_date"></span></p>
-                <p style="margin: 8px 0;"><strong>Time:</strong> <span id="assign_service_time"></span></p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <p style="margin: 8px 0;"><strong><i class='bx bx-user'></i> Client:</strong> <span id="assign_client_name"></span></p>
+                        <p style="margin: 8px 0;"><strong><i class='bx bx-briefcase'></i> Service:</strong> <span id="assign_service_type"></span></p>
+                        <p style="margin: 8px 0;"><strong><i class='bx bx-calendar-event'></i> Day:</strong> <span id="assign_preferred_day"></span></p>
+                    </div>
+                    <div>
+                        <p style="margin: 8px 0;"><strong><i class='bx bx-time'></i> Time:</strong> <span id="assign_service_time"></span></p>
+                        <p style="margin: 8px 0;"><strong><i class='bx bx-timer'></i> Duration:</strong> <span id="assign_duration"></span></p>
+                        <p style="margin: 8px 0;"><strong><i class='bx bx-map'></i> Area:</strong> <span id="assign_address"></span></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prayer Break Warning -->
+            <div id="prayer_break_warning" style="display: none; background: #fff3cd; border: 1px solid #ffc107; padding: 12px; border-radius: 6px; margin-bottom: 15px;">
+                <p style="color: #856404; margin: 0; font-weight: 600;">
+                    <i class='bx bx-error'></i> ⚠️ UAE Prayer/Lunch Break (1:00 PM - 2:00 PM): This booking overlaps with mandatory break time!
+                </p>
             </div>
 
             <hr style="margin: 20px 0; border: none; border-top: 1px solid #dee2e6;">
 
-            <!-- Cleaners Selection -->
+            <!-- GROUP SELECTION -->
             <div class="form-group">
-                <label><i class='bx bx-spray-can'></i> Select Cleaners:</label>
-                <div class="checkbox-group" id="cleaners-list">
-                    <?php foreach ($cleaners as $cleaner): 
-                        $cleaner_full_name = $cleaner['first_name'] . ' ' . $cleaner['last_name'];
-                        $is_assigned = (isset($cleaner['status']) && $cleaner['status'] === 'Assigned');
+                <label>
+                    <i class='bx bx-group'></i> Select Pre-defined Group
+                    <span style="font-size: 0.9em; color: #6c757d;">(Groups sorted by location match)</span>
+                    <a href="manage_groups.php" target="_blank" style="margin-left: 10px; color: #007bff; font-size: 0.9em;">
+                        <i class='bx bx-cog'></i> Manage Groups
+                    </a>
+                </label>
+                <select id="group_select" class="group-select" onchange="loadGroupMembers()">
+                    <option value="">-- Select a Group --</option>
+                    <?php
+                    // Fetch groups from database with area information
+                    $groups_query = "SELECT eg.*, 
+                        CONCAT(e1.first_name, ' ', e1.last_name) as cleaner1_name,
+                        CONCAT(e2.first_name, ' ', e2.last_name) as cleaner2_name,
+                        CONCAT(e3.first_name, ' ', e3.last_name) as cleaner3_name,
+                        CONCAT(e4.first_name, ' ', e4.last_name) as cleaner4_name,
+                        CONCAT(e5.first_name, ' ', e5.last_name) as cleaner5_name,
+                        CONCAT(d.first_name, ' ', d.last_name) as driver_name
+                    FROM employee_groups eg
+                    LEFT JOIN employees e1 ON eg.cleaner1_id = e1.id
+                    LEFT JOIN employees e2 ON eg.cleaner2_id = e2.id
+                    LEFT JOIN employees e3 ON eg.cleaner3_id = e3.id
+                    LEFT JOIN employees e4 ON eg.cleaner4_id = e4.id
+                    LEFT JOIN employees e5 ON eg.cleaner5_id = e5.id
+                    LEFT JOIN employees d ON eg.driver_id = d.id
+                    ORDER BY eg.group_name";
+                    $groups_result = $conn->query($groups_query);
+                    
+                    if ($groups_result) {
+                        while ($group = $groups_result->fetch_assoc()) {
+                            $group_json = htmlspecialchars(json_encode($group), ENT_QUOTES, 'UTF-8');
+                            $area_label = !empty($group['preferred_area']) ? " [{$group['preferred_area']}]" : "";
+                            echo "<option value='{$group['id']}' data-group='{$group_json}'>{$group['group_name']}{$area_label}</option>";
+                        }
+                    }
                     ?>
-                        <label class="checkbox-label <?= $is_assigned ? 'disabled' : '' ?>" data-employee-name="<?= htmlspecialchars($cleaner_full_name) ?>">
-                            <input type="checkbox" 
-                                   name="cleaners[]" 
-                                   value="<?= $cleaner['id'] ?>" 
-                                   class="cleaner-checkbox"
-                                   <?= $is_assigned ? 'disabled' : '' ?>>
-                            <span class="employee-name"><?= htmlspecialchars($cleaner_full_name) ?></span>
-                            <?php if ($is_assigned): ?>
-                                <span class="unavailable-badge">Assigned</span>
-                            <?php endif; ?>
-                        </label>
-                    <?php endforeach; ?>
-                    <?php if (empty($cleaners)): ?>
-                        <p class="no-staff">No cleaners available</p>
-                    <?php endif; ?>
-                </div>
+                </select>
             </div>
-
-            <!-- Drivers Selection -->
-            <div class="form-group">
-                <label><i class='bx bx-car'></i> Select Drivers:</label>
-                <div class="checkbox-group" id="drivers-list">
-                    <?php foreach ($drivers as $driver): 
-                        $driver_full_name = $driver['first_name'] . ' ' . $driver['last_name'];
-                        $is_assigned = (isset($driver['status']) && $driver['status'] === 'Assigned');
-                    ?>
-                        <label class="checkbox-label <?= $is_assigned ? 'disabled' : '' ?>" data-employee-name="<?= htmlspecialchars($driver_full_name) ?>">
-                            <input type="checkbox" 
-                                   name="drivers[]" 
-                                   value="<?= $driver['id'] ?>" 
-                                   class="driver-checkbox"
-                                   <?= $is_assigned ? 'disabled' : '' ?>>
-                            <span class="employee-name"><?= htmlspecialchars($driver_full_name) ?></span>
-                            <?php if ($is_assigned): ?>
-                                <span class="unavailable-badge">Assigned</span>
-                            <?php endif; ?>
-                        </label>
-                    <?php endforeach; ?>
-                    <?php if (empty($drivers)): ?>
-                        <p class="no-staff">No drivers available</p>
-                    <?php endif; ?>
+            
+            <!-- Group Preview -->
+            <div id="selected_group_preview" style="display: none; background: #e7f3ff; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                <h4 style="color: #007bff; margin-bottom: 10px;">
+                    <i class='bx bx-check-circle'></i> Selected Group Members
+                </h4>
+                
+                <!-- Conflict Warning -->
+                <div id="group_conflict_warning" style="display: none; background: #fff3cd; border: 1px solid #ffc107; padding: 12px; border-radius: 6px; margin-bottom: 15px;">
+                    <p style="color: #856404; margin: 0; font-weight: 600;">
+                        <i class='bx bx-error'></i> <span id="conflict_message"></span>
+                    </p>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <p style="font-weight: 600; margin-bottom: 8px;">
+                            <i class='bx bx-spray-can'></i> Cleaners:
+                        </p>
+                        <ul id="group_cleaners_list" style="list-style: none; padding-left: 20px;">
+                        </ul>
+                    </div>
+                    <div>
+                        <p style="font-weight: 600; margin-bottom: 8px;">
+                            <i class='bx bx-car'></i> Driver:
+                        </p>
+                        <ul id="group_driver_list" style="list-style: none; padding-left: 20px;">
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Assignment Summary -->
+                <div id="assignment_summary" style="margin-top: 15px; padding: 10px; background: #d4edda; border-radius: 6px;">
+                    <p style="margin: 0; color: #155724; font-weight: 600;">
+                        <i class='bx bx-info-circle'></i> This group can be assigned to recurring bookings on different days, as long as times don't overlap on the same day.
+                    </p>
                 </div>
             </div>
 
             <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; padding-top: 15px; border-top: 1px solid #dee2e6;">
                 <button type="button" class="btn btn-cancel" onclick="closeAssignModal()">Cancel</button>
-                <button type="submit" name="assign_staff" class="btn btn-view">
+                <button type="submit" name="assign_staff" class="btn btn-view" id="assignStaffBtn">
                     <i class='bx bx-check'></i> Assign Staff
                 </button>
             </div>
@@ -1164,374 +1335,276 @@ $status_colors = [
 </div>
 
 <style>
-/* Assign Modal Specific Styles */
-#assignModal .booking-info p {
-    background: transparent !important;
-    border: none !important;
-    padding: 0 !important;
-    margin: 8px 0 !important;
-    display: block !important;
-}
-
-#assignModal .form-group {
-    margin-bottom: 20px;
-}
-
-#assignModal .form-group label {
-    display: block;
-    font-weight: 600;
-    margin-bottom: 10px;
-    color: #333;
-    font-size: 1rem;
-}
-
-#assignModal .checkbox-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    max-height: 200px;
-    overflow-y: auto;
-    padding: 10px;
-    background: #f8f9fa;
+/* Group Select Styles */
+.group-select {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #007bff;
     border-radius: 8px;
-    border: 1px solid #dee2e6;
+    font-size: 15px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s;
 }
 
-#assignModal .checkbox-label {
+.group-select:hover {
+    border-color: #0056b3;
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
+}
+
+.group-select:focus {
+    outline: none;
+    border-color: #0056b3;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+#selected_group_preview ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+#selected_group_preview ul li {
+    padding: 5px 0;
     display: flex;
     align-items: center;
-    padding: 10px;
-    background: white;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-weight: normal;
-    margin: 0;
-    border: none;
-}
-
-#assignModal .checkbox-label:hover {
-    background: #e9ecef;
-    transform: translateX(5px);
-}
-
-#assignModal .checkbox-label.disabled {
-    background: #f8d7da;
-    cursor: not-allowed;
-    opacity: 0.7;
-}
-
-#assignModal .checkbox-label.disabled:hover {
-    transform: none;
-}
-
-#assignModal .checkbox-label input[type="checkbox"] {
-    margin-right: 12px;
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-}
-
-#assignModal .checkbox-label.disabled input[type="checkbox"] {
-    cursor: not-allowed;
-}
-
-#assignModal .no-staff {
-    color: #6c757d;
-    font-style: italic;
-    text-align: center;
-    padding: 15px;
-    margin: 0;
-}
-</style>
-<!-- ASSIGN STAFF MODAL -->
-<div id="assignModal" class="modal">
-    <div class="modal-content" style="max-width: 600px;">
-        <span class="close-btn" onclick="closeAssignModal()">&times;</span>
-        <h3><i class='bx bx-user-plus'></i> Assign Staff to Booking</h3>
-        <form method="POST" action="" style="padding: 20px;">
-            <input type="hidden" name="booking_id" id="assign_booking_id">
-            <input type="hidden" id="assign_service_date_hidden" value="">
-            <input type="hidden" id="assign_service_time_hidden" value="">
-            
-            <!-- Booking Info Display -->
-            <div class="booking-info" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                <p style="margin: 8px 0;"><strong>Client:</strong> <span id="assign_client_name"></span></p>
-                <p style="margin: 8px 0;"><strong>Service:</strong> <span id="assign_service_type"></span></p>
-                <p style="margin: 8px 0;"><strong>Date:</strong> <span id="assign_service_date"></span></p>
-                <p style="margin: 8px 0;"><strong>Time:</strong> <span id="assign_service_time"></span></p>
-            </div>
-
-            <hr style="margin: 20px 0; border: none; border-top: 1px solid #dee2e6;">
-
-            <!-- Cleaners Selection -->
-            <div class="form-group">
-                <label><i class='bx bx-spray-can'></i> Select Cleaners:</label>
-                <div class="checkbox-group" id="cleaners-list">
-                    <?php foreach ($cleaners as $cleaner): 
-                        $cleaner_full_name = $cleaner['first_name'] . ' ' . $cleaner['last_name'];
-                        $is_assigned = (isset($cleaner['status']) && $cleaner['status'] === 'Assigned');
-                    ?>
-                        <label class="checkbox-label <?= $is_assigned ? 'disabled' : '' ?>" data-employee-name="<?= htmlspecialchars($cleaner_full_name) ?>">
-                            <input type="checkbox" 
-                                   name="cleaners[]" 
-                                   value="<?= $cleaner['id'] ?>" 
-                                   class="cleaner-checkbox"
-                                   <?= $is_assigned ? 'disabled' : '' ?>>
-                            <span class="employee-name"><?= htmlspecialchars($cleaner_full_name) ?></span>
-                            <span class="unavailable-badge" style="<?= $is_assigned ? '' : 'display: none;' ?> margin-left: auto; background: #dc3545; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;"><?= $is_assigned ? 'Assigned' : '' ?></span>
-                        </label>
-                    <?php endforeach; ?>
-                    <?php if (empty($cleaners)): ?>
-                        <p class="no-staff">No cleaners available</p>
-                    <?php endif; ?>
-                </div>
-            </div>
-
-            <!-- Drivers Selection -->
-            <div class="form-group">
-                <label><i class='bx bx-car'></i> Select Drivers:</label>
-                <div class="checkbox-group" id="drivers-list">
-                    <?php foreach ($drivers as $driver): 
-                        $driver_full_name = $driver['first_name'] . ' ' . $driver['last_name'];
-                        $is_assigned = (isset($driver['status']) && $driver['status'] === 'Assigned');
-                    ?>
-                        <label class="checkbox-label <?= $is_assigned ? 'disabled' : '' ?>" data-employee-name="<?= htmlspecialchars($driver_full_name) ?>">
-                            <input type="checkbox" 
-                                   name="drivers[]" 
-                                   value="<?= $driver['id'] ?>" 
-                                   class="driver-checkbox"
-                                   <?= $is_assigned ? 'disabled' : '' ?>>
-                            <span class="employee-name"><?= htmlspecialchars($driver_full_name) ?></span>
-                            <?php if ($is_assigned): ?>
-                                <span class="unavailable-badge">Assigned</span>
-                            <?php endif; ?>
-                        </label>
-                    <?php endforeach; ?>
-                    <?php if (empty($drivers)): ?>
-                        <p class="no-staff">No drivers available</p>
-                    <?php endif; ?>
-                </div>
-            </div>
-
-            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; padding-top: 15px; border-top: 1px solid #dee2e6;">
-                <button type="button" class="btn btn-cancel" onclick="closeAssignModal()">Cancel</button>
-                <button type="submit" name="assign_staff" class="btn btn-view">
-                    <i class='bx bx-check'></i> Assign Staff
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<style>
-/* Assign Modal Specific Styles */
-#assignModal .booking-info p {
-    background: transparent !important;
-    border: none !important;
-    padding: 0 !important;
-    margin: 8px 0 !important;
-    display: block !important;
-}
-
-#assignModal .form-group {
-    margin-bottom: 20px;
-}
-
-#assignModal .form-group label {
-    display: block;
-    font-weight: 600;
-    margin-bottom: 10px;
-    color: #333;
-    font-size: 1rem;
-}
-
-#assignModal .checkbox-group {
-    display: flex;
-    flex-direction: column;
     gap: 8px;
-    max-height: 200px;
-    overflow-y: auto;
-    padding: 10px;
-    background: #f8f9fa;
-    border-radius: 8px;
-    border: 1px solid #dee2e6;
 }
 
-#assignModal .checkbox-label {
-    display: flex;
-    align-items: center;
-    padding: 10px;
-    background: white;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-weight: normal;
-    margin: 0;
-    border: none;
+#selected_group_preview ul li i {
+    color: #28a745;
+    font-size: 1.2em;
 }
 
-#assignModal .checkbox-label:hover {
-    background: #e9ecef;
-    transform: translateX(5px);
+#selected_group_preview ul li.unavailable-member {
+    color: #dc3545;
 }
 
-#assignModal .checkbox-label.disabled {
-    background: #f8d7da;
-    cursor: not-allowed;
-    opacity: 0.7;
+#selected_group_preview ul li.unavailable-member i {
+    color: #dc3545;
 }
 
-#assignModal .checkbox-label.disabled:hover {
-    transform: none;
-    background: #f8d7da;
-}
-
-#assignModal .checkbox-label input[type="checkbox"] {
-    margin-right: 12px;
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-}
-
-#assignModal .checkbox-label.disabled input[type="checkbox"] {
-    cursor: not-allowed;
-}
-
-#assignModal .unavailable-badge {
+#selected_group_preview ul li .conflict-time {
     margin-left: auto;
+    font-size: 0.85em;
+    color: #dc3545;
+    font-weight: 600;
+}
+
+/* Assign Modal Specific Styles */
+#assignModal .booking-info p {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 8px 0 !important;
+    display: block !important;
+}
+
+#assignModal .form-group {
+    margin-bottom: 20px;
+}
+
+#assignModal .form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #333;
+    font-size: 1rem;
+}
+
+.unavailable-badge {
     background: #dc3545;
     color: white;
     padding: 2px 8px;
     border-radius: 12px;
-    font-size: 11px;
+    font-size: 0.75em;
+    margin-left: auto;
     font-weight: 600;
 }
-
-#assignModal .no-staff {
-    color: #6c757d;
-    font-style: italic;
-    text-align: center;
-    padding: 15px;
-    margin: 0;
-}
 </style>
-<div id="logoutModal" class="modal">
-<div class="modal__content">
-<h3 class="modal__title">Are you sure you want to log out?</h3>
-<div class="modal__actions">
-<button id="cancelLogout" class="btn btn--secondary">Cancel</button>
-<button id="confirmLogout" class="btn btn--primary">Log Out</button>
-
 
 <script>
-
+// Check if booking overlaps with UAE prayer/lunch break (1:00 PM - 2:00 PM)
+function checkPrayerBreak(startTime, duration) {
+    const start = new Date(`2000-01-01 ${startTime}`);
+    const durationMatch = duration.match(/(\d+\.?\d*)/);
+    const hours = durationMatch ? parseFloat(durationMatch[1]) : 0;
+    const end = new Date(start.getTime() + hours * 3600000);
     
-const navLinks = document.querySelectorAll('.sidebar__menu .menu__link');
-const logoutLink = document.querySelector('.sidebar__menu .menu__link[data-content="logout"]');
-const logoutModal = document.getElementById('logoutModal');
-const cancelLogoutBtn = document.getElementById('cancelLogout');
-const confirmLogoutBtn = document.getElementById('confirmLogout');
-
-// Handle logout modal
-function showLogoutModal() {
-    if (logoutModal) logoutModal.classList.add('show');
+    const breakStart = new Date('2000-01-01 13:00:00');
+    const breakEnd = new Date('2000-01-01 14:00:00');
+    
+    return (start < breakEnd && end > breakStart);
 }
 
-if (cancelLogoutBtn && logoutModal) {
-    cancelLogoutBtn.addEventListener('click', function() {
-        logoutModal.classList.remove('show');
-    });
+function loadGroupMembers() {
+    const select = document.getElementById('group_select');
+    const selectedOption = select.options[select.selectedIndex];
+    const preview = document.getElementById('selected_group_preview');
+    const conflictWarning = document.getElementById('group_conflict_warning');
+    document.getElementById('selected_group_id').value = selectedOption.value || '';
+    
+    if (!selectedOption.value) {
+        preview.style.display = 'none';
+        return;
+    }
+    
+    const groupData = JSON.parse(selectedOption.getAttribute('data-group'));
+    console.log('🔍 Group data loaded:', groupData);
+    
+    preview.style.display = 'block';
+    conflictWarning.style.display = 'none';
+    
+    const cleanersList = document.getElementById('group_cleaners_list');
+    const driversList = document.getElementById('group_driver_list');
+    cleanersList.innerHTML = '';
+    driversList.innerHTML = '';
+    
+    // ✅ Get RECURRING booking details (use preferred_day instead of service_date)
+    const preferredDay = document.getElementById('assign_preferred_day').textContent;
+    const serviceTime = document.getElementById('assign_service_time').textContent;
+    const duration = document.getElementById('assign_duration').textContent;
+    const bookingId = document.getElementById('assign_booking_id').value;
+    
+    // ✅ Fetch unavailable staff for RECURRING bookings (day-based)
+    fetch(`check_staff_availability_recurring.php?preferred_day=${preferredDay}&service_time=${serviceTime}&duration=${encodeURIComponent(duration)}&booking_id=${bookingId}`)
+        .then(response => response.json())
+        .then(data => {
+            console.log('📊 Recurring availability data:', data);
+            
+            const unavailableStaff = data.unavailable_staff || [];
+            const conflicts = data.conflicts || {};
+            let unavailableCount = 0;
+            
+            // Process cleaners
+            for (let i = 1; i <= 5; i++) {
+                const cleanerName = groupData[`cleaner${i}_name`];
+                const cleanerId = groupData[`cleaner${i}_id`];
+                
+                if (cleanerName && cleanerName !== 'null null' && cleanerId) {
+                    const li = document.createElement('li');
+                    
+                    if (unavailableStaff.includes(cleanerName)) {
+                        li.className = 'unavailable-member';
+                        const conflictTime = conflicts[cleanerName] || 'Unknown time';
+                        li.innerHTML = `
+                            <i class='bx bx-x-circle'></i> 
+                            ${cleanerName}
+                            <span class="conflict-time">Every ${preferredDay}: ${conflictTime}</span>
+                        `;
+                        unavailableCount++;
+                    } else {
+                        li.innerHTML = `<i class='bx bx-check-circle'></i> ${cleanerName}`;
+                    }
+                    
+                    cleanersList.appendChild(li);
+                }
+            }
+            
+            // Process driver
+            const driverName = groupData.driver_name;
+            const driverId = groupData.driver_id;
+            
+            if (driverName && driverName !== 'null null' && driverId) {
+                const li = document.createElement('li');
+                
+                if (unavailableStaff.includes(driverName)) {
+                    li.className = 'unavailable-member';
+                    const conflictTime = conflicts[driverName] || 'Unknown time';
+                    li.innerHTML = `
+                        <i class='bx bx-x-circle'></i> 
+                        ${driverName}
+                        <span class="conflict-time">Every ${preferredDay}: ${conflictTime}</span>
+                    `;
+                    unavailableCount++;
+                } else {
+                    li.innerHTML = `<i class='bx bx-check-circle'></i> ${driverName}`;
+                }
+                
+                driversList.appendChild(li);
+            }
+            
+            // Show conflict warning if any members are unavailable
+            if (unavailableCount > 0) {
+                conflictWarning.style.display = 'block';
+                document.getElementById('conflict_message').innerHTML = `
+                    <strong>${unavailableCount} members have RECURRING conflicts on ${preferredDay}.</strong><br>
+                    They are already assigned to another recurring booking during this time slot every ${preferredDay}. 
+                    Please choose a different group or time.
+                `;
+                document.getElementById('assignStaffBtn').disabled = true;
+                document.getElementById('assignStaffBtn').style.opacity = '0.5';
+                document.getElementById('assignStaffBtn').style.cursor = 'not-allowed';
+            } else {
+                document.getElementById('assignStaffBtn').disabled = false;
+                document.getElementById('assignStaffBtn').style.opacity = '1';
+                document.getElementById('assignStaffBtn').style.cursor = 'pointer';
+            }
+        })
+        .catch(error => {
+            console.error('❌ Error checking recurring availability:', error);
+        });
 }
 
-if (confirmLogoutBtn) {
-    confirmLogoutBtn.addEventListener('click', function() {
-        window.location.href = "landing_page2.html";
-    });
-}
-// Open Assign Staff Modal
+// Form submission handler
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('assignStaffForm');
+    if (form) {
+        console.log('✅ Form handler attached');
+        
+        form.onsubmit = function(e) {
+            const groupSelect = document.getElementById('group_select');
+            
+            if (!groupSelect.value) {
+                e.preventDefault();
+                alert('⚠️ Please select a group!');
+                return false;
+            }
+            
+            if (document.getElementById('assignStaffBtn').disabled) {
+                e.preventDefault();
+                alert('⚠️ Cannot assign this group due to time conflicts!');
+                return false;
+            }
+            
+            console.log('✅ Form validation passed, submitting...');
+            return true;
+        };
+    }
+});
+
 function openAssignModal(rowData) {
-    console.log('Opening assign modal with data:', rowData);
+    console.log('🔓 Opening modal for recurring booking:', rowData);
     const modal = document.getElementById('assignModal');
     
-    // Populate booking info
     document.getElementById('assign_booking_id').value = rowData.id;
     document.getElementById('assign_client_name').textContent = rowData.full_name;
     document.getElementById('assign_service_type').textContent = rowData.service_type;
-    document.getElementById('assign_service_date').textContent = rowData.service_date;
+    document.getElementById('assign_preferred_day').textContent = rowData.preferred_day; // ✅ CHANGED
     document.getElementById('assign_service_time').textContent = rowData.service_time;
+    document.getElementById('assign_duration').textContent = rowData.duration || 'N/A';
+    document.getElementById('assign_address').textContent = rowData.address || 'N/A';
+    document.getElementById('assign_duration_hidden').value = rowData.duration || '';
     
-    // Store date and time for AJAX call
-    document.getElementById('assign_service_date_hidden').value = rowData.service_date;
-    document.getElementById('assign_service_time_hidden').value = rowData.service_time;
+    // Check prayer break
+    if (rowData.service_time && rowData.duration) {
+        const hasPrayerConflict = checkPrayerBreak(rowData.service_time, rowData.duration);
+        document.getElementById('prayer_break_warning').style.display = hasPrayerConflict ? 'block' : 'none';
+    }
     
-    // Fetch unavailable staff via AJAX
-    fetch('get_unavailable_staff.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `service_date=${rowData.service_date}&service_time=${rowData.service_time}&booking_id=${rowData.id}`
-    })
-    .then(response => response.json())
-    .then(unavailableStaff => {
-        console.log('Unavailable staff:', unavailableStaff);
-        
-        // Reset all checkboxes first
-        document.querySelectorAll('.checkbox-label').forEach(label => {
-            const checkbox = label.querySelector('input[type="checkbox"]');
-            const badge = label.querySelector('.unavailable-badge');
-            
-            checkbox.disabled = false;
-            checkbox.checked = false;
-            label.classList.remove('disabled');
-            badge.style.display = 'none';
-        });
-        
-        // Mark unavailable staff
-        unavailableStaff.forEach(name => {
-            document.querySelectorAll('.checkbox-label').forEach(label => {
-                if (label.dataset.employeeName === name) {
-                    const checkbox = label.querySelector('input[type="checkbox"]');
-                    const badge = label.querySelector('.unavailable-badge');
-                    
-                    checkbox.disabled = true;
-                    label.classList.add('disabled');
-                    badge.style.display = 'inline-block';
-                }
-            });
-        });
-        
-        // Pre-select existing cleaners
-        const existingCleaners = rowData.cleaners ? rowData.cleaners.split(',').map(name => name.trim()) : [];
-        document.querySelectorAll('.cleaner-checkbox').forEach(checkbox => {
-            const label = checkbox.closest('.checkbox-label');
-            const employeeName = label.dataset.employeeName;
-            if (existingCleaners.includes(employeeName) && !checkbox.disabled) {
-                checkbox.checked = true;
-            }
-        });
-        
-        // Pre-select existing drivers
-        const existingDrivers = rowData.drivers ? rowData.drivers.split(',').map(name => name.trim()) : [];
-        document.querySelectorAll('.driver-checkbox').forEach(checkbox => {
-            const label = checkbox.closest('.checkbox-label');
-            const employeeName = label.dataset.employeeName;
-            if (existingDrivers.includes(employeeName) && !checkbox.disabled) {
-                checkbox.checked = true;
-            }
-        });
-    })
- 
+    // Clear selection
+    document.getElementById('group_select').value = '';
+    document.getElementById('selected_group_id').value = '';
+    document.getElementById('selected_group_preview').style.display = 'none';
+    document.getElementById('group_conflict_warning').style.display = 'none';
     
     modal.classList.add('show');
 }
 
-// Close Assign Staff Modal
 function closeAssignModal() {
     document.getElementById('assignModal').classList.remove('show');
 }
 </script>
+
 
 
 

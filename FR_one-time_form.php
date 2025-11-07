@@ -732,7 +732,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <?php if (!empty($cleaners)): ?>
             <div class="section">
-                <div class="section-title">🧹 Rate Your Cleaners</div>
+                <div class="section-title"> Rate Your Cleaners</div>
                 <?php foreach ($cleaners as $cleaner): ?>
                 <div class="staff-card">
                     <div class="staff-name"><?= htmlspecialchars($cleaner['first_name'] . ' ' . $cleaner['last_name']) ?></div>
@@ -751,14 +751,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <?php elseif (!empty($booking['cleaners'])): ?>
             <div class="section">
-                <div class="section-title">🧹 Cleaners</div>
+                <div class="section-title"> Cleaners</div>
                 <div class="no-staff">⚠️ Staff information unavailable</div>
             </div>
             <?php endif; ?>
 
             <?php if (!empty($drivers)): ?>
             <div class="section">
-                <div class="section-title">🚗 Rate Your Drivers</div>
+                <div class="section-title">  Rate Your Drivers</div>
                 <?php foreach ($drivers as $driver): ?>
                 <div class="staff-card">
                     <div class="staff-name"><?= htmlspecialchars($driver['first_name'] . ' ' . $driver['last_name']) ?></div>
@@ -792,74 +792,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         required
                     ></textarea>
                     <div id="sentimentIndicator" class="sentiment-indicator"></div>
-                    
+                    <button type="submit" class="btn-submit">Submit Feedback</button>
                     <!-- VADER Analysis Section -->
                     <div id="vaderAnalysis" style="display: none;">
-                        <div class="vader-container">
-                            <h3 class="vader-title">📊 VADER Sentiment Analysis</h3>
+                        <!-- <div class="vader-container"> -->
+                            <!-- <h3 class="vader-title">📊 VADER Sentiment Analysis</h3> -->
                             
-                            <!-- <div class="vader-steps">
-                                <h4>Simplified Steps in VADER Sentiment Analysis</h4>
-                                
-                                <div class="vader-step">
-                                    <strong>5. Result Classification</strong>
-                                    <p>The final sentiment is labeled as:</p>
-                                    <ul>
-                                        <li><strong>Positive</strong> if the compound score is ≥ 0.05</li>
-                                        <li><strong>Negative</strong> if the compound score is ≤ -0.05</li>
-                                        <li><strong>Neutral</strong> if the score is between -0.05 and 0.05</li>
-                                    </ul>
-                                </div>
-                                    <strong>1. Text Cleaning</strong>
-                                    <p>All feedback is converted to lowercase and unnecessary symbols or punctuation are removed to make the text uniform.</p>
-                                </div>
-                                
-                                <div class="vader-step">
-                                    <strong>2. Word Scoring</strong>
-                                    <p>VADER checks each word in the feedback using its built-in dictionary, where every word already has an assigned emotion score (positive, negative, or neutral).</p>
-                                </div>
-                                
-                                <div class="vader-step">
-                                    <strong>3. Context Adjustment</strong>
-                                    <p>The system adjusts scores depending on nearby words or punctuation (for example, <em>"not bad"</em> becomes slightly positive and <em>"very good!"</em> becomes stronger in positivity).</p>
-                                </div>
-                                
-                                <div class="vader-step">
-                                    <strong>4. Sentiment Calculation</strong>
-                                    <p>All individual scores are added together to produce a total valence score, which is then normalized using VADER's compound formula:</p>
-                                    <div class="vader-formula">
-                                        <div style="font-family: 'Courier New', monospace; font-size: 14px; line-height: 1.8;">
-                                            <div>Compound = Sum of valence scores</div>
-                                            <div style="border-top: 2px solid #333; padding-top: 5px; margin-top: 5px;">
-                                                √((Sum of valence scores)² + 15)
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <p>This formula converts the total sentiment value into a range between <strong>-1</strong> (most negative) and <strong>+1</strong> (most positive).</p>
-                                </div>
-                                
-                              <div class="vader-step">
-                                    <strong>5. Result Classification</strong>
-                                    <p>The final sentiment is labeled as:</p>
-                                    <ul>
-                                        <li><strong>Positive</strong> if the compound score is ≥ 0.05</li>
-                                        <li><strong>Negative</strong> if the compound score is ≤ -0.05</li>
-                                        <li><strong>Neutral</strong> if the score is between -0.05 and 0.05</li>
-                                    </ul>
-                                </div>
-                            </div> -->
+                           
                             
                             <div id="analysisResult" class="analysis-results">
-                                <div class="empty-analysis">
+                                <!-- <div class="empty-analysis">
                                     Start typing to see real-time analysis...
-                                </div>
+                                </div> -->
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <button type="submit" class="btn-submit">Submit Feedback</button>
+            
         </form>
     </div>
 </div>
@@ -975,88 +926,88 @@ function analyzeSentiment(text) {
     sentimentIndicator.className = `sentiment-indicator ${sentimentClass} show`;
     
     // Calculate position for marker (0 to 100%)
-    const markerPosition = ((compound + 1) / 2 * 100);
+    // const markerPosition = ((compound + 1) / 2 * 100);
     
     // Update detailed analysis
-    analysisResult.innerHTML = `
-        <div style="margin-bottom: 20px;">
-            <h4 style="color: #333; margin-bottom: 10px; font-size: 1.1em;">Analysis Results:</h4>
-            <div class="analysis-grid">
-                <div class="analysis-card positive">
-                    <div class="analysis-value" style="color: #155724;">${positiveCount}</div>
-                    <div class="analysis-label" style="color: #155724;">Positive Words</div>
-                </div>
-                <div class="analysis-card negative">
-                    <div class="analysis-value" style="color: #721c24;">${negativeCount}</div>
-                    <div class="analysis-label" style="color: #721c24;">Negative Words</div>
-                </div>
-                <div class="analysis-card neutral">
-                    <div class="analysis-value" style="color: #0c5460;">${totalWords}</div>
-                    <div class="analysis-label" style="color: #0c5460;">Total Words</div>
-                </div>
-            </div>
-        </div>
+//     analysisResult.innerHTML = `
+//         <div style="margin-bottom: 20px;">
+//             <h4 style="color: #333; margin-bottom: 10px; font-size: 1.1em;">Analysis Results:</h4>
+//             <div class="analysis-grid">
+//                 <div class="analysis-card positive">
+//                     <div class="analysis-value" style="color: #155724;">${positiveCount}</div>
+//                     <div class="analysis-label" style="color: #155724;">Positive Words</div>
+//                 </div>
+//                 <div class="analysis-card negative">
+//                     <div class="analysis-value" style="color: #721c24;">${negativeCount}</div>
+//                     <div class="analysis-label" style="color: #721c24;">Negative Words</div>
+//                 </div>
+//                 <div class="analysis-card neutral">
+//                     <div class="analysis-value" style="color: #0c5460;">${totalWords}</div>
+//                     <div class="analysis-label" style="color: #0c5460;">Total Words</div>
+//                 </div>
+//             </div>
+//         </div>
         
-        <div class="compound-score">
-           <h4>Compound Score:</h4>
-<div class="score-bar-container">
-    <div class="score-bar">
-        <div style="position: relative; width: 100%; height: 50px;">
-            <!-- Score track with sections -->
-            <div style="display: flex; width: 100%; height: 30px; border-radius: 15px; overflow: hidden;">
-                <!-- Negative zone: -1.0 to -0.05 (47.5% of width) -->
-                <div style="width: 47.5%; background: linear-gradient(to right, #dc3545, #e67e87); position: relative;">
-                    <span style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); font-size: 0.7em; color: white; font-weight: bold;">-0.05</span>
-                </div>
-                <!-- Neutral zone: -0.05 to 0.05 (5% of width) -->
-                <div style="width: 5%; background: #ffc107; position: relative;">
-                    <span style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 0.6em; color: #333; font-weight: bold;">0</span>
-                </div>
-                <!-- Positive zone: 0.05 to 1.0 (47.5% of width) -->
-                <div style="width: 47.5%; background: linear-gradient(to right, #8bc34a, #28a745); position: relative;">
-                    <span style="position: absolute; left: 5px; top: 50%; transform: translateY(-50%); font-size: 0.7em; color: white; font-weight: bold;">+0.05</span>
-                </div>
-            </div>
-            <!-- Marker -->
-            <div class="score-marker" style="position: absolute; left: ${markerPosition}%; top: 15px; transform: translateX(-50%);"></div>
-        </div>
-    </div>
-    <div class="score-labels" style="margin-top: 10px;">
-        <span>-1.0 (Negative)</span>
-        <span class="score-value">${compound.toFixed(3)}</span>
-        <span>+1.0 (Positive)</span>
-    </div>
-    <div style="text-align: center; margin-top: 8px; font-size: 0.8em; color: #666;">
-        <strong>Neutral Zone:</strong> -0.05 to +0.05
-    </div>
-</div>
+//         <div class="compound-score">
+//            <h4>Compound Score:</h4>
+// <div class="score-bar-container">
+//     <div class="score-bar">
+//         <div style="position: relative; width: 100%; height: 50px;">
+//             <!-- Score track with sections -->
+//             <div style="display: flex; width: 100%; height: 30px; border-radius: 15px; overflow: hidden;">
+//                 <!-- Negative zone: -1.0 to -0.05 (47.5% of width) -->
+//                 <div style="width: 47.5%; background: linear-gradient(to right, #dc3545, #e67e87); position: relative;">
+//                     <span style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); font-size: 0.7em; color: white; font-weight: bold;">-0.05</span>
+//                 </div>
+//                 <!-- Neutral zone: -0.05 to 0.05 (5% of width) -->
+//                 <div style="width: 5%; background: #ffc107; position: relative;">
+//                     <span style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 0.6em; color: #333; font-weight: bold;">0</span>
+//                 </div>
+//                 <!-- Positive zone: 0.05 to 1.0 (47.5% of width) -->
+//                 <div style="width: 47.5%; background: linear-gradient(to right, #8bc34a, #28a745); position: relative;">
+//                     <span style="position: absolute; left: 5px; top: 50%; transform: translateY(-50%); font-size: 0.7em; color: white; font-weight: bold;">+0.05</span>
+//                 </div>
+//             </div>
+//             <!-- Marker -->
+//             <div class="score-marker" style="position: absolute; left: ${markerPosition}%; top: 15px; transform: translateX(-50%);"></div>
+//         </div>
+//     </div>
+//     <div class="score-labels" style="margin-top: 10px;">
+//         <span>-1.0 (Negative)</span>
+//         <span class="score-value">${compound.toFixed(3)}</span>
+//         <span>+1.0 (Positive)</span>
+//     </div>
+//     <div style="text-align: center; margin-top: 8px; font-size: 0.8em; color: #666;">
+//         <strong>Neutral Zone:</strong> -0.05 to +0.05
+//     </div>
+// </div>
         
-        <div class="sentiment-result">
-            <h4 style="color: #333; margin-bottom: 10px; font-size: 1.1em;">Overall Sentiment:</h4>
-            <div class="sentiment-box" style="background: ${sentiment === 'Positive' ? 'linear-gradient(135deg, #d4edda, #c3e6cb)' : sentiment === 'Negative' ? 'linear-gradient(135deg, #f8d7da, #f5c6cb)' : 'linear-gradient(135deg, #fff3cd, #ffeaa7)'};">
-                <div class="sentiment-emoji">${emoji}</div>
-                <div class="sentiment-label" style="color: ${sentimentColor};">${sentiment}</div>
-            </div>
-        </div>
+//         <div class="sentiment-result">
+//             <h4 style="color: #333; margin-bottom: 10px; font-size: 1.1em;">Overall Sentiment:</h4>
+//             <div class="sentiment-box" style="background: ${sentiment === 'Positive' ? 'linear-gradient(135deg, #d4edda, #c3e6cb)' : sentiment === 'Negative' ? 'linear-gradient(135deg, #f8d7da, #f5c6cb)' : 'linear-gradient(135deg, #fff3cd, #ffeaa7)'};">
+//                 <div class="sentiment-emoji">${emoji}</div>
+//                 <div class="sentiment-label" style="color: ${sentimentColor};">${sentiment}</div>
+//             </div>
+//         </div>
         
-        ${positiveWordsFound.length > 0 ? `
-        <div class="word-badges">
-            <h4 style="color: #155724;">✓ Positive words detected:</h4>
-            <div class="badge-container">
-                ${positiveWordsFound.map(word => `<span class="word-badge positive">${word}</span>`).join('')}
-            </div>
-        </div>
-        ` : ''}
+//         ${positiveWordsFound.length > 0 ? `
+//         <div class="word-badges">
+//             <h4 style="color: #155724;">✓ Positive words detected:</h4>
+//             <div class="badge-container">
+//                 ${positiveWordsFound.map(word => `<span class="word-badge positive">${word}</span>`).join('')}
+//             </div>
+//         </div>
+//         ` : ''}
         
-        ${negativeWordsFound.length > 0 ? `
-        <div class="word-badges">
-            <h4 style="color: #721c24;">✗ Negative words detected:</h4>
-            <div class="badge-container">
-                ${negativeWordsFound.map(word => `<span class="word-badge negative">${word}</span>`).join('')}
-            </div>
-        </div>
-        ` : ''}
-    `;
+//         ${negativeWordsFound.length > 0 ? `
+//         <div class="word-badges">
+//             <h4 style="color: #721c24;">✗ Negative words detected:</h4>
+//             <div class="badge-container">
+//                 ${negativeWordsFound.map(word => `<span class="word-badge negative">${word}</span>`).join('')}
+//             </div>
+//         </div>
+//         ` : ''}
+//     `;
 }
 </script>
 

@@ -310,6 +310,7 @@ $recent_result = $conn->query($recent_query);
             margin-bottom: 15px;
             border-radius: 8px;
             transition: all 0.3s ease;
+            cursor: pointer;
         }
 
         .feedback-item:hover {
@@ -373,6 +374,230 @@ $recent_result = $conn->query($recent_query);
             color: #999;
         }
 
+        /* VADER Modal Styles */
+        .vader-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.6);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .vader-modal.show {
+            display: flex;
+        }
+
+        .vader-modal-content {
+            background-color: #fff;
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 800px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .vader-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .vader-modal-header h3 {
+            font-size: 1.8em;
+            color: #333;
+            margin: 0;
+        }
+
+        .vader-close-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: #999;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .vader-close-btn:hover {
+            color: #333;
+        }
+
+        .feedback-context {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .feedback-context-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .feedback-context-text {
+            font-style: italic;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .vader-container {
+            padding: 20px 0;
+        }
+
+        .vader-title {
+            font-size: 1.5em;
+            color: #667eea;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .analysis-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .analysis-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .analysis-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .analysis-label {
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .compound-score {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .compound-score h4 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .score-bar-container {
+            margin: 20px 0;
+        }
+
+        .score-marker {
+            width: 20px;
+            height: 20px;
+            background: #667eea;
+            border: 3px solid white;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .score-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        .score-value {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 1.2em;
+        }
+
+        .sentiment-result {
+            margin-top: 25px;
+        }
+
+        .sentiment-box {
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .sentiment-emoji {
+            font-size: 4em;
+            margin-bottom: 10px;
+        }
+
+        .sentiment-label {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .word-badges {
+            margin-top: 20px;
+        }
+
+        .word-badges h4 {
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .badge-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .word-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+
+        .word-badge.positive {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .word-badge.negative {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
         /* Sidebar dropdown fix */
         .has-dropdown .dropdown__menu {
             display: none;
@@ -394,6 +619,14 @@ $recent_result = $conn->query($recent_query);
             .feedback-header {
                 flex-direction: column;
                 align-items: flex-start;
+            }
+
+            .analysis-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .vader-modal-content {
+                padding: 20px;
             }
         }
     </style>
@@ -435,9 +668,6 @@ $recent_result = $conn->query($recent_query);
             
             <li class="menu__item"><a href="ES.php" class="menu__link"><i class='bx bx-time'></i> Employee Scheduling</a></li>
             <li class="menu__item"><a href="admin_feedback_dashboard.php" class="menu__link active"><i class='bx bx-star'></i> Feedback Overview</a></li>
-<!-- <li class="menu__item"><a href="FR.php" class="menu__link"><i class='bx bx-star'></i> Feedback & Ratings</a></li> -->
-             
-            
             <li class="menu__item"><a href="Reports.php" class="menu__link"><i class='bx bx-file-text'></i> Reports</a></li>
             <li class="menu__item"><a href="concern.php?content=profile" class="menu__link"><i class='bx bx-user'></i> Issues & Concerns</a></li>
             <li class="menu__item"><a href="admin_profile.php" class="menu__link"><i class='bx bx-user'></i> Profile</a></li>
@@ -450,7 +680,7 @@ $recent_result = $conn->query($recent_query);
             <div class="content-container">
                 <!-- Header -->
                 <div class="dashboard-header">
-                    <h2> Feedback Dashboard</h2>
+                    <h2>Feedback Dashboard</h2>
                     <p>Monitor customer satisfaction and service performance</p>
                 </div>
 
@@ -565,9 +795,15 @@ $recent_result = $conn->query($recent_query);
 
                 <!-- Recent Feedbacks -->
                 <div class="section-box">
-                    <h3>💬 Recent Feedbacks</h3>
+                    <h3>💬 Recent Feedbacks (Click to see VADER Analysis)</h3>
                     <?php while ($feedback = $recent_result->fetch_assoc()): ?>
-                    <div class="feedback-item">
+                    <div class="feedback-item" onclick="showVaderAnalysis(this)" 
+                         data-comment="<?= htmlspecialchars($feedback['rating_comment']) ?>"
+                         data-service="<?= htmlspecialchars($feedback['service_type']) ?>"
+                         data-date="<?= date('M d, Y', strtotime($feedback['service_date'])) ?>"
+                         data-stars="<?= $feedback['rating_stars'] ?>"
+                         data-sentiment="<?= $feedback['sentiment'] ?>"
+                         data-email="<?= htmlspecialchars($feedback['email']) ?>">
                         <div class="feedback-header">
                             <div class="feedback-meta">
                                 <span><strong><?= htmlspecialchars($feedback['service_type']) ?></strong></span>
@@ -594,6 +830,26 @@ $recent_result = $conn->query($recent_query);
     </main>
 </div>
 
+<!-- VADER Analysis Modal -->
+<div id="vaderModal" class="vader-modal">
+    <div class="vader-modal-content">
+        <div class="vader-modal-header">
+            <h3>📊 VADER Sentiment Analysis</h3>
+            <button class="vader-close-btn" onclick="closeVaderModal()">&times;</button>
+        </div>
+        
+        <div class="feedback-context">
+            <div class="feedback-context-title">Feedback Details:</div>
+            <div id="feedbackContext"></div>
+            <div class="feedback-context-text" id="feedbackText"></div>
+        </div>
+        
+        <div class="vader-container">
+            <div id="analysisResult" class="analysis-results"></div>
+        </div>
+    </div>
+</div>
+
 <!-- Logout Modal -->
 <div id="logoutModal" class="modal">
     <div class="modal__content">
@@ -606,6 +862,214 @@ $recent_result = $conn->query($recent_query);
 </div>
 
 <script>
+// VADER Sentiment Analysis Function
+function analyzeSentiment(text) {
+    const lowerText = text.toLowerCase();
+    
+    // Enhanced word lists for better detection
+    const positiveWords = [
+        'excellent', 'amazing', 'wonderful', 'great', 'good', 'love', 'best', 
+        'awesome', 'perfect', 'beautiful', 'happy', 'clean', 'professional', 
+        'friendly', 'helpful', 'recommend', 'fantastic', 'outstanding', 'superb', 
+        'brilliant', 'exceptional', 'impressive', 'satisfied', 'pleased', 'delighted',
+        'efficient', 'thorough', 'punctual', 'polite', 'courteous', 'neat', 
+        'meticulous', 'reliable', 'trustworthy', 'quality'
+    ];
+    
+    const negativeWords = [
+        'terrible', 'awful', 'horrible', 'bad', 'poor', 'worst', 'hate', 
+        'disappointing', 'dirty', 'rude', 'unprofessional', 'late', 'slow', 
+        'problem', 'issue', 'messy', 'unclean', 'careless', 'sloppy', 'lazy',
+        'incomplete', 'unsatisfactory', 'unacceptable', 'disappointed', 'frustrating',
+        'inadequate', 'subpar', 'inferior', 'deficient', 'lacking'
+    ];
+    
+    let positiveCount = 0;
+    let negativeCount = 0;
+    let positiveWordsFound = [];
+    let negativeWordsFound = [];
+    
+    // Count positive words
+    positiveWords.forEach(word => {
+        const regex = new RegExp('\\b' + word + '\\b', 'gi');
+        const matches = lowerText.match(regex);
+        if (matches) {
+            positiveCount += matches.length;
+            if (!positiveWordsFound.includes(word)) {
+                positiveWordsFound.push(word);
+            }
+        }
+    });
+    
+    // Count negative words
+    negativeWords.forEach(word => {
+        const regex = new RegExp('\\b' + word + '\\b', 'gi');
+        const matches = lowerText.match(regex);
+        if (matches) {
+            negativeCount += matches.length;
+            if (!negativeWordsFound.includes(word)) {
+                negativeWordsFound.push(word);
+            }
+        }
+    });
+    
+    // Calculate total words
+    const totalWords = text.split(/\s+/).filter(word => word.length > 0).length;
+    
+    // Calculate valence score
+    const valenceScore = (positiveCount * 0.5) - (negativeCount * 0.5);
+    
+    // Calculate compound score using VADER-like formula
+    const compound = valenceScore / Math.sqrt(Math.pow(valenceScore, 2) + 15);
+    
+    // Determine sentiment based on compound score
+    let sentiment, sentimentClass, emoji, sentimentColor;
+    if (compound >= 0.05) {
+        sentiment = 'Positive';
+        sentimentClass = 'sentiment-positive';
+        emoji = '😊';
+        sentimentColor = '#155724';
+    } else if (compound <= -0.05) {
+        sentiment = 'Negative';
+        sentimentClass = 'sentiment-negative';
+        emoji = '😔';
+        sentimentColor = '#721c24';
+    } else {
+        sentiment = 'Neutral';
+        sentimentClass = 'sentiment-neutral';
+        emoji = '😐';
+        sentimentColor = '#856404';
+    }
+    
+    // Calculate position for marker (0 to 100%)
+    const markerPosition = ((compound + 1) / 2 * 100);
+    
+    // Build analysis HTML
+    let html = `
+        <div style="margin-bottom: 20px;">
+            <h4 style="color: #333; margin-bottom: 10px; font-size: 1.1em;">Analysis Results:</h4>
+            <div class="analysis-grid">
+                <div class="analysis-card positive">
+                    <div class="analysis-value" style="color: #155724;">${positiveCount}</div>
+                    <div class="analysis-label" style="color: #155724;">Positive Words</div>
+                </div>
+                <div class="analysis-card negative">
+                    <div class="analysis-value" style="color: #721c24;">${negativeCount}</div>
+                    <div class="analysis-label" style="color: #721c24;">Negative Words</div>
+                </div>
+                <div class="analysis-card neutral">
+                    <div class="analysis-value" style="color: #0c5460;">${totalWords}</div>
+                    <div class="analysis-label" style="color: #0c5460;">Total Words</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="compound-score">
+            <h4>Compound Score:</h4>
+            <div class="score-bar-container">
+                <div class="score-bar">
+                    <div style="position: relative; width: 100%; height: 50px;">
+                        <!-- Score track with sections -->
+                        <div style="display: flex; width: 100%; height: 30px; border-radius: 15px; overflow: hidden;">
+                            <!-- Negative zone: -1.0 to -0.05 (47.5% of width) -->
+                            <div style="width: 47.5%; background: linear-gradient(to right, #dc3545, #e67e87); position: relative;">
+                                <span style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); font-size: 0.7em; color: white; font-weight: bold;">-0.05</span>
+                            </div>
+                            <!-- Neutral zone: -0.05 to 0.05 (5% of width) -->
+                            <div style="width: 5%; background: #ffc107; position: relative;">
+                                <span style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 0.6em; color: #333; font-weight: bold;">0</span>
+                            </div>
+                            <!-- Positive zone: 0.05 to 1.0 (47.5% of width) -->
+                            <div style="width: 47.5%; background: linear-gradient(to right, #8bc34a, #28a745); position: relative;">
+                                <span style="position: absolute; left: 5px; top: 50%; transform: translateY(-50%); font-size: 0.7em; color: white; font-weight: bold;">+0.05</span>
+                            </div>
+                        </div>
+                        <!-- Marker -->
+                        <div class="score-marker" style="position: absolute; left: ${markerPosition}%; top: 15px; transform: translateX(-50%);"></div>
+                    </div>
+                </div>
+                <div class="score-labels" style="margin-top: 10px;">
+                    <span>-1.0 (Negative)</span>
+                    <span class="score-value">${compound.toFixed(3)}</span>
+                    <span>+1.0 (Positive)</span>
+                </div>
+                <div style="text-align: center; margin-top: 8px; font-size: 0.8em; color: #666;">
+                    <strong>Neutral Zone:</strong> -0.05 to +0.05
+                </div>
+            </div>
+        </div>
+        
+        <div class="sentiment-result">
+            <h4 style="color: #333; margin-bottom: 10px; font-size: 1.1em;">Overall Sentiment:</h4>
+            <div class="sentiment-box" style="background: ${sentiment === 'Positive' ? 'linear-gradient(135deg, #d4edda, #c3e6cb)' : sentiment === 'Negative' ? 'linear-gradient(135deg, #f8d7da, #f5c6cb)' : 'linear-gradient(135deg, #fff3cd, #ffeaa7)'};">
+                <div class="sentiment-emoji">${emoji}</div>
+                <div class="sentiment-label" style="color: ${sentimentColor};">${sentiment}</div>
+            </div>
+        </div>
+        
+        ${positiveWordsFound.length > 0 ? `
+        <div class="word-badges">
+            <h4 style="color: #155724;">✓ Positive words detected:</h4>
+            <div class="badge-container">
+                ${positiveWordsFound.map(word => `<span class="word-badge positive">${word}</span>`).join('')}
+            </div>
+        </div>
+        ` : ''}
+        
+        ${negativeWordsFound.length > 0 ? `
+        <div class="word-badges">
+            <h4 style="color: #721c24;">✗ Negative words detected:</h4>
+            <div class="badge-container">
+                ${negativeWordsFound.map(word => `<span class="word-badge negative">${word}</span>`).join('')}
+            </div>
+        </div>
+        ` : ''}
+    `;
+    
+    return html;
+}
+
+// Show VADER Analysis Modal
+function showVaderAnalysis(element) {
+    const comment = element.getAttribute('data-comment');
+    const service = element.getAttribute('data-service');
+    const date = element.getAttribute('data-date');
+    const stars = element.getAttribute('data-stars');
+    const sentiment = element.getAttribute('data-sentiment');
+    const email = element.getAttribute('data-email');
+    
+    // Update feedback context
+    const contextHTML = `
+        <div style="margin-bottom: 10px;">
+            <strong>Service:</strong> ${service} | 
+            <strong>Date:</strong> ${date} | 
+            <strong>Rating:</strong> ${stars}⭐ | 
+            <strong>Customer:</strong> ${email}
+        </div>
+    `;
+    document.getElementById('feedbackContext').innerHTML = contextHTML;
+    document.getElementById('feedbackText').innerHTML = `"${comment}"`;
+    
+    // Analyze sentiment and display results
+    const analysisHTML = analyzeSentiment(comment);
+    document.getElementById('analysisResult').innerHTML = analysisHTML;
+    
+    // Show modal
+    document.getElementById('vaderModal').classList.add('show');
+}
+
+// Close VADER Modal
+function closeVaderModal() {
+    document.getElementById('vaderModal').classList.remove('show');
+}
+
+// Close modal when clicking outside
+document.getElementById('vaderModal').addEventListener('click', function(e) {
+    if (e.target.id === 'vaderModal') {
+        closeVaderModal();
+    }
+});
+
 // Handle logout modal
 function showLogoutModal() {
     const logoutModal = document.getElementById('logoutModal');
