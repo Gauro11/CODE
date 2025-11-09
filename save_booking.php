@@ -61,50 +61,61 @@ function calculateEndTime($startTime, $duration) {
 
 $endTime = calculateEndTime($bookingTime, (int)$duration);
 
-// Check for conflicting bookings (cleaners/drivers already assigned)
-$checkQuery = "SELECT COUNT(*) as conflict_count 
-               FROM bookings 
-               WHERE service_date = ? 
-               AND (
-                   (service_time <= ? AND ADDTIME(service_time, SEC_TO_TIME(duration * 3600)) > ?) OR
-                   (service_time < ? AND ADDTIME(service_time, SEC_TO_TIME(duration * 3600)) >= ?)
-               )
-               AND (cleaners IS NOT NULL AND cleaners != '' 
-                    OR drivers IS NOT NULL AND drivers != '')
-               AND status NOT IN ('Cancelled', 'Completed')";
+// Step 1: Count TOTAL employees in the system (Active/Available only)
+$totalEmployeesQuery = "SELECT COUNT(*) as total_employees 
+                        FROM employees 
+                        WHERE status = 'Available' AND archived = 0";
+$totalEmployeesResult = $conn->query($totalEmployeesQuery);
+$totalEmployees = $totalEmployeesResult->fetch_assoc()['total_employees'];
 
-$checkStmt = $conn->prepare($checkQuery);
+// Step 2: Get all assigned employees at this time slot
+$assignedEmployeesQuery = "SELECT cleaners, drivers
+                           FROM bookings 
+                           WHERE service_date = ? 
+                           AND (
+                               (service_time <= ? AND ADDTIME(service_time, SEC_TO_TIME(duration * 3600)) > ?) OR
+                               (service_time < ? AND ADDTIME(service_time, SEC_TO_TIME(duration * 3600)) >= ?)
+                           )
+                           AND status NOT IN ('Cancelled', 'Completed')";
+
+$checkStmt = $conn->prepare($assignedEmployeesQuery);
 $checkStmt->bind_param("sssss", $bookingDate, $bookingTime, $endTime, $endTime, $bookingTime);
 $checkStmt->execute();
-$result = $checkStmt->get_result()->fetch_assoc();
+$result = $checkStmt->get_result();
+
+// Collect all unique employee names from cleaners and drivers
+$assignedEmployeeNames = [];
+while ($row = $result->fetch_assoc()) {
+    // Get cleaners names (comma-separated)
+    if (!empty($row['cleaners'])) {
+        $cleaners = array_map('trim', explode(',', $row['cleaners']));
+        $assignedEmployeeNames = array_merge($assignedEmployeeNames, $cleaners);
+    }
+    
+    // Get drivers names (comma-separated)
+    if (!empty($row['drivers'])) {
+        $drivers = array_map('trim', explode(',', $row['drivers']));
+        $assignedEmployeeNames = array_merge($assignedEmployeeNames, $drivers);
+    }
+}
+
+// Remove duplicates and count
+$assignedEmployeeNames = array_unique($assignedEmployeeNames);
+$assignedCount = count($assignedEmployeeNames);
+
 $checkStmt->close();
 
-// If there are conflicts, check if we have available staff
-$checkQuery = "SELECT COUNT(*) AS conflict_count
-               FROM bookings
-               WHERE service_date = ?
-               AND (
-                    (service_time <= ? AND ADDTIME(service_time, SEC_TO_TIME(duration * 3600)) > ?)
-                    OR
-                    (service_time < ? AND ADDTIME(service_time, SEC_TO_TIME(duration * 3600)) >= ?)
-               )
-               AND (cleaners IS NOT NULL AND cleaners != '' 
-                    OR drivers IS NOT NULL AND drivers != '')
-               AND status NOT IN ('Cancelled', 'Completed')";
-
-$checkStmt = $conn->prepare($checkQuery);
-$checkStmt->bind_param("sssss", $bookingDate, $bookingTime, $endTime, $endTime, $bookingTime);
-$checkStmt->execute();
-$result = $checkStmt->get_result()->fetch_assoc();
-$checkStmt->close();
-
-if ($result['conflict_count'] > 0) {
+// Step 3: Check if ALL employees are busy
+if ($assignedCount >= $totalEmployees) {
     echo "<script>
-            alert('⚠️ All cleaners and drivers are busy at this time.\\nPlease choose a different slot.');
+            alert('⚠️ All cleaners and drivers are busy at this time.\\n\\nCurrently assigned: $assignedCount/$totalEmployees employees\\nPlease choose a different slot.');
             window.history.back();
           </script>";
     exit;
 }
+
+// ✅ If we reach here, there are available employees!
+// Continue with booking...
 
 // ✅ ========== END AVAILABILITY CHECK ==========
 
@@ -193,7 +204,8 @@ $stmt->bind_param(
 
 // ✅ Execute
 if ($stmt->execute()) {
-    echo "<script>alert('✅ Booking saved successfully! Total: AED $total_cost'); window.location.href='client_dashboard.php?content=dashboard';</script>";
+    $availableEmployees = $totalEmployees - $assignedCount;
+    echo "<script>alert('✅ Booking saved successfully! Total: AED $total_cost\\n\\nAvailable employees remaining: $availableEmployees/$totalEmployees'); window.location.href='client_dashboard.php?content=dashboard';</script>";
 } else {
     echo '❌ Database error: ' . htmlspecialchars($stmt->error);
 }

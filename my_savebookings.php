@@ -105,37 +105,50 @@ function getRecurringDates($startDate, $endDate, $frequency, $preferredDay) {
 $endTime = calculateEndTime($bookingTime, (int)$duration);
 $recurringDates = getRecurringDates($startDate, $endDate, $frequency, $preferredDay);
 
-// Check each recurring date for conflicts with ONE-TIME bookings
+// Step 1: Count TOTAL employees in the system (Active/Available only)
+$totalEmployeesQuery = "SELECT COUNT(*) as total_employees 
+                        FROM employees 
+                        WHERE status = 'Available' AND archived = 0";
+$totalEmployeesResult = $conn->query($totalEmployeesQuery);
+$totalEmployees = $totalEmployeesResult->fetch_assoc()['total_employees'];
+
+// Check each recurring date for conflicts
 $conflictDates = [];
 foreach ($recurringDates as $checkDate) {
-    // Check against one-time bookings (those with service_date set)
-    $checkQuery = "SELECT COUNT(*) as conflict_count 
-                   FROM bookings 
-                   WHERE service_date = ? 
-                   AND (
-                       (service_time <= ? AND ADDTIME(service_time, SEC_TO_TIME(duration * 3600)) > ?) OR
-                       (service_time < ? AND ADDTIME(service_time, SEC_TO_TIME(duration * 3600)) >= ?)
-                   )
-                   AND (cleaners IS NOT NULL AND cleaners != '' 
-                        OR drivers IS NOT NULL AND drivers != '')
-                   AND status NOT IN ('Cancelled', 'Completed')";
+    // Check against ONE-TIME bookings (with service_date)
+    $assignedEmployeesQuery = "SELECT cleaners, drivers
+                               FROM bookings 
+                               WHERE service_date = ? 
+                               AND (
+                                   (service_time <= ? AND ADDTIME(service_time, SEC_TO_TIME(duration * 3600)) > ?) OR
+                                   (service_time < ? AND ADDTIME(service_time, SEC_TO_TIME(duration * 3600)) >= ?)
+                               )
+                               AND status NOT IN ('Cancelled', 'Completed')";
 
-    $checkStmt = $conn->prepare($checkQuery);
+    $checkStmt = $conn->prepare($assignedEmployeesQuery);
     $checkStmt->bind_param("sssss", $checkDate, $bookingTime, $endTime, $endTime, $bookingTime);
     $checkStmt->execute();
-    $result = $checkStmt->get_result()->fetch_assoc();
+    $result = $checkStmt->get_result();
+
+    // Collect unique employee names
+    $assignedEmployeeNames = [];
+    while ($row = $result->fetch_assoc()) {
+        if (!empty($row['cleaners'])) {
+            $cleaners = array_map('trim', explode(',', $row['cleaners']));
+            $assignedEmployeeNames = array_merge($assignedEmployeeNames, $cleaners);
+        }
+        
+        if (!empty($row['drivers'])) {
+            $drivers = array_map('trim', explode(',', $row['drivers']));
+            $assignedEmployeeNames = array_merge($assignedEmployeeNames, $drivers);
+        }
+    }
     $checkStmt->close();
 
-    if ($result['conflict_count'] > 0) {
-        $conflictDates[] = $checkDate;
-    }
-}
-
-// Also check against OTHER RECURRING bookings
-foreach ($recurringDates as $checkDate) {
-    $dayOfWeek = date('l', strtotime($checkDate)); // Get day name (Monday, Tuesday, etc.)
+    // Check against OTHER RECURRING bookings
+    $dayOfWeek = date('l', strtotime($checkDate)); // Get day name
     
-    $checkRecurringQuery = "SELECT COUNT(*) as conflict_count 
+    $checkRecurringQuery = "SELECT cleaners, drivers
                            FROM bookings 
                            WHERE booking_type = 'Recurring'
                            AND start_date <= ? 
@@ -145,17 +158,32 @@ foreach ($recurringDates as $checkDate) {
                                (service_time <= ? AND ADDTIME(service_time, SEC_TO_TIME(duration * 3600)) > ?) OR
                                (service_time < ? AND ADDTIME(service_time, SEC_TO_TIME(duration * 3600)) >= ?)
                            )
-                           AND (cleaners IS NOT NULL AND cleaners != '' 
-                                OR drivers IS NOT NULL AND drivers != '')
                            AND status NOT IN ('Cancelled', 'Completed')";
 
     $checkStmt = $conn->prepare($checkRecurringQuery);
     $checkStmt->bind_param("sssssss", $checkDate, $checkDate, $dayOfWeek, $bookingTime, $endTime, $endTime, $bookingTime);
     $checkStmt->execute();
-    $result = $checkStmt->get_result()->fetch_assoc();
+    $result = $checkStmt->get_result();
+
+    // Add recurring booking employees
+    while ($row = $result->fetch_assoc()) {
+        if (!empty($row['cleaners'])) {
+            $cleaners = array_map('trim', explode(',', $row['cleaners']));
+            $assignedEmployeeNames = array_merge($assignedEmployeeNames, $cleaners);
+        }
+        
+        if (!empty($row['drivers'])) {
+            $drivers = array_map('trim', explode(',', $row['drivers']));
+            $assignedEmployeeNames = array_merge($assignedEmployeeNames, $drivers);
+        }
+    }
     $checkStmt->close();
 
-    if ($result['conflict_count'] > 0 && !in_array($checkDate, $conflictDates)) {
+    // Remove duplicates and check if all employees are busy
+    $assignedEmployeeNames = array_unique($assignedEmployeeNames);
+    $assignedCount = count($assignedEmployeeNames);
+
+    if ($assignedCount >= $totalEmployees) {
         $conflictDates[] = $checkDate;
     }
 }
@@ -164,7 +192,7 @@ foreach ($recurringDates as $checkDate) {
 if (!empty($conflictDates)) {
     $conflictList = implode(', ', $conflictDates);
     echo "<script>
-            alert('⚠️ All cleaners and drivers are busy on the following dates:\\n$conflictList\\n\\nPlease adjust your booking time or dates.');
+            alert('⚠️ All cleaners and drivers are busy on the following dates:\\n$conflictList\\n\\nCurrently: $totalEmployees/$totalEmployees employees assigned\\nPlease adjust your booking time or dates.');
             window.history.back();
           </script>";
     exit;
@@ -200,7 +228,7 @@ $status       = 'Pending';
 // ✅ Insert recurring booking WITH remaining_sessions
 $remaining_sessions = 0; // ✅ START AT 0 (will increment up)
 
-// Keep the INSERT query the same, but make sure it uses 0:
+// Keep the INSERT query the same
 $query = "INSERT INTO bookings 
     (full_name, email, phone, service_type, client_type, 
      service_time, duration, property_type, materials_provided, materials_needed, 
@@ -242,7 +270,8 @@ $stmt->bind_param(
 
 if ($stmt->execute()) {
     $sessionText = $estimatedSessions ? " ($estimatedSessions sessions)" : "";
-    echo "<script>alert('✅ Recurring booking saved successfully, $fullName!$sessionText'); window.location.href='client_dashboard.php?content=dashboard';</script>";
+    $availableDates = count($recurringDates);
+    echo "<script>alert('✅ Recurring booking saved successfully, $fullName!$sessionText\\n\\nBooking dates: $availableDates sessions scheduled'); window.location.href='client_dashboard.php?content=dashboard';</script>";
 } else {
     echo "❌ Error saving booking: " . htmlspecialchars($stmt->error);
 }
