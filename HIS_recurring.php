@@ -34,10 +34,11 @@ if ($result && $result->num_rows > 0) {
         $materials_provided = $row['materials_provided'] ?? '';
         $duration = floatval($row['duration'] ?? 0);
 
-        if (preg_match('/(\d+(?:\.\d+)?)\s*AED\s*\/\s*hr/i', $materials_provided, $matches)) {
-            $hourly_rate = floatval($matches[1]);
-            $estimated_price = $hourly_rate * $duration;
-        }
+       if (preg_match('/(\d+(?:\.\d+)?)/', $materials_provided, $matches)) {
+    $hourly_rate = floatval($matches[1]);
+    $estimated_price = $hourly_rate * $duration;
+}
+
 
         // Generate unique recurring reference
         $freq_code = $frequency === 'Weekly' ? 'WK' :

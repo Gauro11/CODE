@@ -22,25 +22,111 @@ if (!$employee) {
 }
 
 $employeeName = $employee['first_name'] . ' ' . $employee['last_name'];
+$today = date('Y-m-d');
 
-// Fetch all confirmed bookings where this employee is assigned
-$query = "
+// ========== FUNCTION: Generate recurring occurrences ==========
+function generateRecurringOccurrences($booking, $targetDate) {
+    $occurrences = [];
+    $frequency = $booking['frequency'];
+    $preferredDay = $booking['preferred_day'];
+    $startDate = $booking['start_date'];
+    $endDate = $booking['end_date'] ? $booking['end_date'] : date('Y-m-d', strtotime('+1 year'));
+    
+    // Check if target date is within the booking range
+    if (strtotime($targetDate) < strtotime($startDate) || strtotime($targetDate) > strtotime($endDate)) {
+        return $occurrences;
+    }
+    
+    $currentTime = strtotime($targetDate);
+    $dayOfWeek = date('l', $currentTime);
+    $shouldInclude = false;
+    
+    switch ($frequency) {
+        case 'Daily':
+            $shouldInclude = true;
+            break;
+        case 'Weekly':
+            $shouldInclude = ($dayOfWeek == $preferredDay);
+            break;
+        case 'Bi-Weekly':
+            if ($dayOfWeek == $preferredDay) {
+                $weeksDiff = floor((strtotime($targetDate) - strtotime($startDate)) / (7 * 24 * 60 * 60));
+                $shouldInclude = ($weeksDiff % 2 == 0);
+            }
+            break;
+        case 'Monthly':
+            $shouldInclude = (date('j', $currentTime) == date('j', strtotime($startDate)));
+            break;
+    }
+    
+    if ($shouldInclude) {
+        $occurrence = $booking;
+        $occurrence['service_date'] = $targetDate;
+        $occurrence['is_recurring'] = true;
+        $occurrences[] = $occurrence;
+    }
+    
+    return $occurrences;
+}
+
+// ========== FETCH ONE-TIME APPOINTMENTS ==========
+$oneTimeQuery = "
 SELECT *
 FROM bookings
-WHERE status = 'Confirmed'
+WHERE booking_type = 'One-Time'
+AND service_date = ?
+AND status = 'Confirmed'
 AND (
     cleaners LIKE CONCAT('%', ?, '%')
     OR drivers LIKE CONCAT('%', ?, '%')
 )
-ORDER BY service_date ASC, service_time ASC
+ORDER BY service_time ASC
 ";
 
-$stmt = $conn->prepare($query);
-$stmt->bind_param("ss", $employeeName, $employeeName);
+$stmt = $conn->prepare($oneTimeQuery);
+$stmt->bind_param("sss", $today, $employeeName, $employeeName);
 $stmt->execute();
-$result = $stmt->get_result();
-?>
+$oneTimeResult = $stmt->get_result();
 
+$appointments = [];
+
+// Add one-time appointments
+while ($row = $oneTimeResult->fetch_assoc()) {
+    $row['is_recurring'] = false;
+    $appointments[] = $row;
+}
+
+// ========== FETCH RECURRING APPOINTMENTS ==========
+$recurringQuery = "
+SELECT *
+FROM bookings
+WHERE booking_type = 'Recurring'
+AND start_date <= ?
+AND (end_date IS NULL OR end_date >= ?)
+AND status = 'Active'
+AND (
+    cleaners LIKE CONCAT('%', ?, '%')
+    OR drivers LIKE CONCAT('%', ?, '%')
+)
+ORDER BY service_time ASC
+";
+
+$stmt = $conn->prepare($recurringQuery);
+$stmt->bind_param("ssss", $today, $today, $employeeName, $employeeName);
+$stmt->execute();
+$recurringResult = $stmt->get_result();
+
+// Generate occurrences for recurring appointments that fall on today
+while ($row = $recurringResult->fetch_assoc()) {
+    $occurrences = generateRecurringOccurrences($row, $today);
+    $appointments = array_merge($appointments, $occurrences);
+}
+
+// Sort all appointments by time
+usort($appointments, function($a, $b) {
+    return strtotime($a['service_time']) - strtotime($b['service_time']);
+});
+?>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -51,20 +137,13 @@ $result = $stmt->get_result();
 <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 <link rel="stylesheet" href="client_db.css">
 <style>
-.content-container {
-    background: #fff;
-    border-radius: 12px;
-    padding: 20px;
-    margin: 20px;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-}
 .table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 15px;
 }
 .table th {
-    background: #4CAF50;
+    background:  #007bff;
     color: white;
     padding: 10px;
     text-align: left;
@@ -77,24 +156,60 @@ $result = $stmt->get_result();
 .no-data {
     text-align: center;
     font-weight: bold;
-    color: red;
-    margin-top: 20px;
+    color: #999;
+    margin-top: 40px;
+    padding: 40px;
+}
+.no-data i {
+    font-size: 64px;
+    display: block;
+    margin-bottom: 15px;
+    opacity: 0.5;
 }
 .print-btn {
     margin-bottom: 15px;
     padding: 8px 15px;
-    background: #4CAF50;
+    background:  #007bff;
     color: #fff;
     border: none;
     border-radius: 5px;
     cursor: pointer;
 }
 .print-btn:hover {
-    background: #45a049;
+    background:  #007bff;
 }
 .highlight {
     font-weight: bold;
-    color: #d9534f; /* red color to highlight employee */
+    color: #d9534f;
+}
+.recurring-badge {
+    display: inline-block;
+    background: #4facfe;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 5px;
+}
+.onetime-badge {
+    display: inline-block;
+    background: #f093fb;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 5px;
+}
+
+@media print {
+    .print-btn, .dashboard__sidebar, .header, .nav__toggle {
+        display: none !important;
+    }
+    .dashboard__content {
+        margin-left: 0 !important;
+    }
 }
 </style>
 <script>
@@ -131,6 +246,7 @@ function printPage() {
             </ul>
         </li>
         <li class="menu__item"><a href="EMP_ratings_feedback.php" class="menu__link"><i class='bx bx-star'></i> Ratings/Feedback</a></li>
+        <li class="menu__item"><a href="employee_schedule.php" class="menu__link"><i class='bx bx-calendar-week'></i> Schedule</a></li>
         <li class="menu__item"><a href="landing_page2.html" class="menu__link"><i class='bx bx-log-out'></i> Logout</a></li>
     </ul>
 </aside>
@@ -138,14 +254,19 @@ function printPage() {
 <main class="dashboard__content">
 <section class="content__section active">
     <div class="content-container">
-        <h2>📅 Today's Confirmed Appointments for <?= htmlspecialchars($employeeName) ?></h2>
-        <button class="print-btn" onclick="printPage()">🖨️ Print / Save as PDF</button>
+        <h2><i class='bx bx-calendar-check'></i> Today's Confirmed Appointments for <?= htmlspecialchars($employeeName) ?></h2>
+        <p style="color: #666; margin-bottom: 20px;">
+            <i class='bx bx-calendar'></i> <?= date('l, F j, Y') ?>
+        </p>
+        <button class="print-btn" onclick="printPage()">
+            <i class='bx bx-printer'></i> Print / Save as PDF
+        </button>
 
-        <?php if ($result->num_rows > 0): ?>
+        <?php if (count($appointments) > 0): ?>
         <table class="table">
             <thead>
                 <tr>
-                   
+                    <th>Booking Type</th>
                     <th>Client</th>
                     <th>Service Type</th>
                     <th>Client Type</th>
@@ -158,40 +279,101 @@ function printPage() {
                 </tr>
             </thead>
             <tbody>
-                <?php while ($row = $result->fetch_assoc()): 
-                    $cleaners = explode(",", $row['cleaners']);
-                    $drivers = explode(",", $row['drivers']);
+                <?php foreach ($appointments as $row): 
+                    $cleaners = !empty($row['cleaners']) ? explode(",", $row['cleaners']) : [];
+                    $drivers = !empty($row['drivers']) ? explode(",", $row['drivers']) : [];
                 ?>
                 <tr>
-                   
+                    <td>
+                        <?php if (isset($row['is_recurring']) && $row['is_recurring']): ?>
+                            <span class="recurring-badge"><i class='bx bx-repeat'></i> Recurring</span>
+                        <?php else: ?>
+                            <span class="onetime-badge"><i class='bx bx-calendar-check'></i> One-Time</span>
+                        <?php endif; ?>
+                    </td>
                     <td><?= htmlspecialchars($row['full_name']) ?></td>
                     <td><?= htmlspecialchars($row['service_type']) ?></td>
                     <td><?= htmlspecialchars($row['client_type']) ?></td>
                     <td><?= htmlspecialchars($row['address']) ?></td>
                     <td>
-                        <?php foreach($cleaners as $c): ?>
-                            <?= htmlspecialchars(trim($c)) === $employeeName ? "<span class='highlight'>$c</span>" : htmlspecialchars(trim($c)) ?>,<br>
-                        <?php endforeach; ?>
+                        <?php if (count($cleaners) > 0): ?>
+                            <?php foreach($cleaners as $c): 
+                                $cleanerName = trim($c);
+                                if (empty($cleanerName)) continue;
+                            ?>
+                                <?= htmlspecialchars($cleanerName) === $employeeName ? 
+                                    "<span class='highlight'>" . htmlspecialchars($cleanerName) . "</span>" : 
+                                    htmlspecialchars($cleanerName) 
+                                ?><br>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <em style="color: #999;">None</em>
+                        <?php endif; ?>
                     </td>
                     <td>
-                        <?php foreach($drivers as $d): ?>
-                            <?= htmlspecialchars(trim($d)) === $employeeName ? "<span class='highlight'>$d</span>" : htmlspecialchars(trim($d)) ?>,<br>
-                        <?php endforeach; ?>
+                        <?php if (count($drivers) > 0): ?>
+                            <?php foreach($drivers as $d): 
+                                $driverName = trim($d);
+                                if (empty($driverName)) continue;
+                            ?>
+                                <?= htmlspecialchars($driverName) === $employeeName ? 
+                                    "<span class='highlight'>" . htmlspecialchars($driverName) . "</span>" : 
+                                    htmlspecialchars($driverName) 
+                                ?><br>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <em style="color: #999;">None</em>
+                        <?php endif; ?>
                     </td>
                     <td><?= date("g:i A", strtotime($row['service_time'])) ?></td>
-                    <td><?= htmlspecialchars($row['duration']) ?></td>
+                    <td><?= htmlspecialchars($row['duration']) ?> hrs</td>
                     <td><?= htmlspecialchars($row['status']) ?></td>
                 </tr>
-                <?php endwhile; ?>
+                <?php endforeach; ?>
             </tbody>
         </table>
+        
+        <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+            <strong>Summary:</strong> 
+            <?php 
+            $oneTimeCount = count(array_filter($appointments, function($a) { return !$a['is_recurring']; }));
+            $recurringCount = count(array_filter($appointments, function($a) { return isset($a['is_recurring']) && $a['is_recurring']; }));
+            ?>
+            Total: <?= count($appointments) ?> appointments 
+            (<?= $oneTimeCount ?> one-time, <?= $recurringCount ?> recurring)
+        </div>
+        
         <?php else: ?>
-            <p class="no-data">No confirmed appointments assigned to you today.</p>
+            <div class="no-data">
+                <i class='bx bx-calendar-x'></i>
+                <p>No confirmed appointments assigned to you today.</p>
+                <p style="font-size: 14px; color: #999; margin-top: 10px;">
+                    Check back later or view your upcoming schedule.
+                </p>
+            </div>
         <?php endif; ?>
     </div>
 </section>
 </main>
 
 </div>
+
+<script>
+// Sidebar dropdown toggle
+document.addEventListener('DOMContentLoaded', function() {
+    const dropdownParents = document.querySelectorAll('.has-dropdown');
+    
+    dropdownParents.forEach(parent => {
+        const parentLink = parent.querySelector('.menu__link');
+        
+        if (parentLink) {
+            parentLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                parent.classList.toggle('open');
+            });
+        }
+    });
+});
+</script>
 </body>
 </html>

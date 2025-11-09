@@ -23,31 +23,28 @@
    
    // --- PRICE COMPUTATION LOGIC (Generic function para sa lahat ng forms) ---
    function updateEstimatedPrice(priceDisplayEl, durationSelectEl, materialsYesEl, materialsNoEl) {
-       if (!priceDisplayEl || !durationSelectEl || !materialsYesEl || !materialsNoEl) {
-           return;
-       }
-   
-       const selectedDuration = durationSelectEl.value;
-       let hourlyRate = 0;
-   
-       // Check if the price display is for recurring or one-time to determine the correct radio buttons
-       // Since the radio button IDs are the same, we check the element passed.
-       if (materialsYesEl.checked) {
-           hourlyRate = 40;
-       } else if (materialsNoEl.checked) {
-           hourlyRate = 35;
-       }
-   
-       let calculatedPrice = 0;
-       if (selectedDuration) {
-           const durationInHours = parseFloat(selectedDuration);
-           calculatedPrice = hourlyRate * (isNaN(durationInHours) ? 0 : durationInHours);
-       }
-   
-       // Use Math.round() as you provided in your code for the final display
-       priceDisplayEl.textContent = `AED ${Math.round(calculatedPrice)}`;
-   }
-   
+    if (!priceDisplayEl || !durationSelectEl || !materialsYesEl || !materialsNoEl) {
+        return;
+    }
+
+    const selectedDuration = durationSelectEl.value;
+    let hourlyRate = 0;
+
+    if (materialsYesEl.checked) {
+        hourlyRate = 40; // With materials
+    } else if (materialsNoEl.checked) {
+        hourlyRate = 35; // No materials → use fixed rate
+    }
+
+    let calculatedPrice = 0;
+    if (selectedDuration) {
+        const durationInHours = parseFloat(selectedDuration);
+        calculatedPrice = hourlyRate * (isNaN(durationInHours) ? 0 : durationInHours);
+    }
+
+    priceDisplayEl.textContent = `AED ${Math.round(calculatedPrice)}`;
+}
+
    document.addEventListener('DOMContentLoaded', () => {
        // --- ELEMENT DECLARATIONS (Para makita ng buong function) ---
        const navToggle = document.getElementById('nav-toggle');

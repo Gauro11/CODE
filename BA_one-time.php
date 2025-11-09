@@ -177,6 +177,7 @@
                             </div>
                         </div>
                         
+                        
                         <div class="form-group full-width">
                             <label for="address">Address</label>
                             <input type="text" id="address" name="address" placeholder="Enter full address" required>
@@ -310,6 +311,7 @@
 
     <script src="client_db.js"></script>
     <script>
+        
         
         document.addEventListener("DOMContentLoaded", () => {
             // BAGONG JS PARA SA CLEANING MATERIALS
@@ -581,6 +583,47 @@
                 return `${adjustedHours}:${formattedMinutes} ${period}`;
             }
 
+            // ========== UAE BREAK CALCULATION FUNCTIONS ==========
+            
+            // Check if work period includes the 1:00 PM - 2:00 PM break
+            function includesBreakTime(startTime, workHours) {
+                if (!startTime || !workHours) return false;
+                
+                const [hours, minutes] = startTime.split(':').map(Number);
+                const startMinutes = hours * 60 + minutes;
+                
+                // Prayer + Lunch break is 1:00 PM - 2:00 PM (13:00 - 14:00)
+                const breakStart = 13 * 60; // 1:00 PM in minutes
+                const breakEnd = 14 * 60;   // 2:00 PM in minutes
+                
+                // Calculate end time in minutes (without break)
+                const endMinutes = startMinutes + (workHours * 60);
+                
+                // Check if the work period overlaps with break time
+                return startMinutes < breakEnd && endMinutes > breakStart;
+            }
+
+            // Calculate actual duration with break
+            function calculateActualDuration(startTime, workHours) {
+                const hasBreak = includesBreakTime(startTime, workHours);
+                const breakDuration = hasBreak ? 1 : 0;
+                const totalHours = workHours + breakDuration;
+                
+                return {
+                    workHours: workHours,
+                    breakHours: breakDuration,
+                    totalHours: totalHours,
+                    hasBreak: hasBreak
+                };
+            }
+
+            // Check if duration exceeds 5 consecutive hours
+            function checkConsecutiveHours(workHours) {
+                return workHours > 5;
+            }
+
+            // ========== END UAE BREAK CALCULATION ==========
+
             if (bookingTimeInput) {
                 bookingTimeInput.addEventListener('change', () => {
                     const selectedTime = bookingTimeInput.value;
@@ -615,18 +658,41 @@
                     return;
                 }
 
+                // Calculate UAE break requirements
+                const duration = calculateActualDuration(selectedTimeStr, selectedDuration);
+
                 const [hours, minutes] = selectedTimeStr.split(':').map(Number);
                 const startDate = new Date();
-                startDate.setHours(hours, minutes, 0, 0); // Set hours, minutes, seconds, milliseconds
+                startDate.setHours(hours, minutes, 0, 0);
 
-                const endDate = new Date(startDate.getTime() + selectedDuration * 60 * 60 * 1000);
+                // Add TOTAL hours (work + break)
+                const endDate = new Date(startDate.getTime() + duration.totalHours * 60 * 60 * 1000);
 
-                const formattedCompletionTime = formatTime12Hour(endDate.getHours().toString().padStart(2, '0') + ':' + endDate.getMinutes().toString().padStart(2, '0'));
+                const formattedStartTime = formatTime12Hour(selectedTimeStr);
+                const formattedCompletionTime = formatTime12Hour(
+                    endDate.getHours().toString().padStart(2, '0') + ':' + 
+                    endDate.getMinutes().toString().padStart(2, '0')
+                );
 
-                let completionText = `Estimated completion: ${formattedCompletionTime}`;
+                let completionText = `${formattedStartTime} - ${formattedCompletionTime}`;
                 
-                // Always show parenthesis for duration
-                completionText += ` (${selectedDuration} hrs)`;
+                // Show work hours
+                completionText += ` (${selectedDuration} hrs work`;
+                
+                // Add break information if applicable
+                if (duration.hasBreak) {
+                    completionText += ` + 1 hr break [1:00 PM - 2:00 PM Prayer/Lunch]`;
+                }
+                
+                completionText += `)`;
+
+                // Warning if exceeds 5 consecutive hours without break
+                if (checkConsecutiveHours(selectedDuration) && !duration.hasBreak) {
+                    completionText += ` ⚠️ Exceeds 5 hours without break`;
+                    estimatedTimeDisplay.style.color = '#d9534f';
+                } else {
+                    estimatedTimeDisplay.style.color = '#555';
+                }
 
                 estimatedTimeDisplay.textContent = completionText;
                 estimatedTimeDisplay.style.display = 'block';

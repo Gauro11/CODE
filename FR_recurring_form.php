@@ -725,7 +725,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <?php if (!empty($cleaners)): ?>
             <div class="section">
-                <div class="section-title">🧹 Rate Your Cleaners</div>
+                <div class="section-title"> Rate Your Cleaners</div>
                 <?php foreach ($cleaners as $cleaner): ?>
                 <div class="staff-card">
                     <div class="staff-name"><?= htmlspecialchars($cleaner['first_name'] . ' ' . $cleaner['last_name']) ?></div>
@@ -744,14 +744,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <?php elseif (!empty($booking['cleaners'])): ?>
             <div class="section">
-                <div class="section-title">🧹 Cleaners</div>
+                <div class="section-title"> Cleaners</div>
                 <div class="no-staff">⚠️ Staff information unavailable</div>
             </div>
             <?php endif; ?>
 
             <?php if (!empty($drivers)): ?>
             <div class="section">
-                <div class="section-title">🚗 Rate Your Drivers</div>
+                <div class="section-title"> Rate Your Drivers</div>
                 <?php foreach ($drivers as $driver): ?>
                 <div class="staff-card">
                     <div class="staff-name"><?= htmlspecialchars($driver['first_name'] . ' ' . $driver['last_name']) ?></div>
@@ -770,13 +770,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <?php elseif (!empty($booking['drivers'])): ?>
             <div class="section">
-                <div class="section-title">🚗 Drivers</div>
+                <div class="section-title"> Drivers</div>
                 <div class="no-staff">⚠️ Staff information unavailable</div>
             </div>
             <?php endif; ?>
 
             <div class="section">
-                <div class="section-title">💬 Written Feedback</div>
+                <div class="section-title">💬Written Feedback</div>
                 <div class="feedback-wrapper">
                     <textarea 
                         name="rating_comment" 
@@ -785,11 +785,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         required
                     ></textarea>
                     <div id="sentimentIndicator" class="sentiment-indicator"></div>
+                     <button type="submit" class="btn-submit">Submit Feedback</button>
                     
                     <!-- VADER Analysis Section -->
                     <div id="vaderAnalysis" style="display: none;">
-                        <div class="vader-container">
-                            <h3 class="vader-title">📊 VADER Sentiment Analysis</h3>
+                        <!-- <div class="vader-container"> -->
+                            <!-- <h3 class="vader-title">📊 VADER Sentiment Analysis</h3> -->
                             
                             <!-- <div class="vader-steps">
                                 <h4>Simplified Steps in VADER Sentiment Analysis</h4>
@@ -842,17 +843,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </div>
                             </div> -->
                             
-                            <div id="analysisResult" class="analysis-results">
+                            <!-- <div id="analysisResult" class="analysis-results">
                                 <div class="empty-analysis">
                                     Start typing to see real-time analysis...
                                 </div>
-                            </div>
+                            </div> -->
                         </div>
                     </div>
                 </div>
             </div>
 
-            <button type="submit" class="btn-submit">Submit Feedback</button>
+           
         </form>
     </div>
 </div>

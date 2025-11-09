@@ -964,10 +964,11 @@ $status_colors = [
         </li>
 
         <li class="menu__item"><a href="ES.php" class="menu__link"><i class='bx bx-time'></i> Employee Scheduling</a></li>
-         <li class="menu__item"><a href="admin_feedback_dashboard.php" class="menu__link active"><i class='bx bx-star'></i> Feedback Overview</a></li>
+        <li class="menu__item"><a href="manage_groups.php" class="menu__link "><i class='bx bx-group'></i> Manage Groups</a></li>
+         <li class="menu__item"><a href="admin_feedback_dashboard.php" class="menu__link "><i class='bx bx-star'></i> Feedback Overview</a></li>
         <!-- <li class="menu__item"><a href="FR.php" class="menu__link"><i class='bx bx-star'></i> Feedback & Ratings</a></li> -->
-        <li class="menu__item"><a href="Reports.php" class="menu__link"><i class='bx bx-file-text'></i> Reports</a></li>
-           <li class="menu__item"><a href="concern.php?content=profile" class="menu__link" data-content="profile"><i class='bx bx-user'></i> Issues&Concerns</a></li>
+        <li class="menu__item"><a href="Reports.php" class="menu__link"><i class='bx bx-file'></i> Reports</a></li>
+           <li class="menu__item"><a href="concern.php?content=profile" class="menu__link" data-content="profile"><i class='bx bx-info-circle'></i> Issues&Concerns</a></li>
         <li class="menu__item"><a href="admin_profile.php" class="menu__link"><i class='bx bx-user'></i> Profile</a></li>
         <li class="menu__item"><a href="javascript:void(0)" class="menu__link" onclick="showLogoutModal()"><i class='bx bx-log-out'></i> Logout</a></li>
     </ul>
@@ -1162,10 +1163,10 @@ $status_colors = [
             </div>
 
             <!-- Prayer Break Warning -->
-            <div id="prayer_break_warning" style="display: none; background: #fff3cd; border: 1px solid #ffc107; padding: 12px; border-radius: 6px; margin-bottom: 15px;">
-                <p style="color: #856404; margin: 0; font-weight: 600;">
+            <div id="prayer_break_warning" style="display: none; background:white ; border: ; padding: 12px; border-radius: 6px; margin-bottom: 15px;">
+                <!-- <p style="color: #856404; margin: 0; font-weight: 600;">
                     <i class='bx bx-error'></i> ⚠️ UAE Prayer/Lunch Break (1:00 PM - 2:00 PM): This booking overlaps with mandatory break time!
-                </p>
+                </p> -->
             </div>
 
             <hr style="margin: 20px 0; border: none; border-top: 1px solid #dee2e6;">
@@ -1451,7 +1452,7 @@ function loadGroupMembers() {
             if (unavailableCount > 0) {
                 conflictWarning.style.display = 'block';
                 document.getElementById('conflict_message').innerHTML = `
-                    <strong>${unavailableCount} members have conflicting bookings at this time.</strong><br>
+                    <strong>${unavailableCount} member(s have conflicting bookings at this time.</strong><br>
                     They are already assigned during this time slot. Please choose a different group or time.
                 `;
                 document.getElementById('assignStaffBtn').disabled = true;

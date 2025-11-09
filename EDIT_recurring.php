@@ -633,16 +633,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // Initialize Flatpickr
-    const fpStart = flatpickr(startDateInput, {
-        dateFormat: "Y-m-d",
-        minDate: "today"
-    });
+    // With this:
+const fpStart = flatpickr(startDateInput, {
+    dateFormat: "Y-m-d",
+    minDate: "today",
+    defaultDate: startDateInput.value || null  // ✅ Set the default date from PHP value
+});
+
+const fpEnd = flatpickr(endDateInput, {
+    dateFormat: "Y-m-d",
+    minDate: "today",
+    defaultDate: endDateInput.value || null  // ✅ Set the default date from PHP value
+});
     
-    const fpEnd = flatpickr(endDateInput, {
-        dateFormat: "Y-m-d",
-        minDate: "today"
-    });
+   
 
     // Helper function to get day number
     function getPreferredDayNumber(day) {
@@ -694,28 +698,34 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function updateEstimatedTime() {
-        const duration = parseFloat(durationSelect.value) || 0;
-        const estimatedTimeDisplay = document.getElementById("estimatedTimeDisplay");
-        
-        if (duration > 0 && estimatedTimeDisplay) {
-            const startTime = bookingTimeInput.value;
-            if (startTime) {
-                const [hours, minutes] = startTime.split(':').map(Number);
-                const endHours = hours + Math.floor(duration);
-                const endMinutes = minutes + ((duration % 1) * 60);
-                
-                const finalEndHours = endHours + Math.floor(endMinutes / 60);
-                const finalEndMinutes = Math.floor(endMinutes % 60);
-                
-                const endTime12hr = convert24To12Hour(finalEndHours, finalEndMinutes);
-                estimatedTimeDisplay.textContent = `Estimated end time: ${endTime12hr}`;
-                estimatedTimeDisplay.style.display = 'block';
-            }
-        } else if (estimatedTimeDisplay) {
-            estimatedTimeDisplay.style.display = 'none';
+   function updateEstimatedTime() {
+    const duration = parseFloat(durationSelect.value) || 0;
+    const estimatedTimeDisplay = document.getElementById("estimatedTimeDisplay");
+    
+    if (duration > 0 && estimatedTimeDisplay) {
+        const startTime = bookingTimeInput.value;
+        if (startTime) {
+            const [hours, minutes] = startTime.split(':').map(Number);
+            
+            // Add 1 hour break time to the duration
+            const totalDuration = duration + 1;
+            
+            const endHours = hours + Math.floor(totalDuration);
+            const endMinutes = minutes + ((totalDuration % 1) * 60);
+            
+            const finalEndHours = endHours + Math.floor(endMinutes / 60);
+            const finalEndMinutes = Math.floor(endMinutes % 60);
+            
+            const startTime12hr = convert24To12Hour(hours, minutes);
+            const endTime12hr = convert24To12Hour(finalEndHours, finalEndMinutes);
+            
+            estimatedTimeDisplay.innerHTML = `${startTime12hr} - ${endTime12hr} (${duration} hrs work + 1 hr break [1:00 PM - 2:00 PM Prayer/Lunch])`;
+            estimatedTimeDisplay.style.display = 'block';
         }
+    } else if (estimatedTimeDisplay) {
+        estimatedTimeDisplay.style.display = 'none';
     }
+}
 
     // Materials radio logic
     materialsRadios.forEach(radio => {

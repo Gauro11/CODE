@@ -445,7 +445,7 @@ $conn->close();
 <link rel="stylesheet" href="client_db.css">
 <style>
 .ratings-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient( #007bff);
     color: white;
     padding: 30px;
     border-radius: 15px;
@@ -665,6 +665,7 @@ $conn->close();
     outline: none;
     border-color: #667eea;
 }
+
 </style>
 </head>
 <body>
@@ -705,9 +706,9 @@ $conn->close();
 <i class='bx bx-star'></i> Ratings/Feedback
 </a>
 </li>
-<!-- <li class="menu__item">
-<a href="employee_profile.php" class="menu__link">
-<i class='bx bx-user'></i> My Profile -->
+<li class="menu__item">
+<a href="employee_schedule.php" class="menu__link">
+<i class='bx bx-calendar-week'></i> Schedule
 </a>
 </li>
 <li class="menu__item">
@@ -824,20 +825,16 @@ $conn->close();
 
 </main>
 </div>
-
 <script>
-// Filter functionality
-document.getElementById('ratingFilter').addEventListener('change', filterRatings);
-document.getElementById('typeFilter').addEventListener('change', filterRatings);
+// Filter functionality - FIXED: Removed typeFilter reference
+document.getElementById('ratingFilter')?.addEventListener('change', filterRatings);
 
 function filterRatings() {
     const ratingFilter = document.getElementById('ratingFilter').value;
-    const typeFilter = document.getElementById('typeFilter').value;
     const cards = document.querySelectorAll('.rating-card');
     
     cards.forEach(card => {
         const cardRating = card.getAttribute('data-rating');
-        const cardType = card.getAttribute('data-type');
         
         let showCard = true;
         
@@ -845,23 +842,35 @@ function filterRatings() {
             showCard = false;
         }
         
-        if (typeFilter !== 'all' && cardType !== typeFilter) {
-            showCard = false;
-        }
-        
         card.style.display = showCard ? 'block' : 'none';
     });
 }
 
-// Mobile menu toggle
-const navToggle = document.getElementById('nav-toggle');
-const sidebar = document.querySelector('.dashboard__sidebar');
-
-if (navToggle) {
-    navToggle.addEventListener('click', () => {
-        sidebar.classList.toggle('show');
+// Sidebar dropdown toggle functionality - MUST BE BEFORE OTHER CODE
+document.addEventListener('DOMContentLoaded', function() {
+    const dropdownParents = document.querySelectorAll('.has-dropdown');
+    
+    dropdownParents.forEach(parent => {
+        const parentLink = parent.querySelector('.menu__link');
+        
+        if (parentLink) {
+            parentLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                parent.classList.toggle('open');
+            });
+        }
     });
-}
+    
+    // Mobile menu toggle
+    const navToggle = document.getElementById('nav-toggle');
+    const sidebar = document.querySelector('.dashboard__sidebar');
+
+    if (navToggle) {
+        navToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('show');
+        });
+    }
+});
 </script>
 </body>
 </html>

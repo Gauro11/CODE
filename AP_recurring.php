@@ -382,13 +382,80 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assign_staff'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     $id = $_POST['booking_id'];
     $status = $_POST['status'];
-
-    $update = $conn->prepare("UPDATE bookings SET status = ? WHERE id = ?");
-    $update->bind_param("si", $status, $id);
-    $update->execute();
-    $update->close();
-
-    echo "<script>alert('Status updated successfully!'); window.location='AP_recurring.php';</script>";
+    
+    // Get current booking data
+    $check = $conn->prepare("SELECT remaining_sessions, estimated_sessions, status FROM bookings WHERE id = ?");
+    $check->bind_param("i", $id);
+    $check->execute();
+    $result = $check->get_result()->fetch_assoc();
+    $check->close();
+    
+    if (!$result) {
+        echo "<script>alert('❌ Booking not found!'); window.location='AP_recurring.php';</script>";
+        exit;
+    }
+    
+    $completed_sessions = $result['remaining_sessions'] ?? 0; // ✅ This is now COMPLETED count
+    $total = $result['estimated_sessions'];
+    $remaining = $total - $completed_sessions; // ✅ Calculate how many LEFT
+    
+    // ✅ Special handling for "Session Complete" status
+    if ($status === 'Session Complete') {
+        
+        if ($remaining > 0) {
+            $new_completed = $completed_sessions + 1; // ✅ INCREMENT by 1
+            $new_remaining = $total - $new_completed;
+            
+            // ✅ If this was the last session, change to "Completed"
+            if ($new_completed >= $total) {
+                $update = $conn->prepare("UPDATE bookings SET status = 'Completed', remaining_sessions = ? WHERE id = ?");
+                $update->bind_param("ii", $total, $id);
+                $update->execute();
+                $update->close();
+                
+                echo "<script>
+                    alert('🎉 FINAL SESSION COMPLETED!\\n\\n✅ All $total sessions are now complete.\\n📊 Total: $total/$total\\n✓ Status changed to: Completed');
+                    window.location='AP_recurring.php';
+                </script>";
+            } else {
+                // ✅ Increment session count, set status to "Session Complete"
+                $update = $conn->prepare("UPDATE bookings SET remaining_sessions = ?, status = 'Session Complete' WHERE id = ?");
+                $update->bind_param("ii", $new_completed, $id);
+                $update->execute();
+                $update->close();
+                
+                echo "<script>
+                    alert('✅ SESSION COMPLETED!\\n\\n📊 Progress: $new_completed / $total sessions completed\\n📋 Remaining: $new_remaining sessions\\n✓ Status: Session Complete');
+                    window.location='AP_recurring.php';
+                </script>";
+            }
+        } else {
+            // All sessions already completed
+            echo "<script>
+                alert('⚠️ ALL SESSIONS ALREADY COMPLETED!\\n\\nTotal: $total/$total sessions\\nNo more sessions to complete.');
+                window.location='AP_recurring.php';
+            </script>";
+        }
+        
+    } else {
+        // ✅ Regular status update (no session changes)
+        $update = $conn->prepare("UPDATE bookings SET status= ? WHERE id = ?");
+        $update->bind_param("si", $status, $id);
+        
+        if ($update->execute()) {
+            $update->close();
+            echo "<script>
+                alert('✅ Status updated to: $status');
+                window.location='AP_recurring.php';
+            </script>";
+        } else {
+            $update->close();
+            echo "<script>
+                alert('❌ Error updating status: " . htmlspecialchars($conn->error) . "');
+                window.location='AP_recurring.php';
+            </script>";
+        }
+    }
     exit;
 }
 
@@ -1032,16 +1099,17 @@ $status_colors = [
         <li class="menu__item has-dropdown open">
             <a href="#" class="menu__link active-parent"><i class='bx bx-calendar-check'></i> Appointment Management <i class='bx bx-chevron-down arrow-icon'></i></a>
             <ul class="dropdown__menu">
-                <li class="menu__item"><a href="AP_one-time.php" class="menu__link active">One-time Service</a></li>
-                <li class="menu__item"><a href="AP_recurring.php" class="menu__link">Recurring Service</a></li>
+                <li class="menu__item"><a href="AP_one-time.php" class="menu__link ">One-time Service</a></li>
+                <li class="menu__item"><a href="AP_recurring.php" class="menu__link active">Recurring Service</a></li>
             </ul>
         </li>
 
         <li class="menu__item"><a href="ES.php" class="menu__link"><i class='bx bx-time'></i> Employee Scheduling</a></li>
-         <li class="menu__item"><a href="admin_feedback_dashboard.php" class="menu__link active"><i class='bx bx-star'></i> Feedback Overview</a></li>
-        <!-- <li class="menu__item"><a href="FR.php" class="menu__link"><i class='bx bx-star'></i> Feedback & Ratings</a></li> -->
-        <li class="menu__item"><a href="Reports.php" class="menu__link"><i class='bx bx-file-text'></i> Reports</a></li>
-           <li class="menu__item"><a href="concern.php?content=profile" class="menu__link" data-content="profile"><i class='bx bx-user'></i> Issues&Concerns</a></li>
+        <li class="menu__item"><a href="manage_groups.php" class="menu__link "><i class='bx bx-group'></i> Manage Groups</a></li>
+         <li class="menu__item"><a href="admin_feedback_dashboard.php" class="menu__link"><i class='bx bx-star'></i> Feedback Overview</a></li>
+      
+        <li class="menu__item"><a href="Reports.php" class="menu__link"><i class='bx bx-file'></i> Reports</a></li>
+           <li class="menu__item"><a href="concern.php?content=profile" class="menu__link" data-content="profile"><i class='bx bx-info-circle'></i> Issues&Concerns</a></li>
         <li class="menu__item"><a href="admin_profile.php" class="menu__link"><i class='bx bx-user'></i> Profile</a></li>
         <li class="menu__item"><a href="javascript:void(0)" class="menu__link" onclick="showLogoutModal()"><i class='bx bx-log-out'></i> Logout</a></li>
     </ul>
@@ -1064,8 +1132,8 @@ $status_colors = [
     <a href="AP_recurring.php?status=Active" class="status-tab confirmed <?= $status_filter === 'Active' ? 'active' : '' ?>">
         <i class='bx bx-check-circle'></i> Active
     </a>
-    <a href="AP_recurring.php?status= Paused " class="status-tab ongoing <?= $status_filter === ' Paused ' ? 'active' : '' ?>">
-        <i class='bx bx-loader-alt'></i>  Paused 
+    <a href="AP_recurring.php?status=Session Complete" class="status-tab ongoing <?= $status_filter === 'Session Complete' ? 'active' : '' ?>">
+        <i class='bx bx-loader-alt'></i> Session Complete
     </a>
     <a href="AP_recurring.php?status=Completed" class="status-tab completed <?= $status_filter === 'Completed' ? 'active' : '' ?>">
         <i class='bx bx-check-double'></i> Completed
@@ -1073,36 +1141,56 @@ $status_colors = [
     <a href="AP_recurring.php?status=Cancelled" class="status-tab cancelled <?= $status_filter === 'Cancelled' ? 'active' : '' ?>">
         <i class='bx bx-x-circle'></i> Cancelled
     </a>
-    
 </div>
 
             <table>
                 <thead>
-                    <tr>
-                        <th>Full Name</th>
-                        <th>Phone</th>
-                        <th>Service Type</th>
-                        <th>Preferred Day</th>
-                        <th>Start Date</th>
-                         <th>Start Date</th>
-                        <th>Time</th>
-                        <th>Assigned Cleaners</th>
-                        <th>Assigned Drivers</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
+    <tr>
+        <th>Full Name</th>
+        <th>Phone</th>
+        <th>Sessions (Left/Total)</th>
+        <th>Preferred Day</th>
+        <th>Start Date</th>
+        <th>End Date</th>
+        <th>Time</th>
+        <th>Assigned Cleaners</th>
+        <th>Assigned Drivers</th>
+        <th>Status</th>
+        <th>Actions</th>
+    </tr>
+</thead>
+               <tbody>
 <?php if ($result->num_rows > 0): ?>
     <?php while ($row = $result->fetch_assoc()): 
         $status = $row['status'] ?? 'Pending';
         $color = $status_colors[$status] ?? '#adb5bd';
         $rowData = htmlspecialchars(json_encode($row), ENT_QUOTES, 'UTF-8');
+        
+        // ✅ Calculate sessions (now remaining_sessions = COMPLETED count)
+        $completed = $row['remaining_sessions'] ?? 0; // ✅ This is COMPLETED sessions
+        $total = $row['estimated_sessions'] ?? 0;
+        $remaining = $total - $completed; // ✅ Calculate REMAINING
+        
+        // ✅ Color code based on progress
+        if ($completed >= $total) {
+            $sessionColor = 'color: #28a745; font-weight: bold;'; // Green - ALL DONE!
+            $sessionIcon = '✅';
+        } elseif ($completed >= ($total - 2)) {
+            $sessionColor = 'color: #ffc107; font-weight: bold;'; // Yellow - almost done
+            $sessionIcon = '🟡';
+        } else {
+            $sessionColor = 'color: #007bff; font-weight: bold;'; // Blue - in progress
+            $sessionIcon = '🔵';
+        }
     ?>
     <tr>
         <td><?= htmlspecialchars($row['full_name']) ?></td>
         <td><?= htmlspecialchars($row['phone']) ?></td>
-        <td><?= htmlspecialchars($row['service_type']) ?></td>
+        <td>
+            <span style="<?= $sessionColor ?>">
+                <?= $sessionIcon ?> <?= $completed ?> / <?= $total ?>
+            </span>
+        </td>
         <td><?= htmlspecialchars($row['preferred_day']) ?></td>
         <td><?= htmlspecialchars($row['start_date']) ?></td>
         <td><?= htmlspecialchars($row['end_date']) ?></td>
@@ -1123,76 +1211,85 @@ $status_colors = [
                     <i class='bx bx-dots-horizontal-rounded'></i>
                 </button>
                 <div class="dropdown-content">
-                    <!-- View always available -->
-                    <!-- <button class="btn btn-view" onclick='openModal(<?= $rowData ?>)'>
-                        <i class='bx bx-show'></i> View
-                    </button> -->
-
+                    <!-- Actions based on status -->
                     <?php if ($status === 'Pending'): ?>
                         <button class="btn btn-call" onclick="callClient('<?= htmlspecialchars($row['phone']) ?>')">
                             <i class='bx bx-phone'></i> Call
                         </button>
-                        <!-- <button class="btn btn-edit" onclick='openEditModal(<?= $rowData ?>)'>
-                            <i class='bx bx-edit'></i> Edit
-                        </button> -->
-                        <button class="btn btn-assign" onclick='openAssignModal(<?= $rowData ?>)'>
-    <i class='bx bx-user-plus'></i> Assign Staff
-</button>
-
-                        <button class="btn btn-cancel" onclick="confirmCancel(<?= $row['id'] ?>)">
-                            <i class='bx bx-x'></i> Cancel
-                        </button>
-
-                    <?php elseif ($status === 'Confirmed'): ?>
-                        <button class="btn btn-call" onclick="callClient('<?= htmlspecialchars($row['phone']) ?>')">
-                            <i class='bx bx-phone'></i> Call
-                        </button>
-                        <!-- <button class="btn btn-edit" onclick='openEditModal(<?= $rowData ?>)'>
-                            <i class='bx bx-edit'></i> Edit
-                        </button> -->
-                       <button class="btn btn-assign" onclick='openAssignModal(<?= $rowData ?>)'>
-    <i class='bx bx-user-plus'></i> Assign Staff
-</button>
-
-                        <!-- <button class="btn btn-reschedule" onclick='openRescheduleModal(<?= $rowData ?>)'>
-                            <i class='bx bx-calendar-edit'></i> Reschedule
-                        </button> -->
-                        <button class="btn btn-cancel" onclick="confirmCancel(<?= $row['id'] ?>)">
-                            <i class='bx bx-x'></i> Cancel
-                        </button>
-
-                    <?php elseif ($status === 'Ongoing'): ?>
-                        <button class="btn btn-call" onclick="callClient('<?= htmlspecialchars($row['phone']) ?>')">
-                            <i class='bx bx-phone'></i> Call
-                        </button>
-                        <!-- <button class="btn btn-edit" onclick='openEditModal(<?= $rowData ?>)'>
-                            <i class='bx bx-edit'></i> Edit
-                        </button> -->
                         <button class="btn btn-assign" onclick='openAssignModal(<?= $rowData ?>)'>
                             <i class='bx bx-user-plus'></i> Assign Staff
+                        </button>
+                        <button class="btn btn-cancel" onclick="confirmCancel(<?= $row['id'] ?>)">
+                            <i class='bx bx-x'></i> Cancel
+                        </button>
+
+                    <?php elseif ($status === 'Confirmed' || $status === 'Active' || $status === 'Session Complete'): ?>
+                        <button class="btn btn-call" onclick="callClient('<?= htmlspecialchars($row['phone']) ?>')">
+                            <i class='bx bx-phone'></i> Call
+                        </button>
+                        <button class="btn btn-assign" onclick='openAssignModal(<?= $rowData ?>)'>
+                            <i class='bx bx-user-plus'></i> Reassign Staff
+                        </button>
+                        <button class="btn btn-cancel" onclick="confirmCancel(<?= $row['id'] ?>)">
+                            <i class='bx bx-x'></i> Cancel
+                        </button>
+
+                    <?php elseif ($status === 'Ongoing' || $status === 'Paused'): ?>
+                        <button class="btn btn-call" onclick="callClient('<?= htmlspecialchars($row['phone']) ?>')">
+                            <i class='bx bx-phone'></i> Call
                         </button>
 
                     <?php elseif ($status === 'Completed'): ?>
                         <button class="btn btn-call" onclick="callClient('<?= htmlspecialchars($row['phone']) ?>')">
                             <i class='bx bx-phone'></i> Call
                         </button>
-                        <!-- <button class="btn btn-report" onclick='openCompletionReport(<?= $rowData ?>)'>
-                            <i class='bx bx-file'></i> Report
-                        </button>
-                        <button class="btn btn-invoice" onclick='openInvoiceModal(<?= $rowData ?>)'>
-                            <i class='bx bx-receipt'></i> Invoice
-                        </button> -->
                     <?php endif; ?>
 
-                    <!-- Update Status Dropdown -->
+                    <!-- ✅ STATUS DROPDOWN WITH SESSION COMPLETE -->
                     <form method="POST" action="" style="margin-top: 8px;">
                         <input type="hidden" name="booking_id" value="<?= $row['id'] ?>">
-                        <select name="status" style="padding:6px; width:100%;">
-                            <?php foreach ($status_colors as $s => $c): ?>
-                                <option value="<?= $s ?>" <?= ($status === $s) ? 'selected' : '' ?>><?= $s ?></option>
+                        <select name="status" style="padding:8px; width:100%; border:2px solid #007bff; border-radius:5px; font-size:14px;" required>
+                            
+                            <?php 
+                            // ✅ Show "Session Complete" ONLY if sessions remain
+                            if ($remaining > 0) {
+                                $isCurrentSessionComplete = ($status === 'Session Complete');
+                                echo '<option value="Session Complete" ' . ($isCurrentSessionComplete ? 'selected' : '') . ' style="background:#20c997; color:white; font-weight:bold;">';
+                                echo 'Session Complete' . ($isCurrentSessionComplete ? ' ✓' : ' ');
+                                echo '</option>';
+                                echo '<option value="" disabled style="background:#e9ecef;"></option>';
+                            }
+                            
+                            // ✅ Other statuses
+                            $available_statuses = [
+                                'Pending', 
+                                'Active',
+                               
+                                'Paused',
+                                'Cancelled'
+                            ];
+                            
+                            // ✅ Only show "Completed" if all sessions are done
+                            if ($completed >= $total) {
+                                $available_statuses[] = 'Completed';
+                            }
+                            
+                            foreach ($available_statuses as $s): 
+                                $isSelected = ($status === $s);
+                                $checkmark = $isSelected ? ' ✓' : '';
+                            ?>
+                                <option value="<?= $s ?>" <?= $isSelected ? 'selected' : '' ?>>
+                                    <?= $s . $checkmark ?>
+                                </option>
                             <?php endforeach; ?>
                         </select>
-                        <button type="submit" name="update_status" style="padding:6px 10px; width:100%; margin-top:4px;">Update</button>
+                        
+                        <button type="submit" name="update_status" 
+                                style="padding:8px 12px; width:100%; margin-top:6px; background:#007bff; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:600; font-size:14px;"
+                                onmouseover="this.style.background='#0056b3'" 
+                                onmouseout="this.style.background='#007bff'">
+                            <i class='bx bx-check-circle'></i> Update Status
+                        </button>
                     </form>
                 </div>
             </div>
@@ -1200,9 +1297,9 @@ $status_colors = [
     </tr>
     <?php endwhile; ?>
 <?php else: ?>
-    <tr><td colspan="9" class="no-data">No bookings found for this status.</td></tr>
+    <tr><td colspan="11" class="no-data">No recurring bookings found for this status.</td></tr>
 <?php endif; ?>
-                </tbody>
+</tbody>
             </table>
         </div>
     </section>
@@ -1237,10 +1334,10 @@ $status_colors = [
             </div>
 
             <!-- Prayer Break Warning -->
-            <div id="prayer_break_warning" style="display: none; background: #fff3cd; border: 1px solid #ffc107; padding: 12px; border-radius: 6px; margin-bottom: 15px;">
-                <p style="color: #856404; margin: 0; font-weight: 600;">
+            <div id="prayer_break_warning" style="display: none; background:white; border: ; padding: 12px; border-radius: 6px; margin-bottom: 15px;">
+                <!-- <p style="color: #856404; margin: 0; font-weight: 600;">
                     <i class='bx bx-error'></i> ⚠️ UAE Prayer/Lunch Break (1:00 PM - 2:00 PM): This booking overlaps with mandatory break time!
-                </p>
+                </p> -->
             </div>
 
             <hr style="margin: 20px 0; border: none; border-top: 1px solid #dee2e6;">
@@ -2246,7 +2343,7 @@ function openInvoiceModal(data) {
 
     const duration = parseFloat(data.duration) || 0;
     const subtotal = rate * duration;
-    const vat = subtotal * 0.05; // 5% VAT
+    const vat = subtotal * 0.05; 
     const total = subtotal + vat;
     
     content.innerHTML = `

@@ -76,7 +76,7 @@ if ($search) {
 <link rel="stylesheet" href="admin_db.css">
 <style>
 /* Main content styling */
-.content-container { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 3px 10px rgba(0,0,0,0.1); margin: 20px; }
+
 .search-sort { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
 .search-sort input, .search-sort select { padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; }
 .search-sort button { padding: 8px 16px; border: none; border-radius: 6px; background: #007bff; color: white; cursor: pointer; }
@@ -134,15 +134,15 @@ if ($search) {
     <!-- Sidebar -->
     <aside class="dashboard__sidebar">
         <ul class="sidebar__menu">
-            <li class="menu__item"><a href="admin_dashboard.php?content=dashboard" class="menu__link">Dashboard</a></li>
+            <li class="menu__item"><a href="admin_dashboard.php?content=dashboard" class="menu__link"><i class='bx bx-home-alt-2'></i> Dashboard</a></li>
             <li class="menu__item has-dropdown">
                 <a href="#" class="menu__link"><i class='bx bx-user-circle'></i> User Management <i class='bx bx-chevron-down arrow-icon'></i></a>
                 <ul class="dropdown__menu">
-                    <li class="menu__item"><a href="clients.php?content=manage-clients" class="menu__link">Clients</a></li>
-                    <li class="menu__item"><a href="UM_employees.php?content=manage-employees" class="menu__link">Employees</a></li>
-                    <li class="menu__item"><a href="UM_admins.php?content=manage-admins" class="menu__link">Admins</a></li>
+                    <li class="menu__item"><a href="clients.php" class="menu__link">Clients</a></li>
+                    <li class="menu__item"><a href="UM_employees.php" class="menu__link">Employees</a></li>
+                    <li class="menu__item"><a href="UM_admins.php" class="menu__link">Admins</a></li>
                     <li class="menu__item"><a href="archived_clients.php?content=manage-archive" class="menu__link">Archive</a></li>
-                </ul>       
+                </ul>
             </li>
             <li class="menu__item has-dropdown">
                 <a href="#" class="menu__link"><i class='bx bx-calendar-check'></i> Appointment Management <i class='bx bx-chevron-down arrow-icon'></i></a>
@@ -151,13 +151,14 @@ if ($search) {
                     <li class="menu__item"><a href="AP_recurring.php" class="menu__link">Recurring Service</a></li>
                 </ul>
             </li>
-            <li class="menu__item"><a href="ES.php" class="menu__link">Employee Scheduling</a></li>
+            <li class="menu__item"><a href="ES.php" class="menu__link"><i class='bx bx-time'></i> Employee Scheduling</a></li>
+             <li class="menu__item"><a href="manage_groups.php" class="menu__link "><i class='bx bx-group'></i> Manage Groups</a></li>
              <li class="menu__item"><a href="admin_feedback_dashboard.php" class="menu__link "><i class='bx bx-star'></i> Feedback Overview</a></li>
-            <!-- <li class="menu__item"><a href="FR.php" class="menu__link">Feedback & Ratings</a></li> -->
-            <li class="menu__item"><a href="Reports.php" class="menu__link">Reports</a></li>
-            <li class="menu__item"><a href="concern.php" class="menu__link active">Issues & Concerns</a></li>
-            <li class="menu__item"><a href="admin_profile.php" class="menu__link">Profile</a></li>
-            <li class="menu__item"><a href="javascript:void(0)" class="menu__link" onclick="showLogoutModal()">Logout</a></li>
+         
+            <li class="menu__item"><a href="Reports.php" class="menu__link "><i class='bx bx-file'></i> Reports</a></li>
+               <li class="menu__item"><a href="concern.php?content=profile" class="menu__link active" data-content="profile"><i class='bx bx-info-circle'></i> Issues&Concerns</a></li>
+            <li class="menu__item"><a href="admin_profile.php" class="menu__link"><i class='bx bx-user'></i> Profile</a></li>
+            <li class="menu__item"><a href="javascript:void(0)" class="menu__link" onclick="showLogoutModal()"><i class='bx bx-log-out'></i> Logout</a></li>
         </ul>
     </aside>
 

@@ -101,13 +101,13 @@ $recent_result = $conn->query($recent_query);
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="admin_db.css">
     <style>
-        .content-container {
+        /* .content-container {
             background: #fff;
             border-radius: 12px;
             padding: 20px;
             box-shadow: 0 3px 10px rgba(0,0,0,0.1);
             margin: 20px;
-        }
+        } */
 
         .dashboard-header {
             margin-bottom: 30px;
@@ -667,9 +667,10 @@ $recent_result = $conn->query($recent_query);
             </li>
             
             <li class="menu__item"><a href="ES.php" class="menu__link"><i class='bx bx-time'></i> Employee Scheduling</a></li>
+            <li class="menu__item"><a href="manage_groups.php" class="menu__link "><i class='bx bx-group'></i> Manage Groups</a></li>
             <li class="menu__item"><a href="admin_feedback_dashboard.php" class="menu__link active"><i class='bx bx-star'></i> Feedback Overview</a></li>
-            <li class="menu__item"><a href="Reports.php" class="menu__link"><i class='bx bx-file-text'></i> Reports</a></li>
-            <li class="menu__item"><a href="concern.php?content=profile" class="menu__link"><i class='bx bx-user'></i> Issues & Concerns</a></li>
+            <li class="menu__item"><a href="Reports.php" class="menu__link"><i class='bx bx-file'></i> Reports</a></li>
+            <li class="menu__item"><a href="concern.php?content=profile" class="menu__link"><i class='bx bx-info-circle'></i> Issues & Concerns</a></li>
             <li class="menu__item"><a href="admin_profile.php" class="menu__link"><i class='bx bx-user'></i> Profile</a></li>
             <li class="menu__item"><a href="javascript:void(0)" class="menu__link" onclick="showLogoutModal()"><i class='bx bx-log-out'></i> Logout</a></li>
         </ul>
@@ -680,7 +681,7 @@ $recent_result = $conn->query($recent_query);
             <div class="content-container">
                 <!-- Header -->
                 <div class="dashboard-header">
-                    <h2>Feedback Dashboard</h2>
+                     <h1><i class='bx bx-message-dots'></i>Feedback Dashboard</h1>
                     <p>Monitor customer satisfaction and service performance</p>
                 </div>
 
@@ -710,7 +711,7 @@ $recent_result = $conn->query($recent_query);
 
                 <!-- Sentiment Breakdown -->
                 <div class="section-box">
-                    <h3>📈 Sentiment Breakdown</h3>
+                    <h3>Sentiment Breakdown</h3>
                     <div class="sentiment-bars">
                         <div class="sentiment-bar">
                             <div class="sentiment-bar-header">
@@ -752,7 +753,7 @@ $recent_result = $conn->query($recent_query);
 
                 <!-- Service-based Sentiment Summary -->
                 <div class="section-box">
-                    <h3>🧹 Service-based Sentiment Summary</h3>
+                    <h3><i class=''></i> Service-based Sentiment Summary</h3> 
                     <div class="service-grid">
                         <?php foreach ($service_data as $service => $data): 
                             $status = getServiceStatus($data);
@@ -795,7 +796,7 @@ $recent_result = $conn->query($recent_query);
 
                 <!-- Recent Feedbacks -->
                 <div class="section-box">
-                    <h3>💬 Recent Feedbacks (Click to see VADER Analysis)</h3>
+                    <h3><i class='bx bx-message-dots'></i> Recent Feedbacks (Click to see VADER Analysis)</h3> 
                     <?php while ($feedback = $recent_result->fetch_assoc()): ?>
                     <div class="feedback-item" onclick="showVaderAnalysis(this)" 
                          data-comment="<?= htmlspecialchars($feedback['rating_comment']) ?>"
@@ -834,7 +835,7 @@ $recent_result = $conn->query($recent_query);
 <div id="vaderModal" class="vader-modal">
     <div class="vader-modal-content">
         <div class="vader-modal-header">
-            <h3>📊 VADER Sentiment Analysis</h3>
+           <h1><i class='bx bx-bar-chart-alt-2'></i>VADER Sentiment Analysis</h1> 
             <button class="vader-close-btn" onclick="closeVaderModal()">&times;</button>
         </div>
         

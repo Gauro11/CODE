@@ -37,6 +37,77 @@ $propertyLayout    = $_POST['propertyLayout'] ?? '';
 $cleaningMaterials = $_POST['cleaningMaterials'] ?? 'No - 35 AED / hr';
 $additionalRequest = $_POST['additionalRequest'] ?? '';
 
+// ✅ ========== AVAILABILITY CHECK ==========
+// Calculate end time based on duration (including break if applicable)
+function calculateEndTime($startTime, $duration) {
+    $start = new DateTime($startTime);
+    
+    // Check if break is needed (1:00 PM - 2:00 PM)
+    $startHour = (int)$start->format('H');
+    $startMinute = (int)$start->format('i');
+    $startMinutes = $startHour * 60 + $startMinute;
+    
+    $breakStart = 13 * 60; // 1:00 PM
+    $breakEnd = 14 * 60;   // 2:00 PM
+    $endMinutes = $startMinutes + ($duration * 60);
+    
+    // Check if work period includes break time
+    $hasBreak = ($startMinutes < $breakEnd && $endMinutes > $breakStart);
+    $totalDuration = $hasBreak ? $duration + 1 : $duration;
+    
+    $start->modify("+{$totalDuration} hours");
+    return $start->format('H:i:s');
+}
+
+$endTime = calculateEndTime($bookingTime, (int)$duration);
+
+// Check for conflicting bookings (cleaners/drivers already assigned)
+$checkQuery = "SELECT COUNT(*) as conflict_count 
+               FROM bookings 
+               WHERE service_date = ? 
+               AND (
+                   (service_time <= ? AND ADDTIME(service_time, SEC_TO_TIME(duration * 3600)) > ?) OR
+                   (service_time < ? AND ADDTIME(service_time, SEC_TO_TIME(duration * 3600)) >= ?)
+               )
+               AND (cleaners IS NOT NULL AND cleaners != '' 
+                    OR drivers IS NOT NULL AND drivers != '')
+               AND status NOT IN ('Cancelled', 'Completed')";
+
+$checkStmt = $conn->prepare($checkQuery);
+$checkStmt->bind_param("sssss", $bookingDate, $bookingTime, $endTime, $endTime, $bookingTime);
+$checkStmt->execute();
+$result = $checkStmt->get_result()->fetch_assoc();
+$checkStmt->close();
+
+// If there are conflicts, check if we have available staff
+$checkQuery = "SELECT COUNT(*) AS conflict_count
+               FROM bookings
+               WHERE service_date = ?
+               AND (
+                    (service_time <= ? AND ADDTIME(service_time, SEC_TO_TIME(duration * 3600)) > ?)
+                    OR
+                    (service_time < ? AND ADDTIME(service_time, SEC_TO_TIME(duration * 3600)) >= ?)
+               )
+               AND (cleaners IS NOT NULL AND cleaners != '' 
+                    OR drivers IS NOT NULL AND drivers != '')
+               AND status NOT IN ('Cancelled', 'Completed')";
+
+$checkStmt = $conn->prepare($checkQuery);
+$checkStmt->bind_param("sssss", $bookingDate, $bookingTime, $endTime, $endTime, $bookingTime);
+$checkStmt->execute();
+$result = $checkStmt->get_result()->fetch_assoc();
+$checkStmt->close();
+
+if ($result['conflict_count'] > 0) {
+    echo "<script>
+            alert('⚠️ All cleaners and drivers are busy at this time.\\nPlease choose a different slot.');
+            window.history.back();
+          </script>";
+    exit;
+}
+
+// ✅ ========== END AVAILABILITY CHECK ==========
+
 // ✅ Determine rate based on cleaning materials
 $rate = 0;
 if (strpos($cleaningMaterials, '40 AED') !== false) {

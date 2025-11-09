@@ -1,19 +1,35 @@
 <?php
-// ES.php
+// employee_schedule.php
 include 'connection.php';
 session_start();
 
-// ✅ Ensure user is logged in
+// ✅ Ensure employee is logged in
 if (!isset($_SESSION['email'])) {
     echo "<script>alert('Please log in first.'); window.location.href='login.php';</script>";
     exit;
 }
 
+// Get employee information from database
+$employee_email = $_SESSION['email'];
+$employee_sql = "SELECT id, first_name, last_name, position FROM employees WHERE email = ?";
+$stmt = $conn->prepare($employee_sql);
+$stmt->bind_param("s", $employee_email);
+$stmt->execute();
+$employee_result = $stmt->get_result();
+
+if ($employee_result->num_rows == 0) {
+    echo "<script>alert('Employee not found.'); window.location.href='login.php';</script>";
+    exit;
+}
+
+$employee = $employee_result->fetch_assoc();
+$employee_name = $employee['first_name'] . ' ' . $employee['last_name'];
+$employee_position = $employee['position'];
+
 // Get current date and view parameters
 $current_date = date('Y-m-d');
 $view = isset($_GET['view']) ? $_GET['view'] : 'week'; // 'week' or 'month'
 $selected_date = isset($_GET['date']) ? $_GET['date'] : $current_date;
-$selected_employee = isset($_GET['employee']) ? $_GET['employee'] : 'all';
 
 // Calculate week start and end
 $week_start = date('Y-m-d', strtotime('monday this week', strtotime($selected_date)));
@@ -22,16 +38,6 @@ $week_end = date('Y-m-d', strtotime('sunday this week', strtotime($selected_date
 // Calculate month start and end
 $month_start = date('Y-m-01', strtotime($selected_date));
 $month_end = date('Y-m-t', strtotime($selected_date));
-
-// Fetch all active employees
-$employees_sql = "SELECT id, first_name, last_name, position, status 
-                  FROM employees 
-                  WHERE status = 'Active'
-                  ORDER BY position, first_name, last_name";
-$employees_result = $conn->query($employees_sql);
-if (!$employees_result) {
-    die("Error fetching employees: " . $conn->error);
-}
 
 // Generate recurring booking occurrences
 function generateRecurringOccurrences($booking, $start_date, $end_date) {
@@ -82,24 +88,29 @@ function generateRecurringOccurrences($booking, $start_date, $end_date) {
     return $occurrences;
 }
 
-// Function to get bookings for date range
-function getBookingsForRange($conn, $start_date, $end_date, $employee_name = null) {
+// Function to check if employee is assigned to booking
+function isEmployeeAssigned($booking, $employee_name) {
+    $cleaners = !empty($booking['cleaners']) ? array_map('trim', explode(',', $booking['cleaners'])) : [];
+    $drivers = !empty($booking['drivers']) ? array_map('trim', explode(',', $booking['drivers'])) : [];
+    
+    return in_array($employee_name, $cleaners) || in_array($employee_name, $drivers);
+}
+
+// Function to get bookings for date range (filtered by employee)
+function getBookingsForEmployee($conn, $start_date, $end_date, $employee_name) {
     $bookings = [];
     
-    $employee_condition = "";
-    if ($employee_name && $employee_name != 'all') {
-        $employee_name = $conn->real_escape_string($employee_name);
-        $employee_condition = "AND (FIND_IN_SET('$employee_name', cleaners) > 0 
-                                   OR FIND_IN_SET('$employee_name', drivers) > 0)";
-    }
+    // Escape employee name for SQL
+    $employee_name_escaped = $conn->real_escape_string($employee_name);
     
-    // Get One-Time bookings
+    // Get One-Time bookings where employee is assigned
     $onetime_sql = "SELECT id, address, full_name, service_type, service_date, service_time, 
                            status, booking_type, cleaners, drivers, duration
                     FROM bookings
                     WHERE booking_type = 'One-Time'
                     AND service_date BETWEEN '$start_date' AND '$end_date'
-                    $employee_condition
+                    AND (FIND_IN_SET('$employee_name_escaped', cleaners) > 0 
+                         OR FIND_IN_SET('$employee_name_escaped', drivers) > 0)
                     ORDER BY service_date, service_time";
     
     $result = $conn->query($onetime_sql);
@@ -109,7 +120,7 @@ function getBookingsForRange($conn, $start_date, $end_date, $employee_name = nul
         }
     }
     
-    // Get Recurring bookings
+    // Get Recurring bookings where employee is assigned
     $recurring_sql = "SELECT id, address, full_name, service_type, start_date, end_date, 
                              service_time, status, booking_type, frequency, preferred_day,
                              cleaners, drivers, duration
@@ -117,7 +128,8 @@ function getBookingsForRange($conn, $start_date, $end_date, $employee_name = nul
                       WHERE booking_type = 'Recurring'
                       AND start_date <= '$end_date'
                       AND (end_date IS NULL OR end_date >= '$start_date')
-                      $employee_condition
+                      AND (FIND_IN_SET('$employee_name_escaped', cleaners) > 0 
+                           OR FIND_IN_SET('$employee_name_escaped', drivers) > 0)
                       ORDER BY start_date, service_time";
     
     $result = $conn->query($recurring_sql);
@@ -140,7 +152,7 @@ if ($view == 'week') {
     $range_end = $month_end;
 }
 
-$all_bookings = getBookingsForRange($conn, $range_start, $range_end, $selected_employee);
+$my_bookings = getBookingsForEmployee($conn, $range_start, $range_end, $employee_name);
 
 // Handle AJAX request for booking details
 if (isset($_GET['action']) && $_GET['action'] == 'get_booking_details' && isset($_GET['booking_id'])) {
@@ -149,15 +161,23 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_booking_details' && isset(
     $result = $conn->query($sql);
     
     if ($result && $booking = $result->fetch_assoc()) {
-        header('Content-Type: application/json');
-        echo json_encode($booking);
-        exit;
+        // Verify employee is assigned to this booking
+        if (isEmployeeAssigned($booking, $employee_name)) {
+            header('Content-Type: application/json');
+            echo json_encode($booking);
+            exit;
+        } else {
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Access denied']);
+            exit;
+        }
     } else {
         header('Content-Type: application/json');
         echo json_encode(['error' => 'Booking not found']);
         exit;
     }
 }
+
 // Create schedule grid for week view
 $schedule_grid = [];
 if ($view == 'week') {
@@ -184,7 +204,7 @@ if ($view == 'week') {
     }
     
     // Place bookings in grid
-    foreach ($all_bookings as $booking) {
+    foreach ($my_bookings as $booking) {
         $date = $booking['service_date'];
         $time = $booking['service_time'];
         
@@ -202,20 +222,12 @@ if ($view == 'week') {
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Employee Scheduling</title>
+<title>My Schedule</title>
 <link rel="stylesheet" href="admin_dashboard.css">
 <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 <link rel="stylesheet" href="admin_db.css">
 <style>
-/* Content container */
-/* .content-container { 
-    background: #fff; 
-    border-radius: 12px; 
-    padding: 20px; 
-    box-shadow: 0 3px 10px rgba(0,0,0,0.1); 
-    margin: 20px; 
-} */
-/* Booking Details Modal */
+/* Reuse all the same styles from ES.php */
 .modal {
     display: none;
     position: fixed;
@@ -351,84 +363,6 @@ if ($view == 'week') {
     border-left: 3px solid #007bff;
 }
 
-.employee-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.employee-chip {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 13px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.media-gallery {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 10px;
-}
-
-.media-item {
-    width: 100%;
-    height: 150px;
-    border-radius: 8px;
-    object-fit: cover;
-    cursor: pointer;
-    border: 2px solid #e0e0e0;
-    transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.media-item:hover {
-    transform: scale(1.05);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-}
-
-.no-media {
-    color: #999;
-    font-style: italic;
-    text-align: center;
-    padding: 20px;
-    background: #f8f9fa;
-    border-radius: 8px;
-}
-
-.rating-display {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.stars {
-    color: #ffc107;
-    font-size: 20px;
-}
-
-.loading-spinner {
-    text-align: center;
-    padding: 40px;
-}
-
-.spinner {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #667eea;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    animation: spin 1s linear infinite;
-    margin: 0 auto;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-/* View controls */
 .view-controls {
     display: flex;
     justify-content: space-between;
@@ -498,23 +432,6 @@ if ($view == 'week') {
     text-align: center;
 }
 
-.employee-filter {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.employee-filter select {
-    padding: 8px 15px;
-    border: 2px solid #007bff;
-    border-radius: 5px;
-    font-size: 14px;
-    cursor: pointer;
-    background: white;
-    color: #004a80;
-}
-
-/* Schedule Grid - Class Timetable Style */
 .schedule-container {
     overflow-x: auto;
     margin-top: 20px;
@@ -593,14 +510,6 @@ if ($view == 'week') {
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
-.schedule-item.onetime {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-}
-
-.schedule-item.recurring {
-    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-}
-
 .schedule-item.confirmed {
     background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
 }
@@ -609,6 +518,9 @@ if ($view == 'week') {
     background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%);
 }
 
+.schedule-item.active {
+    background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%);
+}
 .schedule-item.completed {
     background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
 }
@@ -617,16 +529,18 @@ if ($view == 'week') {
     background: linear-gradient(gray);
 }
 
-.schedule-item.active {
-    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-}
-
 .schedule-item.cancelled {
     background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
 }
+
 .schedule-item.no-show {
     background: linear-gradient(135deg, #795548 0%, #4e342e 100%);
-    color: #fff;
+}
+.schedule-item.paused {
+    background: linear-gradient(135deg, #b6e626ff 0%, #d7d126ff 100%);
+}
+.schedule-item.session-complete {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
 }
 
 
@@ -664,15 +578,6 @@ if ($view == 'week') {
     font-weight: 600;
 }
 
-.empty-cell {
-    color: #ccc;
-    text-align: center;
-    padding: 20px;
-    font-style: italic;
-    font-size: 12px;
-}
-
-/* List View for Month */
 .month-list {
     display: grid;
     gap: 15px;
@@ -715,6 +620,7 @@ if ($view == 'week') {
     gap: 15px;
     align-items: center;
     transition: transform 0.2s;
+    cursor: pointer;
 }
 
 .booking-card:hover {
@@ -743,12 +649,6 @@ if ($view == 'week') {
     color: #666;
 }
 
-.booking-employees {
-    font-size: 12px;
-    color: #888;
-    margin-top: 3px;
-}
-
 .booking-meta {
     display: flex;
     gap: 8px;
@@ -763,49 +663,15 @@ if ($view == 'week') {
     font-weight: 500;
 }
 
-/* Add/Update these classes for No Show status */
-.status-No\Show {
-    background-color: #795548 !important; /* brown */
-    color: #fff !important;
-}
-
-.schedule-item.no-show {
-    background: linear-gradient(135deg, #795548 0%, #4e342e 100%) !important;
-    color: #fff !important;
-}
-
-
 .status-Pending { background-color: gray; }
 .status-Confirmed { background-color: #007bff; }
-.status-Ongoing { background-color: #17a2b8; }
+.status-Active { background-color: #17a2b8; }
 .status-Completed { background-color: #28a745; }
+.status-Session-Complete { background-color: #28a745; }
 .status-Cancelled { background-color: #dc3545; }
-.status-No\Show,
-.status-NoShow,
-.status-No-Show {
-    background-color: #795548 !important; /* brown */
-    color: #fff !important;
-}
-.status-Active { background-color: #007bff; }
+.status-No-Show { background-color: #795548; }
+.status-Paused { background-color: #e0e716ff; }
 
-.type-badge {
-    padding: 3px 8px;
-    border-radius: 10px;
-    font-size: 10px;
-    font-weight: 600;
-}
-
-.type-badge.onetime {
-    background: #f093fb;
-    color: white;
-}
-
-.type-badge.recurring {
-    background: #4facfe;
-    color: white;
-}
-
-/* Summary stats */
 .summary-stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -831,17 +697,33 @@ if ($view == 'week') {
     font-size: 12px;
     opacity: 0.9;
 }
- .dashboard__sidebar {
-    min-width: 250px;
-    width: 250px;
-    flex-shrink: 0;
+
+.employee-info-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
-/* Sidebar dropdown */
-.has-dropdown .dropdown__menu { display: none; }
-.has-dropdown.open .dropdown__menu { display: block; }
+.employee-info-card h2 {
+    margin: 0 0 5px 0;
+    font-size: 24px;
+}
 
-/* Legend */
+.employee-info-card p {
+    margin: 0;
+    opacity: 0.9;
+}
+
+.section-divider {
+    border: 0;
+    height: 2px;
+    background: #ddd;
+    margin: 10px 0 20px;
+}
+
 .schedule-legend {
     display: flex;
     gap: 20px;
@@ -865,10 +747,6 @@ if ($view == 'week') {
     border-radius: 4px;
 }
 
-@media print {
-    .view-controls, .nav-btn, .employee-filter { display: none; }
-}
-
 @media (max-width: 768px) {
     .view-controls {
         flex-direction: column;
@@ -878,19 +756,30 @@ if ($view == 'week') {
         font-size: 11px;
     }
 }
-.section-divider {
-    border: 0;
-    height: 2px;
-    background: #ddd;
-    margin: 10px 0 20px;
+.employee-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
 }
+
+.employee-chip {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
 </style>
 </head>
 <body>
 
 <header class="header" id="header">
 <nav class="nav container">
-    <a href="admin_dashboard.php?content=dashboard" class="nav__logo">
+    <a href="employee_dashboard.php" class="nav__logo">
         <img src="LOGO.png" alt="ALAZIMA Logo" 
              onerror="this.onerror=null;this.src='https://placehold.co/200x50/FFFFFF/004a80?text=ALAZIMA';">
     </a>
@@ -899,72 +788,46 @@ if ($view == 'week') {
 </header>
 
 <div class="dashboard__wrapper">
-    <aside class="dashboard__sidebar">
-        <ul class="sidebar__menu">
-            <li class="menu__item"><a href="admin_dashboard.php?content=dashboard" class="menu__link"><i class='bx bx-home-alt-2'></i> Dashboard</a></li>
-            
-            <li class="menu__item has-dropdown">
-                <a href="#" class="menu__link -parent"><i class='bx bx-user-circle'></i> User Management <i class='bx bx-chevron-down arrow-icon'></i></a>
-                <ul class="dropdown__menu">
-                    <li class="menu__item"><a href="clients.php?content=manage-clients" class="menu__link">Clients</a></li>
-                    <li class="menu__item"><a href="UM_employees.php?content=manage-employees" class="menu__link ">Employees</a></li>
-                    <li class="menu__item"><a href="UM_admins.php?content=manage-admins" class="menu__link">Admins</a></li>
-                    <li class="menu__item"><a href="archived_clients.php?content=manage-archive" class="menu__link">Archive</a></li>
-                </ul>       
-            </li>
-            
-            <li class="menu__item has-dropdown">
-                <a href="#" class="menu__link"><i class='bx bx-calendar-check'></i> Appointment Management <i class='bx bx-chevron-down arrow-icon'></i></a>
-                <ul class="dropdown__menu">
-                    <li class="menu__item"><a href="AP_one-time.php" class="menu__link">One-time Service</a></li>
-                    <li class="menu__item"><a href="AP_recurring.php" class="menu__link">Recurring Service</a></li>
-                </ul>
-            </li>
-            
-            <li class="menu__item"><a href="ES.php" class="menu__link active"><i class='bx bx-time'></i> Employee Scheduling</a></li>
-            <li class="menu__item"><a href="manage_groups.php" class="menu__link "><i class='bx bx-group'></i> Manage Groups</a></li>
-            <li class="menu__item"><a href="admin_feedback_dashboard.php" class="menu__link"><i class='bx bx-star'></i> Feedback Overview</a></li>
-            <li class="menu__item"><a href="Reports.php" class="menu__link"><i class='bx bx-file'></i> Reports</a></li>
-            <li class="menu__item"><a href="concern.php?content=profile" class="menu__link"><i class='bx bx-info-circle'></i> Issues & Concerns</a></li>
-            <li class="menu__item"><a href="admin_profile.php" class="menu__link"><i class='bx bx-user'></i> Profile</a></li>
-            <li class="menu__item"><a href="javascript:void(0)" class="menu__link" onclick="showLogoutModal()"><i class='bx bx-log-out'></i> Logout</a></li>
-        </ul>
-    </aside>
+   <aside class="dashboard__sidebar">
+    <ul class="sidebar__menu">
+        <li class="menu__item">
+            <a href="employee_dashboard.php" class="menu__link"><i class='bx bx-home-alt-2'></i> Dashboard</a>
+        </li>
+        <li class="menu__item has-dropdown ">
+            <a href="#" class="menu__link"><i class='bx bx-calendar-check'></i> My Appointments <i class='bx bx-chevron-down arrow-icon'></i></a>
+            <ul class="dropdown__menu" style="display:block;">
+                <li class="menu__item"><a href="EMP_appointments_today.php" class="menu__link ">Today's Appointments</a></li>
+                <li class="menu__item"><a href="EMP_appointments_history.php" class="menu__link">History</a></li>
+            </ul>
+        </li>
+        <li class="menu__item"><a href="EMP_ratings_feedback.php" class="menu__link"><i class='bx bx-star'></i> Ratings/Feedback</a></li>
+        <li class="menu__item"><a href="employee_schedule.php" class="menu__link active"><i class='bx bx-calendar-week'></i> Schedule</a></li>
+        
+        <li class="menu__item"><a href="landing_page2.html" class="menu__link"><i class='bx bx-log-out'></i> Logout</a></li>
+        
+    </ul>
+</aside>
 
     <main class="dashboard__content">
         <section class="content__section active">
             <div class="content-container">
-                <h1><i class='bx bx-calendar-week'></i> Employee Scheduling</h1>
+                <!-- Employee Info Card -->
+                
+
+                <h1><i class='bx bx-calendar-week'></i> My Schedule</h1>
                 <hr class="section-divider">
 
                 <!-- View Controls -->
                 <div class="view-controls">
                     <div class="view-tabs">
-                        <a href="ES.php?view=week&date=<?= $selected_date ?>&employee=<?= $selected_employee ?>" 
+                        <a href="employee_schedule.php?view=week&date=<?= $selected_date ?>" 
                            class="view-tab <?= $view == 'week' ? 'active' : '' ?>">
                             <i class='bx bx-calendar-week'></i> Weekly Schedule
                         </a>
-                        <a href="ES.php?view=month&date=<?= $selected_date ?>&employee=<?= $selected_employee ?>" 
+                        <a href="employee_schedule.php?view=month&date=<?= $selected_date ?>" 
                            class="view-tab <?= $view == 'month' ? 'active' : '' ?>">
                             <i class='bx bx-calendar'></i> Monthly List
                         </a>
-                    </div>
-
-                    <div class="employee-filter">
-                        <!-- <label><i class='bx bx-user'></i> Filter:</label>
-                        <select id="employeeSelect" onchange="filterEmployee()">
-                            <option value="all" <?= $selected_employee == 'all' ? 'selected' : '' ?>>All Employees</option> -->
-                            <?php 
-                            mysqli_data_seek($employees_result, 0);
-                            while ($emp = $employees_result->fetch_assoc()): 
-                                $emp_name = $emp['first_name'] . ' ' . $emp['last_name'];
-                            ?>
-                                <option value="<?= htmlspecialchars($emp_name) ?>" 
-                                        <?= $selected_employee == $emp_name ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($emp_name) ?> (<?= $emp['position'] ?>)
-                                </option>
-                            <?php endwhile; ?>
-                        </select>
                     </div>
 
                     <div class="date-navigation">
@@ -989,56 +852,33 @@ if ($view == 'week') {
                     </div>
                 </div>
 
-                <!-- Summary Statistics -->
-                <!-- <div class="summary-stats">
-                    <div class="stat-card">
-                        <div class="stat-number"><?= count($all_bookings) ?></div>
-                        <div class="stat-label">Total Appointments</div>
-                    </div>
-                    <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                        <div class="stat-number">
-                            <?= count(array_filter($all_bookings, function($b) { 
-                                return $b['booking_type'] == 'One-Time'; 
-                            })) ?>
-                        </div>
-                        <div class="stat-label">One-Time</div>
-                    </div>
-                    <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-                        <div class="stat-number">
-                            <?= count(array_filter($all_bookings, function($b) { 
-                                return isset($b['is_recurring']) && $b['is_recurring']; 
-                            })) ?>
-                        </div>
-                        <div class="stat-label">Recurring</div>
-                    </div>
-                </div> -->
-
+               
                 <?php if ($view == 'week'): ?>
                     <!-- Legend -->
                     <div class="schedule-legend">
-                        <div class="legend-item">
-                            <!-- <div class="legend-color" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);"></div>
-                            <span>One-Time Service</span> -->
-                        </div>
-                        <div class="legend-item">
-                            <!-- <div class="legend-color" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);"></div>
-                            <span>Recurring Service</span> -->
-                        </div>
                         <div class="legend-item">
                             <div class="legend-color" style="background: linear-gradient(gray);"></div>
                             <span>Pending</span>
                         </div>
                         <div class="legend-item">
                             <div class="legend-color" style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);"></div>
-                            <span>Confirmed</span>
+                            <span>Active</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: linear-gradient(135deg, #d3dd1aff 0%, #e1eb1aff 100%);"></div>
+                            <span>Paused</span>
                         </div>
                         <div class="legend-item">
                             <div class="legend-color" style="background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);"></div>
                             <span>Completed</span>
                         </div>
+                         <div class="legend-item">
+                            <div class="legend-color" style="background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);"></div>
+                            <span>Session Complete</span>
+                        </div>
                     </div>
 
-                    <!-- Weekly Schedule Grid (Class Timetable Style) -->
+                    <!-- Weekly Schedule Grid -->
                     <div class="schedule-container">
                         <div class="schedule-grid">
                             <!-- Header Row -->
@@ -1071,24 +911,10 @@ if ($view == 'week') {
                                             <?php if (count($bookings) > 0): ?>
                                                 <?php foreach ($bookings as $booking): 
                                                     $status_class = strtolower(str_replace(' ', '-', $booking['status']));
-                                                    $type_class = isset($booking['is_recurring']) && $booking['is_recurring'] ? 'recurring' : 'onetime';
-                                                    
-                                                    // Get assigned employees
-                                                    $assigned = [];
-                                                    if (!empty($booking['cleaners'])) {
-                                                        $assigned = array_merge($assigned, explode(',', $booking['cleaners']));
-                                                    }
-                                                    if (!empty($booking['drivers'])) {
-                                                        $assigned = array_merge($assigned, explode(',', $booking['drivers']));
-                                                    }
-                                                    $assigned = array_map('trim', $assigned);
                                                 ?>
-                                                    <div class="schedule-item <?= $type_class ?> <?= $status_class ?>" 
+                                                    <div class="schedule-item <?= $status_class ?>" 
                                                          onclick="showBookingDetails(<?= $booking['id'] ?>)"
                                                          title="<?= htmlspecialchars($booking['full_name'] . ' - ' . $booking['service_type']) ?>">
-                                                        <div class="schedule-item-badge">
-                                                            <?= isset($booking['is_recurring']) && $booking['is_recurring'] ? '' : '' ?>
-                                                        </div>
                                                         <div class="schedule-item-time">
                                                             <?= date('g:i A', strtotime($booking['service_time'])) ?>
                                                         </div>
@@ -1098,10 +924,9 @@ if ($view == 'week') {
                                                         <div class="schedule-item-service">
                                                             <?= htmlspecialchars($booking['service_type']) ?>
                                                         </div>
-                                                        <?php if ($selected_employee == 'all' && count($assigned) > 0): ?>
+                                                        <?php if (!empty($booking['duration'])): ?>
                                                             <div style="font-size: 10px; margin-top: 3px; opacity: 0.8;">
-                                                                <i class='bx bx-user'></i> <?= htmlspecialchars(implode(', ', array_slice($assigned, 0, 2))) ?>
-                                                                <?= count($assigned) > 2 ? '...' : '' ?>
+                                                                <i class='bx bx-time'></i> <?= htmlspecialchars($booking['duration']) ?>
                                                             </div>
                                                         <?php endif; ?>
                                                     </div>
@@ -1120,7 +945,7 @@ if ($view == 'week') {
                         <?php
                         // Group bookings by date
                         $bookings_by_date = [];
-                        foreach ($all_bookings as $booking) {
+                        foreach ($my_bookings as $booking) {
                             $date = $booking['service_date'];
                             if (!isset($bookings_by_date[$date])) {
                                 $bookings_by_date[$date] = [];
@@ -1145,23 +970,8 @@ if ($view == 'week') {
                                 </div>
                                 <div class="day-body">
                                     <div class="day-bookings">
-                                        <?php foreach ($bookings as $booking): 
-                                            // Get assigned employees
-                                            $assigned = [];
-                                            if (!empty($booking['cleaners'])) {
-                                                $cleaners = explode(',', $booking['cleaners']);
-                                                foreach ($cleaners as $c) {
-                                                    $assigned[] = trim($c) . ' (Cleaner)';
-                                                }
-                                            }
-                                            if (!empty($booking['drivers'])) {
-                                                $drivers = explode(',', $booking['drivers']);
-                                                foreach ($drivers as $d) {
-                                                    $assigned[] = trim($d) . ' (Driver)';
-                                                }
-                                            }
-                                        ?>
-                                            <div class="booking-card">
+                                        <?php foreach ($bookings as $booking): ?>
+                                            <div class="booking-card" onclick="showBookingDetails(<?= $booking['id'] ?>)">
                                                 <div class="booking-time">
                                                     <i class='bx bx-time'></i>
                                                     <?= date('g:i A', strtotime($booking['service_time'])) ?>
@@ -1176,21 +986,11 @@ if ($view == 'week') {
                                                             • <?= htmlspecialchars($booking['duration']) ?>
                                                         <?php endif; ?>
                                                     </div>
-                                                    <?php if (count($assigned) > 0): ?>
-                                                        <div class="booking-employees">
-                                                            <i class='bx bx-group'></i> <?= htmlspecialchars(implode(', ', $assigned)) ?>
-                                                        </div>
-                                                    <?php endif; ?>
                                                     <div class="booking-service" style="margin-top: 3px;">
                                                         <i class='bx bx-map'></i> <?= htmlspecialchars(substr($booking['address'], 0, 60)) ?><?= strlen($booking['address']) > 60 ? '...' : '' ?>
                                                     </div>
                                                 </div>
                                                 <div class="booking-meta">
-                                                    <?php if (isset($booking['is_recurring']) && $booking['is_recurring']): ?>
-                                                        <span class="type-badge recurring">Recurring</span>
-                                                    <?php else: ?>
-                                                        <span class="type-badge onetime">One-Time</span>
-                                                    <?php endif; ?>
                                                     <span class="status-badge status-<?= str_replace(' ', '-', $booking['status']) ?>">
                                                         <?= htmlspecialchars($booking['status']) ?>
                                                     </span>
@@ -1219,6 +1019,7 @@ if ($view == 'week') {
         </section>
     </main>
 </div>
+
 <!-- Booking Details Modal -->
 <div id="bookingModal" class="modal">
     <div class="modal__content">
@@ -1240,12 +1041,21 @@ if ($view == 'week') {
     </div>
 </div>
 
+<!-- Logout Modal -->
 <div id="logoutModal" class="modal">
     <div class="modal__content">
-        <h3 class="modal__title">Are you sure you want to log out?</h3>
-        <div class="modal__actions">
-            <button id="cancelLogout" class="btn btn--secondary">Cancel</button>
-            <button id="confirmLogout" class="btn btn--primary">Log Out</button>
+        <div class="modal__header">
+            <h3 class="modal__title">Confirm Logout</h3>
+            <button class="modal__close" onclick="closeLogoutModal()">
+                <i class='bx bx-x'></i>
+            </button>
+        </div>
+        <div class="modal__body">
+            <p style="text-align: center; padding: 20px;">Are you sure you want to log out?</p>
+            <div style="display: flex; gap: 10px; justify-content: center; padding: 0 20px 20px;">
+                <button onclick="closeLogoutModal()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer;">Cancel</button>
+                <button onclick="confirmLogout()" style="padding: 10px 20px; background: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer;">Log Out</button>
+            </div>
         </div>
     </div>
 </div>
@@ -1255,7 +1065,6 @@ if ($view == 'week') {
 function navigateDate(direction) {
     const currentDate = '<?= $selected_date ?>';
     const view = '<?= $view ?>';
-    const employee = '<?= $selected_employee ?>';
     let newDate;
     
     if (direction === 'today') {
@@ -1280,24 +1089,14 @@ function navigateDate(direction) {
         newDate = date.toISOString().split('T')[0];
     }
     
-    window.location.href = `ES.php?view=${view}&date=${newDate}&employee=${employee}`;
+    window.location.href = `employee_schedule.php?view=${view}&date=${newDate}`;
 }
 
-// Filter by employee
-function filterEmployee() {
-    const employee = document.getElementById('employeeSelect').value;
-    const view = '<?= $view ?>';
-    const date = '<?= $selected_date ?>';
-    window.location.href = `ES.php?view=${view}&date=${date}&employee=${encodeURIComponent(employee)}`;
-}
-
-// Show booking details (placeholder - you can expand this)
 // Show booking details
 function showBookingDetails(bookingId) {
     const modal = document.getElementById('bookingModal');
     const content = document.getElementById('bookingDetailsContent');
     
-    // Show modal with loading state
     modal.classList.add('show');
     content.innerHTML = `
         <div class="loading-spinner">
@@ -1306,8 +1105,7 @@ function showBookingDetails(bookingId) {
         </div>
     `;
     
-    // Fetch booking details via AJAX
-    fetch(`ES.php?action=get_booking_details&booking_id=${bookingId}`)
+    fetch(`employee_schedule.php?action=get_booking_details&booking_id=${bookingId}`)
         .then(response => response.json())
         .then(data => {
             if (data.error) {
@@ -1320,7 +1118,6 @@ function showBookingDetails(bookingId) {
                 return;
             }
             
-            // Build the details HTML
             let html = `
                 <!-- Client Information -->
                 <div class="detail-section">
@@ -1333,16 +1130,8 @@ function showBookingDetails(bookingId) {
                             <div class="detail-value large">${data.full_name || 'N/A'}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">Email</div>
-                            <div class="detail-value">${data.email || 'N/A'}</div>
-                        </div>
-                        <div class="detail-item">
                             <div class="detail-label">Phone</div>
                             <div class="detail-value">${data.phone || 'N/A'}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Client Type</div>
-                            <div class="detail-value">${data.client_type || 'N/A'}</div>
                         </div>
                     </div>
                 </div>
@@ -1358,24 +1147,12 @@ function showBookingDetails(bookingId) {
                             <div class="detail-value large">${data.service_type || 'N/A'}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">Booking Type</div>
-                            <div class="detail-value">
-                                <span class="type-badge ${data.booking_type === 'One-Time' ? 'onetime' : 'recurring'}">
-                                    ${data.booking_type || 'N/A'}
-                                </span>
-                            </div>
-                        </div>
-                        <div class="detail-item">
                             <div class="detail-label">Duration</div>
                             <div class="detail-value">${data.duration || 'N/A'}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">Property Type</div>
                             <div class="detail-value">${data.property_type || 'N/A'}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Materials Provided</div>
-                            <div class="detail-value">${data.materials_provided || 'N/A'}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">Status</div>
@@ -1414,18 +1191,6 @@ function showBookingDetails(bookingId) {
                             <div class="detail-value">${data.frequency || 'N/A'}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">Preferred Day</div>
-                            <div class="detail-value">${data.preferred_day || 'N/A'}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Start Date</div>
-                            <div class="detail-value">${formatDate(data.start_date)}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">End Date</div>
-                            <div class="detail-value">${data.end_date ? formatDate(data.end_date) : 'Ongoing'}</div>
-                        </div>
-                        <div class="detail-item">
                             <div class="detail-label">Service Time</div>
                             <div class="detail-value">${formatTime(data.service_time)}</div>
                         </div>
@@ -1453,6 +1218,7 @@ function showBookingDetails(bookingId) {
                     </div>
             `;
             
+            // Parse cleaners and drivers
             const cleaners = data.cleaners ? data.cleaners.split(',').map(c => c.trim()) : [];
             const drivers = data.drivers ? data.drivers.split(',').map(d => d.trim()) : [];
             
@@ -1466,12 +1232,11 @@ function showBookingDetails(bookingId) {
                 });
                 html += '</div>';
             } else {
-                html += '<p class="no-media">No employees assigned yet</p>';
+                html += '<p style="color: #999; font-style: italic; text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px;">No employees assigned yet</p>';
             }
             
             html += '</div>';
             
-            // Comments
             if (data.comments) {
                 html += `
                     <div class="detail-section">
@@ -1485,7 +1250,6 @@ function showBookingDetails(bookingId) {
                 `;
             }
             
-            // Materials Needed
             if (data.materials_needed) {
                 html += `
                     <div class="detail-section">
@@ -1499,7 +1263,6 @@ function showBookingDetails(bookingId) {
                 `;
             }
             
-            // Media Gallery
             const media = [];
             if (data.media1) media.push(data.media1);
             if (data.media2) media.push(data.media2);
@@ -1514,107 +1277,10 @@ function showBookingDetails(bookingId) {
                         <div class="media-gallery">
                 `;
                 media.forEach(img => {
-                    html += `<img src="${img}" class="media-item" onclick="window.open('${img}', '_blank')" alt="Booking photo">`;
+                    html += `<img src="${img}" class="media-item" onclick="window.open('${img}', '_blank')" alt="Booking photo" style="width: 100%; height: 150px; object-fit: cover; border-radius: 8px; cursor: pointer;">`;
                 });
                 html += '</div></div>';
             }
-            
-            // Rating
-            if (data.rating_stars) {
-                html += `
-                    <div class="detail-section">
-                        <div class="section-title">
-                            <i class='bx bx-star'></i> Rating & Feedback
-                        </div>
-                        <div class="rating-display">
-                            <div class="stars">
-                `;
-                for (let i = 0; i < 5; i++) {
-                    html += i < data.rating_stars ? '<i class="bx bxs-star"></i>' : '<i class="bx bx-star"></i>';
-                }
-                html += `
-                            </div>
-                            <span>${data.rating_stars}/5</span>
-                        </div>
-                `;
-                if (data.rating_comment) {
-                    html += `<div class="detail-value address" style="margin-top: 10px;">${data.rating_comment}</div>`;
-                }
-                html += '</div>';
-            }
-            
-            // Issue Report
-            if (data.issue_type) {
-                html += `
-                    <div class="detail-section">
-                        <div class="section-title">
-                            <i class='bx bx-error'></i> Reported Issue
-                        </div>
-                        <div class="detail-grid">
-                            <div class="detail-item">
-                                <div class="detail-label">Issue Type</div>
-                                <div class="detail-value">${data.issue_type}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Report Date</div>
-                                <div class="detail-value">${formatDate(data.issue_report_date)}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Report Time</div>
-                                <div class="detail-value">${formatTime(data.issue_report_time)}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Sentiment</div>
-                                <div class="detail-value">${data.sentiment || 'N/A'}</div>
-                            </div>
-                        </div>
-                `;
-                if (data.issue_description) {
-                    html += `<div class="detail-value address" style="margin-top: 10px;">${data.issue_description}</div>`;
-                }
-                
-                // Issue photos
-                const issuePhotos = [];
-                if (data.issue_photo1) issuePhotos.push(data.issue_photo1);
-                if (data.issue_photo2) issuePhotos.push(data.issue_photo2);
-                if (data.issue_photo3) issuePhotos.push(data.issue_photo3);
-                
-                if (issuePhotos.length > 0) {
-                    html += '<div class="media-gallery" style="margin-top: 10px;">';
-                    issuePhotos.forEach(img => {
-                        html += `<img src="${img}" class="media-item" onclick="window.open('${img}', '_blank')" alt="Issue photo">`;
-                    });
-                    html += '</div>';
-                }
-                
-                html += '</div>';
-            }
-            
-            // Booking Information
-           
-            
-            if (data.submission_date) {
-                html += `
-                        <div class="detail-item">
-                            <div class="detail-label">Submission Date</div>
-                            <div class="detail-value">${formatDate(data.submission_date)}</div>
-                        </div>
-                `;
-            }
-            
-            if (data.submission_time) {
-                html += `
-                        <div class="detail-item">
-                            <div class="detail-label">Submission Time</div>
-                            <div class="detail-value">${formatTime(data.submission_time)}</div>
-                        </div>
-                `;
-            }
-            
-            html += `
-                    </div>
-                </div>
-            `;
             
             content.innerHTML = html;
         })
@@ -1633,7 +1299,18 @@ function closeBookingModal() {
     document.getElementById('bookingModal').classList.remove('show');
 }
 
-// Helper functions
+function showLogoutModal() {
+    document.getElementById('logoutModal').classList.add('show');
+}
+
+function closeLogoutModal() {
+    document.getElementById('logoutModal').classList.remove('show');
+}
+
+function confirmLogout() {
+    window.location.href = "logout.php";
+}
+
 function formatDate(dateStr) {
     if (!dateStr) return 'N/A';
     const date = new Date(dateStr);
@@ -1649,19 +1326,6 @@ function formatTime(timeStr) {
     return `${displayHour}:${minutes} ${ampm}`;
 }
 
-function formatDateTime(dateTimeStr) {
-    if (!dateTimeStr) return 'N/A';
-    const date = new Date(dateTimeStr);
-    return date.toLocaleString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
-    });
-}
-
 // Close modal when clicking outside
 window.onclick = function(event) {
     const bookingModal = document.getElementById('bookingModal');
@@ -1671,37 +1335,53 @@ window.onclick = function(event) {
         closeBookingModal();
     }
     if (event.target == logoutModal) {
-        logoutModal.classList.remove('show');
+        closeLogoutModal();
     }
 }
 
-// Logout modal
-function showLogoutModal() {
-    document.getElementById('logoutModal').classList.add('show');
-}
+// Loading spinner animation
+const style = document.createElement('style');
+style.textContent = `
+    .loading-spinner {
+        text-align: center;
+        padding: 40px;
+    }
+    .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #667eea;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .media-gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 10px;
+    }
+`;
+document.head.appendChild(style);
 
-document.getElementById('cancelLogout')?.addEventListener('click', function() {
-    document.getElementById('logoutModal').classList.remove('show');
-});
-
-document.getElementById('confirmLogout')?.addEventListener('click', function() {
-    window.location.href = "landing_page2.html";
-});
-
-// Sidebar dropdown toggle
-(function(){
-    const nav = document.querySelector('.sidebar__menu');
-    if (!nav) return;
-    const dropdownParents = nav.querySelectorAll('.has-dropdown');
+// Sidebar dropdown toggle functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const dropdownParents = document.querySelectorAll('.has-dropdown');
+    
     dropdownParents.forEach(parent => {
         const parentLink = parent.querySelector('.menu__link');
-        if (!parentLink) return;
-        parentLink.addEventListener('click', function(e){
-            e.preventDefault();
-            parent.classList.toggle('open');
-        });
+        
+        if (parentLink) {
+            parentLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                parent.classList.toggle('open');
+            });
+        }
     });
-})();
+});
 </script>
 
 </body>

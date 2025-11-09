@@ -53,13 +53,7 @@ $ratings = $stmt->get_result();
 <link rel="stylesheet" href="client_db.css">
 
 <style>
-.content-container {
-    background: #fff;
-    border-radius: 12px;
-    padding: 20px;
-    margin: 20px;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-}
+
 
 .table {
     width: 100%;
@@ -68,7 +62,7 @@ $ratings = $stmt->get_result();
 }
 
 .table th {
-    background: #4CAF50;
+    background: #007bff;
     color: white;
     padding: 10px;
     text-align: left;
@@ -135,11 +129,11 @@ $ratings = $stmt->get_result();
             </a>
         </li>
 
-        <!-- <li class="menu__item">
-            <a href="employee_profile.php" class="menu__link">
-                <i class='bx bx-user'></i> My Profile
+        <li class="menu__item">
+            <a href="employee_schedule.php" class="menu__link">
+                <i class='bx bx-calendar-week'></i> Schedule
             </a>
-        </li> -->
+        </li>
 
         <li class="menu__item">
             <a href="landing_page2.html" class="menu__link">

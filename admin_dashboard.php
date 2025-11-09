@@ -36,6 +36,12 @@ if ($result_employees && $result_employees->num_rows > 0) {
 } else {
     $totalEmployees = 0;
 }
+// ✅ Total Concerns (from bookings with issues)
+$sql_concerns = "SELECT COUNT(*) AS total FROM bookings 
+                 WHERE (issue_type IS NOT NULL AND issue_type != '') 
+                 OR (issue_description IS NOT NULL AND issue_description != '')";
+$result_concerns = $conn->query($sql_concerns);
+$totalConcerns = ($result_concerns && $row = $result_concerns->fetch_assoc()) ? (int)$row['total'] : 0;
 
 // ✅ One-Time services breakdown
 $one_time_services_breakdown = [];
@@ -89,6 +95,22 @@ function render_breakdown_list($data, $max_items) {
     $html .= '</ul>';
     return $html;
 }
+$sql_pending = "
+    SELECT id, full_name, email, phone, service_type, booking_type, 
+           service_date, service_time, address, created_at
+    FROM bookings
+    WHERE status = 'Pending'
+    ORDER BY created_at ASC
+    LIMIT 10
+";
+$result_pending = $conn->query($sql_pending);
+$pending_bookings = [];
+if ($result_pending && $result_pending->num_rows > 0) {
+    while ($row = $result_pending->fetch_assoc()) {
+        $pending_bookings[] = $row;
+    }
+}
+$total_pending = count($pending_bookings);
 
 // ===========================
 // BOOKINGS CHART DATA
@@ -150,6 +172,185 @@ $conn->close();
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
 /* --- CSS Variables for new Modal styles --- */
+ .dashboard__sidebar {
+    min-width: 240px;
+    width: 240px;
+    flex-shrink: 0;
+}
+
+.dashboard__wrapper {
+    display: flex;
+    min-height: 100vh;
+}
+
+.dashboard__content {
+    flex: 1;
+    overflow-x: auto;
+}
+/* --- NEW: Pending Bookings Section Styles --- */
+.pending-bookings-container {
+    margin-top: 20px;
+    padding: 25px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-top: 8px solid #FF9800; /* Orange for pending */
+}
+
+.pending-bookings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.pending-bookings-header h3 {
+    font-size: 1.5em;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+}
+
+.pending-bookings-header h3 i {
+    color: #FF9800;
+    font-size: 1.3em;
+}
+
+.pending-count-badge {
+    background-color: #FF9800;
+    color: white;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.pending-bookings-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.pending-booking-item {
+    background-color: #f9f9f9;
+    border-left: 5px solid #FF9800;
+    padding: 15px 20px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.pending-booking-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.booking-info {
+    flex: 1;
+}
+
+.booking-info-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.booking-info-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.95em;
+    color: #555;
+}
+
+.booking-info-item i {
+    color: #FF9800;
+    font-size: 1.1em;
+}
+
+.booking-info-item strong {
+    color: #333;
+    font-weight: 600;
+}
+
+.booking-type-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.85em;
+    font-weight: bold;
+    margin-left: 10px;
+}
+
+.booking-type-badge.one-time {
+    background-color: #e3f2fd;
+    color: #1976d2;
+}
+
+.booking-type-badge.recurring {
+    background-color: #f3e5f5;
+    color: #7b1fa2;
+}
+
+.booking-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.booking-actions .btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 600;
+    transition: background-color 0.3s, transform 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.booking-actions .btn-view {
+    background-color: #2196F3;
+    color: white;
+}
+
+.booking-actions .btn-view:hover {
+    background-color: #1976D2;
+    transform: translateY(-2px);
+}
+
+.booking-actions .btn-confirm {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.booking-actions .btn-confirm:hover {
+    background-color: #45a049;
+    transform: translateY(-2px);
+}
+
+.no-pending-message {
+    text-align: center;
+    padding: 40px 20px;
+    color: #999;
+    font-size: 1.1em;
+}
+
+.no-pending-message i {
+    font-size: 3em;
+    color: #ddd;
+    margin-bottom: 15px;
+}
+
+/* --- END: Pending Bookings Section Styles --- */
 :root {
     --container-color: #fefefe; /* White background for modal content */
     --title-color1: #333;       /* Dark text color for title */
@@ -646,7 +847,7 @@ margin-bottom: 20px;
 /* KINAKAILANGAN: NEW HALF-WIDTH CLASS FOR CHART CONTAINERS (INIBA SA 40%) */
 .dashboard__container.chart-half-width {
     flex: 1 1 40%; /* Ginamit ang 40% para lumiit pa */
-    max-width: 50%; /* Nilimitahan ang maximum width sa 40% */
+    max-width: 43%; /* Nilimitahan ang maximum width sa 40% */
     min-width: 280px; /* Inadjust ang min-width para hindi masyadong maipit */
     padding: 20px; 
     margin-top: 0; 
@@ -712,14 +913,17 @@ margin-bottom: 20px;
                 </li>
                 
                 <li class="menu__item"><a href="ES.php?content=employee-scheduling" class="menu__link" data-content="employee-scheduling"><i class='bx bx-time'></i> Employee Scheduling</a></li>
+                <li class="menu__item"><a href="manage_groups.php" class="menu__link "><i class='bx bx-group'></i> Manage Groups</a></li>
  <li class="menu__item"><a href="admin_feedback_dashboard.php" class="menu__link "><i class='bx bx-star'></i> Feedback Overview</a></li>
                 <!-- <li class="menu__item"><a href="FR.php?content=feedback-ratings" class="menu__link" data-content="feedback-ratings"><i class='bx bx-star'></i> Feedback & Ratings</a></li> -->
                 
-                <li class="menu__item"><a href="Reports.php?content=reports" class="menu__link" data-content="reports"><i class='bx bx-file-text'></i> Reports</a></li>
+                <li class="menu__item"><a href="Reports.php?content=reports" class="menu__link" data-content="reports"><i class='bx bx-file'></i> Reports</a></li>
+
+                <li class="menu__item"><a href="concern.php?content=profile" class="menu__link" data-content="profile"><i class='bx bx-info-circle'></i> Issues&Concerns</a></li>
                 
                 <li class="menu__item"><a href="admin_profile.php?content=profile" class="menu__link" data-content="profile"><i class='bx bx-user'></i> Profile</a></li>
 
-                <li class="menu__item"><a href="concern.php?content=profile" class="menu__link" data-content="profile"><i class='bx bx-user'></i> Issues&Concerns</a></li>
+                
                 
                 <li class="menu__item"><a href="javascript:void(0)" class="menu__link" data-content="logout" onclick="showLogoutModal()"><i class='bx bx-log-out'></i> Logout</a></li>
             </ul>
@@ -754,13 +958,14 @@ margin-bottom: 20px;
             </div>
 
             <!-- Concerns (Static Example) -->
-            <div class="summary-card stat-card concerns">
-                <div class="card-content">
-                    <h2 class="stat-value">17</h2>
-                    <p class="stat-title">No. of Concerns</p>
-                </div>
-                <i class='bx bx-error-alt card-icon'></i>
-            </div>
+            <!-- Concerns (Dynamic from Database) -->
+<div class="summary-card stat-card concerns">
+    <div class="card-content">
+        <h2 class="stat-value"><?php echo $totalConcerns; ?></h2>
+        <p class="stat-title">No. of Concerns</p>
+    </div>
+    <i class='bx bx-error-alt card-icon'></i>
+</div>
 
             <!-- Total Employees -->
             <div class="summary-card stat-card active-employees">
@@ -773,6 +978,89 @@ margin-bottom: 20px;
         </div>
     
 
+</div>
+<!-- ========================= -->
+<!-- PENDING BOOKINGS SECTION -->
+<!-- ========================= -->
+<div class="pending-bookings-container">
+    <div class="pending-bookings-header">
+        <h3>
+            <i class='bx bx-time-five'></i>
+            Pending Bookings 
+        </h3>
+        <span class="pending-count-badge"><?php echo $total_pending; ?> Pending</span>
+    </div>
+
+    <?php if (count($pending_bookings) > 0): ?>
+        <ul class="pending-bookings-list">
+            <?php foreach ($pending_bookings as $booking): ?>
+                <li class="pending-booking-item">
+                    <div class="booking-info">
+                        <div class="booking-info-row">
+                            <div class="booking-info-item">
+                                <i class='bx bx-user'></i>
+                                <strong><?php echo htmlspecialchars($booking['full_name']); ?></strong>
+                            </div>
+                            <div class="booking-info-item">
+                                <i class='bx bx-phone'></i>
+                                <?php echo htmlspecialchars($booking['phone']); ?>
+                            </div>
+                            <div class="booking-info-item">
+                                <i class='bx bx-envelope'></i>
+                                <?php echo htmlspecialchars($booking['email']); ?>
+                            </div>
+                        </div>
+                        <div class="booking-info-row">
+                            <div class="booking-info-item">
+                                <i class='bx bx-calendar'></i>
+                                <strong>Date:</strong> <?php echo date('M d, Y', strtotime($booking['service_date'])); ?>
+                            </div>
+                            <div class="booking-info-item">
+                                <i class='bx bx-time'></i>
+                                <strong>Time:</strong> <?php echo date('h:i A', strtotime($booking['service_time'])); ?>
+                            </div>
+                            <div class="booking-info-item">
+                                <i class='bx bx-customize'></i>
+                                <strong>Service:</strong> <?php echo htmlspecialchars($booking['service_type']); ?>
+                                <span class="booking-type-badge <?php echo strtolower($booking['booking_type']) === 'one-time' ? 'one-time' : 'recurring'; ?>">
+                                    <?php echo htmlspecialchars($booking['booking_type']); ?>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="booking-info-row">
+                            <div class="booking-info-item">
+                                <i class='bx bx-map'></i>
+                                <strong>Address:</strong> <?php echo htmlspecialchars(substr($booking['address'], 0, 50)) . (strlen($booking['address']) > 50 ? '...' : ''); ?>
+                            </div>
+                            <div class="booking-info-item">
+                                <i class='bx bx-calendar-plus'></i>
+                                <strong>Booked:</strong> <?php echo date('M d, Y h:i A', strtotime($booking['created_at'])); ?>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="booking-actions">
+                       
+                        <button onclick="confirmBooking(<?php echo $booking['id']; ?>)" class="btn btn-confirm">
+                            <i class='bx bx-check'></i> Confirm
+                        </button>
+                    </div>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+        
+        <?php if ($total_pending > 10): ?>
+            <div class="view-all-container">
+                <a href="AP_one-time.php?filter=pending" class="view-all-link">
+                    View All Pending Bookings <i class='bx bx-right-arrow-alt'></i>
+                </a>
+            </div>
+        <?php endif; ?>
+    <?php else: ?>
+        <div class="no-pending-message">
+            <i class='bx bx-check-circle'></i>
+            <p>No pending bookings at the moment. All caught up!</p>
+        </div>
+    <?php endif; ?>
 </div>
 
 <!-- ========================= -->
@@ -1138,6 +1426,34 @@ if (confirmLogoutBtn) {
     }
   });
 })();
+// ========================= 
+// BOOKING CONFIRMATION SCRIPT 
+// ========================= 
+function confirmBooking(bookingId) {
+    if (confirm('Are you sure you want to confirm this booking?')) {
+        // Send AJAX request to confirm the booking
+        fetch('confirm_booking.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'booking_id=' + bookingId
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Booking confirmed successfully!');
+                location.reload(); // Reload to update the list
+            } else {
+                alert('Error confirming booking: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error confirming booking. Please try again.');
+        });
+    }
+}
 </script>
 
 </body>

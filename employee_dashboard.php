@@ -29,154 +29,200 @@ $employeeId = $employee['id'];
 $employeeName = $employee['first_name'] . ' ' . $employee['last_name'];
 $employeePosition = $employee['position'] ?? 'N/A';
 
-// ==================== DEBUG SECTION ====================
-if ($DEBUG_MODE) {
-    echo "<div style='background: #f0f0f0; padding: 20px; margin: 20px; border: 2px solid #333; border-radius: 10px; font-family: monospace;'>";
-    echo "<h2 style='color: #d32f2f;'>🔍 DEBUG MODE ENABLED</h2>";
-    echo "<p><strong>Logged-in Employee ID:</strong> " . $employeeId . "</p>";
-    echo "<p><strong>Employee Email:</strong> " . $employeeEmail . "</p>";
-    echo "<p><strong>Employee Name:</strong> " . $employeeName . "</p>";
-    echo "<p><strong>Employee Position:</strong> " . $employeePosition . "</p>";
-    echo "<hr style='margin: 20px 0;'>";
+// ========== HELPER FUNCTION: Generate recurring occurrences ==========
+function generateRecurringOccurrences($booking, $targetDate) {
+    $occurrences = [];
+    $frequency = $booking['frequency'];
+    $preferredDay = $booking['preferred_day'];
+    $startDate = $booking['start_date'];
+    $endDate = $booking['end_date'] ? $booking['end_date'] : date('Y-m-d', strtotime('+1 year'));
     
-    // Check all bookings that might contain this employee
-    $debugQuery = "
-        SELECT 
-            id, 
-            service_date, 
-            service_type, 
-            booking_type,
-            cleaners, 
-            drivers,
-            status
-        FROM bookings 
-        WHERE cleaners IS NOT NULL OR drivers IS NOT NULL
-        ORDER BY service_date DESC
-        LIMIT 10
-    ";
-    $debugResult = $conn->query($debugQuery);
-    
-    echo "<h3>📋 Sample Bookings (Last 10 with assignments):</h3>";
-    echo "<table style='width: 100%; border-collapse: collapse; background: white;'>";
-    echo "<tr style='background: #333; color: white;'>";
-    echo "<th style='padding: 10px; border: 1px solid #ddd;'>Booking ID</th>";
-    echo "<th style='padding: 10px; border: 1px solid #ddd;'>Date</th>";
-    echo "<th style='padding: 10px; border: 1px solid #ddd;'>Type</th>";
-    echo "<th style='padding: 10px; border: 1px solid #ddd;'>Cleaners (Raw)</th>";
-    echo "<th style='padding: 10px; border: 1px solid #ddd;'>Drivers (Raw)</th>";
-    echo "<th style='padding: 10px; border: 1px solid #ddd;'>Match?</th>";
-    echo "</tr>";
-    
-    $foundMatch = false;
-    while ($row = $debugResult->fetch_assoc()) {
-        // Check if employee name appears in cleaners or drivers
-        $cleanersLower = strtolower($row['cleaners'] ?? '');
-        $driversLower = strtolower($row['drivers'] ?? '');
-        $employeeNameLower = strtolower($employeeName);
-        
-        $isMatch = (strpos($cleanersLower, $employeeNameLower) !== false) || 
-                   (strpos($driversLower, $employeeNameLower) !== false);
-        
-        if ($isMatch) $foundMatch = true;
-        
-        $rowColor = $isMatch ? 'background: #c8e6c9;' : '';
-        echo "<tr style='$rowColor'>";
-        echo "<td style='padding: 8px; border: 1px solid #ddd;'>" . $row['id'] . "</td>";
-        echo "<td style='padding: 8px; border: 1px solid #ddd;'>" . $row['service_date'] . "</td>";
-        echo "<td style='padding: 8px; border: 1px solid #ddd;'>" . $row['booking_type'] . "</td>";
-        echo "<td style='padding: 8px; border: 1px solid #ddd;'>[" . ($row['cleaners'] ?? 'NULL') . "]</td>";
-        echo "<td style='padding: 8px; border: 1px solid #ddd;'>[" . ($row['drivers'] ?? 'NULL') . "]</td>";
-        echo "<td style='padding: 8px; border: 1px solid #ddd; font-weight: bold;'>" . ($isMatch ? '✅ YES' : '❌ NO') . "</td>";
-        echo "</tr>";
-    }
-    echo "</table>";
-    
-    if (!$foundMatch) {
-        echo "<p style='color: #d32f2f; font-weight: bold; margin-top: 20px;'>⚠️ WARNING: No bookings found for: $employeeName</p>";
-    } else {
-        echo "<p style='color: #4caf50; font-weight: bold; margin-top: 20px;'>✅ Found matching bookings! (highlighted in green)</p>";
+    // Check if target date is within the booking range
+    if (strtotime($targetDate) < strtotime($startDate) || strtotime($targetDate) > strtotime($endDate)) {
+        return $occurrences;
     }
     
-    // Additional debug: Show query results
-    echo "<hr style='margin: 20px 0;'>";
-    echo "<h3>🔎 Query Debug Info:</h3>";
-    echo "<p><strong>Today's Date:</strong> $today</p>";
-    echo "<p><strong>7 Days Later:</strong> $sevenDaysLater</p>";
+    $currentTime = strtotime($targetDate);
+    $dayOfWeek = date('l', $currentTime);
+    $shouldInclude = false;
     
-    // Test the actual queries being used
-    $testQuery = "
-        SELECT id, service_date, booking_type, status, cleaners, drivers
-        FROM bookings 
-        WHERE service_date >= '$today'
-        AND (
-            cleaners LIKE '%$employeeName%'
-            OR drivers LIKE '%$employeeName%'
-        )
-        ORDER BY service_date ASC
-        LIMIT 5
-    ";
-    $testResult = $conn->query($testQuery);
+    switch ($frequency) {
+        case 'Daily':
+            $shouldInclude = true;
+            break;
+        case 'Weekly':
+            $shouldInclude = ($dayOfWeek == $preferredDay);
+            break;
+        case 'Bi-Weekly':
+            if ($dayOfWeek == $preferredDay) {
+                $weeksDiff = floor((strtotime($targetDate) - strtotime($startDate)) / (7 * 24 * 60 * 60));
+                $shouldInclude = ($weeksDiff % 2 == 0);
+            }
+            break;
+        case 'Monthly':
+            $shouldInclude = (date('j', $currentTime) == date('j', strtotime($startDate)));
+            break;
+    }
     
-    echo "<p><strong>Upcoming appointments query returned:</strong> " . $testResult->num_rows . " rows</p>";
+    if ($shouldInclude) {
+        $occurrence = $booking;
+        $occurrence['service_date'] = $targetDate;
+        $occurrence['is_recurring'] = true;
+        $occurrences[] = $occurrence;
+    }
     
-    if ($testResult->num_rows > 0) {
-        echo "<table style='width: 100%; border-collapse: collapse; background: white; margin-top: 10px;'>";
-        echo "<tr style='background: #4CAF50; color: white;'>";
-        echo "<th style='padding: 8px; border: 1px solid #ddd;'>ID</th>";
-        echo "<th style='padding: 8px; border: 1px solid #ddd;'>Date</th>";
-        echo "<th style='padding: 8px; border: 1px solid #ddd;'>Type</th>";
-        echo "<th style='padding: 8px; border: 1px solid #ddd;'>Status</th>";
-        echo "</tr>";
-        while($row = $testResult->fetch_assoc()) {
-            echo "<tr>";
-            echo "<td style='padding: 8px; border: 1px solid #ddd;'>" . $row['id'] . "</td>";
-            echo "<td style='padding: 8px; border: 1px solid #ddd;'>" . $row['service_date'] . "</td>";
-            echo "<td style='padding: 8px; border: 1px solid #ddd;'>" . $row['booking_type'] . "</td>";
-            echo "<td style='padding: 8px; border: 1px solid #ddd;'>" . $row['status'] . "</td>";
-            echo "</tr>";
+    return $occurrences;
+}
+
+// Helper function to calculate next occurrence
+function getNextOccurrence($booking, $fromDate) {
+    $frequency = $booking['frequency'];
+    $preferredDay = $booking['preferred_day'];
+    $startDate = $booking['start_date'];
+    $endDate = $booking['end_date'];
+    
+    $current = strtotime(max($startDate, $fromDate));
+    $endTime = $endDate ? strtotime($endDate) : strtotime('+1 year');
+    
+    // Search for next valid occurrence (max 365 days ahead)
+    for ($i = 0; $i < 365; $i++) {
+        $currentDate = date('Y-m-d', $current);
+        $dayOfWeek = date('l', $current);
+        $shouldInclude = false;
+        
+        switch ($frequency) {
+            case 'Daily':
+                $shouldInclude = true;
+                break;
+            case 'Weekly':
+                $shouldInclude = ($dayOfWeek == $preferredDay);
+                break;
+            case 'Bi-Weekly':
+                if ($dayOfWeek == $preferredDay) {
+                    $weeksDiff = floor((strtotime($currentDate) - strtotime($startDate)) / (7 * 24 * 60 * 60));
+                    $shouldInclude = ($weeksDiff % 2 == 0);
+                }
+                break;
+            case 'Monthly':
+                $shouldInclude = (date('j', $current) == date('j', strtotime($startDate)));
+                break;
         }
-        echo "</table>";
-    } else {
-        echo "<p style='color: #d32f2f;'>❌ No upcoming appointments found (all matched bookings are in the past or filtered out)</p>";
+        
+        if ($shouldInclude && $current >= strtotime($startDate) && $current <= $endTime) {
+            return $currentDate;
+        }
+        
+        $current = strtotime('+1 day', $current);
     }
     
-    echo "</div>";
+    return null; // No valid occurrence found
 }
 
 // ==================== DASHBOARD STATISTICS ====================
 $today = date('Y-m-d');
 $sevenDaysLater = date('Y-m-d', strtotime('+7 days'));
 
-// MODIFIED QUERIES - Now searching by FULL NAME instead of ID
-$todayQuery = "
+// ========== COUNT TODAY'S ONE-TIME APPOINTMENTS ==========
+$todayOneTimeQuery = "
     SELECT COUNT(*) as total 
     FROM bookings 
-    WHERE service_date = ? 
+    WHERE booking_type = 'One-Time'
+    AND service_date = ? 
+    AND status IN ('Confirmed', 'Pending', 'Ongoing')
     AND (
         cleaners LIKE CONCAT('%', ?, '%')
         OR drivers LIKE CONCAT('%', ?, '%')
     )
 ";
-$stmt = $conn->prepare($todayQuery);
+$stmt = $conn->prepare($todayOneTimeQuery);
 $stmt->bind_param("sss", $today, $employeeName, $employeeName);
 $stmt->execute();
-$todayCount = $stmt->get_result()->fetch_assoc()['total'];
+$todayOneTimeCount = $stmt->get_result()->fetch_assoc()['total'];
 
-$upcomingQuery = "
+// ========== COUNT TODAY'S RECURRING APPOINTMENTS ==========
+$todayRecurringQuery = "
+    SELECT * FROM bookings 
+    WHERE booking_type = 'Recurring'
+    AND start_date <= ?
+    AND (end_date IS NULL OR end_date >= ?)
+    AND status IN ('Confirmed', 'Pending', 'Ongoing', 'Active')
+    AND (
+        cleaners LIKE CONCAT('%', ?, '%')
+        OR drivers LIKE CONCAT('%', ?, '%')
+    )
+";
+$stmt = $conn->prepare($todayRecurringQuery);
+$stmt->bind_param("ssss", $today, $today, $employeeName, $employeeName);
+$stmt->execute();
+$todayRecurringResult = $stmt->get_result();
+
+// Count recurring appointments that fall on today
+$todayRecurringCount = 0;
+while ($booking = $todayRecurringResult->fetch_assoc()) {
+    $occurrences = generateRecurringOccurrences($booking, $today);
+    if (count($occurrences) > 0) {
+        $todayRecurringCount++;
+    }
+}
+
+// ========== TOTAL TODAY'S COUNT ==========
+$todayCount = $todayOneTimeCount + $todayRecurringCount;
+
+// ========== COUNT UPCOMING ONE-TIME (7 DAYS) ==========
+$upcomingOneTimeQuery = "
     SELECT COUNT(*) as total 
     FROM bookings 
-    WHERE service_date BETWEEN ? AND ?
+    WHERE booking_type = 'One-Time'
+    AND service_date BETWEEN ? AND ?
     AND status = 'Confirmed'
     AND (
         cleaners LIKE CONCAT('%', ?, '%')
         OR drivers LIKE CONCAT('%', ?, '%')
     )
 ";
-$stmt = $conn->prepare($upcomingQuery);
+$stmt = $conn->prepare($upcomingOneTimeQuery);
 $stmt->bind_param("ssss", $today, $sevenDaysLater, $employeeName, $employeeName);
 $stmt->execute();
-$upcomingCount = $stmt->get_result()->fetch_assoc()['total'];
+$upcomingOneTimeCount = $stmt->get_result()->fetch_assoc()['total'];
 
+// ========== COUNT UPCOMING RECURRING (7 DAYS) ==========
+$upcomingRecurringQuery = "
+    SELECT * FROM bookings 
+    WHERE booking_type = 'Recurring'
+    AND start_date <= ?
+    AND (end_date IS NULL OR end_date >= ?)
+    AND status IN ('Confirmed', 'Active')
+    AND (
+        cleaners LIKE CONCAT('%', ?, '%')
+        OR drivers LIKE CONCAT('%', ?, '%')
+    )
+";
+$stmt = $conn->prepare($upcomingRecurringQuery);
+$stmt->bind_param("ssss", $sevenDaysLater, $today, $employeeName, $employeeName);
+$stmt->execute();
+$upcomingRecurringResult = $stmt->get_result();
+
+// Count recurring appointments in next 7 days
+$upcomingRecurringCount = 0;
+while ($booking = $upcomingRecurringResult->fetch_assoc()) {
+    $current = strtotime($today);
+    $end = strtotime($sevenDaysLater);
+    
+    while ($current <= $end) {
+        $checkDate = date('Y-m-d', $current);
+        $occurrences = generateRecurringOccurrences($booking, $checkDate);
+        if (count($occurrences) > 0) {
+            $upcomingRecurringCount++;
+            break; // Count each booking only once
+        }
+        $current = strtotime('+1 day', $current);
+    }
+}
+
+// ========== TOTAL UPCOMING COUNT ==========
+$upcomingCount = $upcomingOneTimeCount + $upcomingRecurringCount;
+
+// ========== COUNT PENDING ==========
 $pendingQuery = "
     SELECT COUNT(*) as total 
     FROM bookings 
@@ -208,22 +254,41 @@ $stmt->bind_param("sss", $today, $employeeName, $employeeName);
 $stmt->execute();
 $oneTimeResult = $stmt->get_result();
 
-// ==================== FETCH UPCOMING RECURRING APPOINTMENTS ====================
+// ==================== FETCH AND GENERATE UPCOMING RECURRING APPOINTMENTS ====================
 $recurringQuery = "
     SELECT * FROM bookings 
     WHERE booking_type = 'Recurring'
-    AND service_date >= ?
+    AND start_date <= ?
+    AND (end_date IS NULL OR end_date >= ?)
     AND (
         cleaners LIKE CONCAT('%', ?, '%')
         OR drivers LIKE CONCAT('%', ?, '%')
     )
-    ORDER BY service_date ASC, service_time ASC
-    LIMIT 5
+    ORDER BY start_date ASC, service_time ASC
 ";
 $stmt = $conn->prepare($recurringQuery);
-$stmt->bind_param("sss", $today, $employeeName, $employeeName);
+$thirtyDaysLater = date('Y-m-d', strtotime('+30 days')); // Look ahead 30 days
+$stmt->bind_param("ssss", $thirtyDaysLater, $today, $employeeName, $employeeName);
 $stmt->execute();
-$recurringResult = $stmt->get_result();
+$recurringResultRaw = $stmt->get_result();
+
+// Generate next occurrences for recurring bookings
+$recurringAppointments = [];
+while ($booking = $recurringResultRaw->fetch_assoc()) {
+    $nextOccurrence = getNextOccurrence($booking, $today);
+    if ($nextOccurrence) {
+        $booking['service_date'] = $nextOccurrence; // Add the calculated date
+        $recurringAppointments[] = $booking;
+    }
+}
+
+// Sort by next occurrence date
+usort($recurringAppointments, function($a, $b) {
+    return strtotime($a['service_date']) - strtotime($b['service_date']);
+});
+
+// Limit to 5
+$recurringAppointments = array_slice($recurringAppointments, 0, 5);
 
 // Helper function to format reference number
 function formatRefNo($id, $serviceType, $date) {
@@ -255,6 +320,7 @@ function getStatusBadge($status) {
             $badgeClass = 'pending';
             break;
         case 'confirmed':
+        case 'active':
             $badgeClass = 'confirmed';
             break;
         case 'ongoing':
@@ -271,6 +337,24 @@ function getStatusBadge($status) {
     }
     
     return '<span class="status-badge ' . $badgeClass . '">' . htmlspecialchars($status) . '</span>';
+}
+
+// ==================== DEBUG SECTION (if enabled) ====================
+if ($DEBUG_MODE) {
+    echo "<div style='background: #f0f0f0; padding: 20px; margin: 20px; border: 2px solid #333; border-radius: 10px; font-family: monospace;'>";
+    echo "<h2 style='color: #d32f2f;'>🔍 DEBUG MODE ENABLED</h2>";
+    echo "<p><strong>Logged-in Employee:</strong> " . htmlspecialchars($employeeName) . "</p>";
+    echo "<p><strong>Today's Date:</strong> $today</p>";
+    echo "<hr>";
+    echo "<h3>📊 Statistics:</h3>";
+    echo "<p><strong>Today One-Time Count:</strong> $todayOneTimeCount</p>";
+    echo "<p><strong>Today Recurring Count:</strong> $todayRecurringCount</p>";
+    echo "<p><strong>Total Today:</strong> $todayCount</p>";
+    echo "<p><strong>Upcoming One-Time Count (7 days):</strong> $upcomingOneTimeCount</p>";
+    echo "<p><strong>Upcoming Recurring Count (7 days):</strong> $upcomingRecurringCount</p>";
+    echo "<p><strong>Total Upcoming:</strong> $upcomingCount</p>";
+    echo "<p><strong>Pending Count:</strong> $pendingCount</p>";
+    echo "</div>";
 }
 
 $conn->close();
@@ -744,9 +828,9 @@ justify-self: start;
 </a>
 </li>
 
-<!-- <li class="menu__item">
-<a href="?content=profile" class="menu__link" data-content="profile">
-<i class='bx bx-user'></i> My Profile -->
+<li class="menu__item">
+<a href="employee_schedule.php" class="menu__link" data-content="Schedule">
+<i class='bx bx-calendar-week'></i> Schedule
 </a>
 </li>
 <li class="menu__item"><a href="?content=logout" class="menu__link" data-content="logout"><i class='bx bx-log-out'></i> Logout</a></li>
@@ -852,27 +936,29 @@ justify-self: start;
         
         <?php if($oneTimeResult->num_rows > 0): ?>
         <div class="view-all-container">
-            <a href="EMP_appointments_today.php" class="view-all-link">See More...</a>
+            <!-- <a href="EMP_appointments_today.php" class="view-all-link">See More...</a> -->
         </div>
         <?php endif; ?>
     </div>
 </div>
 
 <!-- RECURRING APPOINTMENTS -->
+<!-- RECURRING APPOINTMENTS -->
 <div class="dashboard__container upcoming-container recurring-container">
     <div class="container-title">
         <i class='bx bx-repeat'></i> My Upcoming <strong>Recurring</strong> Tasks
     </div>
     <div class="appointment-list-container">
-        <?php if($recurringResult->num_rows > 0): ?>
-            <?php while($booking = $recurringResult->fetch_assoc()): 
+        <?php if(count($recurringAppointments) > 0): ?>
+            <?php foreach($recurringAppointments as $booking): 
                 $refNo = formatRefNo($booking['id'], $booking['service_type'], $booking['service_date']);
                 $price = calculatePrice($booking['materials_provided'], $booking['duration']);
                 $dayName = date('l', strtotime($booking['service_date']));
             ?>
             <div class="appointment-list-item">
+                <!-- Rest of your appointment display code stays the same -->
                 <div class="button-group-top">
-                    <a href="booking_details.php?id=<?php echo $booking['id']; ?>" class="action-btn view-details-btn"><i class='bx bx-show'></i> View</a>
+                    <!-- <a href="booking_details.php?id=<?php echo $booking['id']; ?>" class="action-btn view-details-btn"><i class='bx bx-show'></i> View</a> -->
                     <a href="tel:<?php echo $booking['phone']; ?>" class="action-btn call-btn"><i class='bx bx-phone'></i> Call Client</a>
                     <div class="dropdown-menu-container">
                         <button class="more-options-btn"><i class='bx bx-dots-vertical-rounded'></i></button>
@@ -884,7 +970,7 @@ justify-self: start;
                 </div>
                 <div class="appointment-details">
                     <p class="full-width-detail ref-no-detail"><strong>Reference No:</strong> <span class="ref-no-value"><?php echo $refNo; ?></span></p>
-                    <p class="full-width-detail"><i class='bx bx-calendar-check'></i> <strong>Date:</strong> <?php echo date('F j, Y', strtotime($booking['service_date'])); ?></p>
+                    <p class="full-width-detail"><i class='bx bx-calendar-check'></i> <strong>Next Occurrence:</strong> <?php echo date('F j, Y', strtotime($booking['service_date'])); ?></p>
                     <p><i class='bx bx-calendar-week'></i> <strong>Day:</strong> <?php echo $dayName; ?></p>
                     <p class="recurring-details"><i class='bx bx-repeat'></i> <strong>Frequency:</strong> <?php echo htmlspecialchars($booking['frequency']); ?></p>
                     <p><i class='bx bx-time'></i> <strong>Time:</strong> <?php echo date('g:i A', strtotime($booking['service_time'])); ?></p>
@@ -893,19 +979,18 @@ justify-self: start;
                     <hr class="divider full-width-detail">
                     <p><i class='bx bx-user'></i> <strong>Client Type:</strong> <?php echo htmlspecialchars($booking['client_type']); ?></p>
                     <p class="recurring-details"><i class='bx bx-wrench'></i> <strong>Service Type:</strong> <?php echo htmlspecialchars($booking['service_type']); ?></p>
-                    <p class="full-width-detail"><i class='bx bx-info-circle'></i> <strong>Status:</strong> <?php echo htmlspecialchars($booking['status']); ?></p>
+                    <p class="full-width-detail"><i class='bx bx-info-circle'></i> <strong>Status:</strong> <?php echo getStatusBadge($booking['status']); ?></p>
                     <p class="price-detail">Client Pays: <span class="aed-color">AED <?php echo number_format($price, 2); ?></span></p>
 
-                    <!-- ADD THESE LINES -->
-    <?php if(!empty($booking['cleaners'])): ?>
-    <p class="full-width-detail"><i class='bx bx-user-check'></i> <strong>Cleaners:</strong> <?php echo htmlspecialchars($booking['cleaners']); ?></p>
-    <?php endif; ?>
-    <?php if(!empty($booking['drivers'])): ?>
-    <p class="full-width-detail"><i class='bx bx-car'></i> <strong>Drivers:</strong> <?php echo htmlspecialchars($booking['drivers']); ?></p>
-    <?php endif; ?>
+                    <?php if(!empty($booking['cleaners'])): ?>
+                    <p class="full-width-detail"><i class='bx bx-user-check'></i> <strong>Cleaners:</strong> <?php echo htmlspecialchars($booking['cleaners']); ?></p>
+                    <?php endif; ?>
+                    <?php if(!empty($booking['drivers'])): ?>
+                    <p class="full-width-detail"><i class='bx bx-car'></i> <strong>Drivers:</strong> <?php echo htmlspecialchars($booking['drivers']); ?></p>
+                    <?php endif; ?>
                 </div>
             </div>
-            <?php endwhile; ?>
+            <?php endforeach; ?>
         <?php else: ?>
             <div class="no-data-message">
                 <i class='bx bx-calendar-x'></i>
@@ -913,9 +998,9 @@ justify-self: start;
             </div>
         <?php endif; ?>
         
-        <?php if($recurringResult->num_rows > 0): ?>
+        <?php if(count($recurringAppointments) > 0): ?>
         <div class="view-all-container">
-            <a href="EMP_appointments_history.php" class="view-all-link">See More...</a>
+            <!-- <a href="EMP_appointments_history.php" class="view-all-link">See More...</a> -->
         </div>
         <?php endif; ?>
     </div>

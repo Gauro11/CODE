@@ -440,13 +440,14 @@ background-color: #303099;
 <li class="menu__item"><a href="AU_cleaners.php" class="menu__link">Cleaner Accounts</a></li>
 </ul>
 </li>
+<li class="menu__item"><a href="manage_groups.php" class="menu__link "><i class='bx bx-group'></i> Manage Groups</a></li>
  <li class="menu__item"><a href="admin_feedback_dashboard.php" class="menu__link "><i class='bx bx-star'></i> Feedback Overview</a></li>
  <!-- <li class="menu__item"><a href="FR.php" class="menu__link"><i class='bx bx-star'></i> Feedback & Ratings</a></li> -->
 <li class="menu__item has-dropdown">
 
 </li>
-<li class="menu__item"><a href="Reports.php?content=reports" class="menu__link" data-content="reports"><i class='bx bx-file-text'></i> Reports</a></li>
-   <li class="menu__item"><a href="concern.php?content=profile" class="menu__link" data-content="profile"><i class='bx bx-user'></i> Issues&Concerns</a></li>
+<li class="menu__item"><a href="Reports.php?content=reports" class="menu__link" data-content="reports"><i class='bx bx-file'></i> Reports</a></li>
+   <li class="menu__item"><a href="concern.php?content=profile" class="menu__link" data-content="profile"><i class='bx bx-info-circle'></i> Issues&Concerns</a></li>
 <li class="menu__item"><a href="admin_profile.php" class="menu__link active" data-content="profile"><i class='bx bx-user'></i> My Profile</a></li>
 <li class="menu__item"><a href="javascript:void(0)" class="menu__link" data-content="logout" onclick="showLogoutModal()"><i class='bx bx-log-out'></i> Logout</a></li>
 </ul>

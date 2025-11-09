@@ -354,3 +354,9 @@ Stack trace:
 #0 C:\Users\asus\Downloads\CODE\FR_one-time.php(749): renderBookingCard(Array)
 #1 {main}
   thrown in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 582
+[09-Nov-2025 03:16:55 Europe/Berlin] PHP Warning:  Undefined variable $booking in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 1700
+[09-Nov-2025 03:16:55 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 1700
+[09-Nov-2025 20:21:32 Europe/Berlin] PHP Warning:  Undefined variable $booking in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 1700
+[09-Nov-2025 20:21:32 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 1700
+[09-Nov-2025 20:38:53 Europe/Berlin] PHP Warning:  Undefined variable $booking in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 1700
+[09-Nov-2025 20:38:53 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 1700

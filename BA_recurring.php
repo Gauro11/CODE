@@ -206,16 +206,22 @@
                         </div>
 
                         <div class="form-row">
-                            <div class="form-group">
-                                <label for="startDate">Start Date</label>
-                                <input type="text" id="startDate" name="startDate" required disabled placeholder="Please select a preferred day first.">
-                                <div id="startDateErrorMessage" class="error-message"></div>
-                            </div>
-                            <div class="form-group">
-                                <label for="endDate">End Date</label>
-                                <input type="text" id="endDate" name="endDate" required disabled placeholder="Please select a start date first.">
-                                <div id="endDateErrorMessage" class="error-message"></div>
-                            </div>
+    <div class="form-group">
+        <label for="startDate">Start Date</label>
+        <input type="text" id="startDate" name="startDate" required disabled placeholder="Please select a preferred day first.">
+        <div id="startDateErrorMessage" class="error-message"></div>
+    </div>
+    <div class="form-group">
+        <label for="endDate">End Date</label>
+        <input type="text" id="endDate" name="endDate" required disabled placeholder="Please select a start date first.">
+        <div id="endDateErrorMessage" class="error-message"></div>
+    </div>
+</div>
+
+<!-- Hidden input for estimated sessions (moved outside form-row) -->
+<input type="hidden" id="estimatedSessionsHidden" name="estimated_sessions" value="">
+
+<div class="form-row">
                             <div class="form-group">
                                 <label for="bookingTimeRecurring">Preferred Time</label>
                                 <input type="time" id="bookingTimeRecurring" name="bookingTime" required disabled>
@@ -352,6 +358,7 @@
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 <script>
+    
 document.addEventListener('DOMContentLoaded', () => {
     // --- SIDEBAR TOGGLE ---
     const navToggle = document.getElementById('nav-toggle');
@@ -489,7 +496,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // **IMPORTANT:** If Preferred Day is already selected, re-trigger the setting of Start Date
         if(preferredDaySelect.value) {
              enableFlatpickrForPreferredDay(preferredDaySelect.value); // This will set Start Date
-        } else {
+        } else
+         {
              // If preferred day is also empty, the flatpickr remains disabled until preferredDay is selected
         }
     });
@@ -711,99 +719,98 @@ document.addEventListener('DOMContentLoaded', () => {
     // ** END OF MODIFIED VALIDATION LOGIC **
 
     // --- SESSION COUNT HELPER (UNCHANGED) ---
-    function updateSessionCountHelper() {
-        const startDateStr = startDateInput.value;
-        const endDateStr = endDateInput.value;
-        const frequency = frequencySelect.value;
-        const helperElementId = 'sessionCountHelper';
+   // --- SESSION COUNT HELPER (MODIFIED) ---
+function updateSessionCountHelper() {
+    const startDateStr = startDateInput.value;
+    const endDateStr = endDateInput.value;
+    const frequency = frequencySelect.value;
+    const helperElementId = 'sessionCountHelper';
+    const hiddenSessionInput = document.getElementById('estimatedSessionsHidden'); // Add this line
 
-        // Find or create the helper element
-        let helperElement = endDateInput.parentNode.querySelector('#' + helperElementId);
-        if (!helperElement) {
-            helperElement = document.createElement('small');
-            helperElement.className = 'session-count-helper';
-            helperElement.id = helperElementId;
-            helperElement.style.cssText = 'color: rgb(85, 85, 85); margin-top: 0.25rem; display: block;'; 
-            endDateInput.parentNode.appendChild(helperElement);
-        }
-
-        // Hide if required conditions are not met or if validation fails
-        if (!startDateStr || !endDateStr || !frequency || !validateDateRange()) {
-            helperElement.style.display = 'none';
-            return;
-        }
-
-        // Normalize dates to start of day for accurate comparison
-        const startDate = new Date(startDateStr + 'T00:00:00');
-        const endDate = new Date(endDateStr + 'T00:00:00');
-        let sessionCount = 0;
-
-        if (frequency === 'Weekly' || frequency === 'Bi-Weekly') {
-            const intervalDays = frequency === 'Weekly' ? 7 : 14;
-            let currentDate = new Date(startDate.getTime()); // Start loop from Start Date
-            
-            // Loop through dates, incrementing by the interval
-            while (currentDate.getTime() <= endDate.getTime()) {
-                sessionCount++;
-                // Advance the date by the interval
-                currentDate.setDate(currentDate.getDate() + intervalDays);
-            }
-            
-        } else if (frequency === 'Monthly') {
-             // Use a more robust monthly counting loop
-             const startDay = startDate.getDate();
-             let currentDate = new Date(startDate.getTime());
-             
-             // Count the first session (Start Date)
-             if(currentDate.getTime() <= endDate.getTime()) {
-                 sessionCount = 1; 
-             } else {
-                 sessionCount = 0;
-             }
-             
-             let nextDate = new Date(startDate.getTime());
-
-             // Loop to find subsequent monthly sessions
-             while (true) {
-                 // Move one calendar month forward
-                 nextDate.setMonth(nextDate.getMonth() + 1); 
-                 
-                 let tempNextDate = new Date(nextDate.getFullYear(), nextDate.getMonth(), startDay);
-
-                 if (tempNextDate.getTime() > endDate.getTime() || nextDate.getMonth() > endDate.getMonth() + 12) {
-                    break;
-                 }
-
-                 if (tempNextDate.getTime() >= startDate.getTime() && tempNextDate.getTime() <= endDate.getTime()) {
-                     // Check if this date is the *same* day of the month. This handles
-                     // the Jan 31st case where nextDate might be March 3rd.
-                     if (tempNextDate.getDate() === startDay) {
-                         sessionCount++;
-                     }
-                 } else if (nextDate.getTime() <= endDate.getTime() && nextDate.getDate() === startDay) {
-                     sessionCount++;
-                 }
-
-                 // If nextDate is past the EndDate, break the loop
-                 if (nextDate.getTime() > endDate.getTime()) {
-                    break;
-                 }
-             }
-            
-        } else {
-            helperElement.style.display = 'none';
-            return;
-        }
-
-        // Final safety check
-        if (sessionCount === 0 && startDate.getTime() <= endDate.getTime()) {
-             sessionCount = 1;
-        }
-
-
-        helperElement.textContent = `Estimated Sessions: ${sessionCount}`;
-        helperElement.style.display = 'block';
+    // Find or create the helper element
+    let helperElement = endDateInput.parentNode.querySelector('#' + helperElementId);
+    if (!helperElement) {
+        helperElement = document.createElement('small');
+        helperElement.className = 'session-count-helper';
+        helperElement.id = helperElementId;
+        helperElement.style.cssText = 'color: rgb(85, 85, 85); margin-top: 0.25rem; display: block;'; 
+        endDateInput.parentNode.appendChild(helperElement);
     }
+
+    // Hide if required conditions are not met or if validation fails
+    if (!startDateStr || !endDateStr || !frequency || !validateDateRange()) {
+        helperElement.style.display = 'none';
+        if (hiddenSessionInput) hiddenSessionInput.value = ''; // Clear hidden value
+        return;
+    }
+
+    // Normalize dates to start of day for accurate comparison
+    const startDate = new Date(startDateStr + 'T00:00:00');
+    const endDate = new Date(endDateStr + 'T00:00:00');
+    let sessionCount = 0;
+
+    if (frequency === 'Weekly' || frequency === 'Bi-Weekly') {
+        const intervalDays = frequency === 'Weekly' ? 7 : 14;
+        let currentDate = new Date(startDate.getTime());
+        
+        while (currentDate.getTime() <= endDate.getTime()) {
+            sessionCount++;
+            currentDate.setDate(currentDate.getDate() + intervalDays);
+        }
+        
+    } else if (frequency === 'Monthly') {
+        const startDay = startDate.getDate();
+        let currentDate = new Date(startDate.getTime());
+        
+        if(currentDate.getTime() <= endDate.getTime()) {
+            sessionCount = 1; 
+        } else {
+            sessionCount = 0;
+        }
+        
+        let nextDate = new Date(startDate.getTime());
+
+        while (true) {
+            nextDate.setMonth(nextDate.getMonth() + 1); 
+            
+            let tempNextDate = new Date(nextDate.getFullYear(), nextDate.getMonth(), startDay);
+
+            if (tempNextDate.getTime() > endDate.getTime() || nextDate.getMonth() > endDate.getMonth() + 12) {
+                break;
+            }
+
+            if (tempNextDate.getTime() >= startDate.getTime() && tempNextDate.getTime() <= endDate.getTime()) {
+                if (tempNextDate.getDate() === startDay) {
+                    sessionCount++;
+                }
+            } else if (nextDate.getTime() <= endDate.getTime() && nextDate.getDate() === startDay) {
+                sessionCount++;
+            }
+
+            if (nextDate.getTime() > endDate.getTime()) {
+                break;
+            }
+        }
+        
+    } else {
+        helperElement.style.display = 'none';
+        if (hiddenSessionInput) hiddenSessionInput.value = ''; // Clear hidden value
+        return;
+    }
+
+    // Final safety check
+    if (sessionCount === 0 && startDate.getTime() <= endDate.getTime()) {
+        sessionCount = 1;
+    }
+
+    helperElement.textContent = `Estimated Sessions: ${sessionCount}`;
+    helperElement.style.display = 'block';
+    
+    // UPDATE HIDDEN INPUT WITH SESSION COUNT (Add this)
+    if (hiddenSessionInput) {
+        hiddenSessionInput.value = sessionCount;
+    }
+}
 
 
     bookingTimeInput.addEventListener("change", () => {
@@ -944,6 +951,46 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- DURATION COMPLETION TIME HELPER ---
+  // --- UAE BREAK CALCULATION FUNCTIONS ---
+    
+    // Check if work period includes the 1:00 PM - 2:00 PM break
+    function includesBreakTime(startTime, workHours) {
+        if (!startTime || !workHours) return false;
+        
+        const [hours, minutes] = startTime.split(':').map(Number);
+        const startMinutes = hours * 60 + minutes;
+        
+        // Prayer + Lunch break is 1:00 PM - 2:00 PM (13:00 - 14:00)
+        const breakStart = 13 * 60; // 1:00 PM in minutes
+        const breakEnd = 14 * 60;   // 2:00 PM in minutes
+        
+        // Calculate end time in minutes (without break)
+        const endMinutes = startMinutes + (workHours * 60);
+        
+        // Check if the work period overlaps with break time
+        return startMinutes < breakEnd && endMinutes > breakStart;
+    }
+
+    // Calculate actual duration with break
+    function calculateActualDuration(startTime, workHours) {
+        const hasBreak = includesBreakTime(startTime, workHours);
+        const breakDuration = hasBreak ? 1 : 0;
+        const totalHours = workHours + breakDuration;
+        
+        return {
+            workHours: workHours,
+            breakHours: breakDuration,
+            totalHours: totalHours,
+            hasBreak: hasBreak
+        };
+    }
+
+    // Check if duration exceeds 5 consecutive hours
+    function checkConsecutiveHours(workHours) {
+        return workHours > 5;
+    }
+
+    // --- DURATION COMPLETION TIME HELPER ---
     function updateDurationHelper() {
         const duration = parseInt(durationSelect.value);
         const timeValue = bookingTimeInput.value;
@@ -953,25 +1000,53 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // Calculate UAE break requirements
+        const durationCalc = calculateActualDuration(timeValue, duration);
+
         const [hours, minutes] = timeValue.split(":").map(Number);
         const startTime = new Date();
         startTime.setHours(hours, minutes, 0);
 
-        const endTime = new Date(startTime.getTime() + duration * 60 * 60 * 1000);
+        // Add TOTAL hours (work + break)
+        const endTime = new Date(startTime.getTime() + durationCalc.totalHours * 60 * 60 * 1000);
         let endHours = endTime.getHours();
         const endMinutes = endTime.getMinutes();
         const ampm = endHours >= 12 ? 'PM' : 'AM';
         endHours = endHours % 12 || 12;
 
+        // Format start time
+        const startAmpm = hours >= 12 ? 'PM' : 'AM';
+        const startHours12 = hours % 12 || 12;
+
         let helperElement = durationSelect.parentNode.querySelector('.duration-completion-helper');
         if (!helperElement) {
             helperElement = document.createElement('small');
             helperElement.className = 'duration-completion-helper';
-            helperElement.style.color = '#555';
             helperElement.style.marginTop = '0.25rem';
             durationSelect.parentNode.appendChild(helperElement);
         }
-        helperElement.textContent = `Estimated completion: ${endHours}:${endMinutes.toString().padStart(2, '0')} ${ampm} (after ${duration} hrs)`;
+
+        let completionText = `${startHours12}:${minutes.toString().padStart(2, '0')} ${startAmpm} - ${endHours}:${endMinutes.toString().padStart(2, '0')} ${ampm}`;
+        
+        // Show work hours
+        completionText += ` (${duration} hrs work`;
+        
+        // Add break information if applicable
+        if (durationCalc.hasBreak) {
+            completionText += ` + 1 hr break [1:00 PM - 2:00 PM Prayer/Lunch]`;
+        }
+        
+        completionText += `)`;
+
+        // Warning if exceeds 5 consecutive hours without break
+        if (checkConsecutiveHours(duration) && !durationCalc.hasBreak) {
+            completionText += ` ⚠️ Exceeds 5 hours without break`;
+            helperElement.style.color = '#d9534f';
+        } else {
+            helperElement.style.color = '#555';
+        }
+
+        helperElement.textContent = completionText;
         helperElement.style.display = 'block';
     }
 
