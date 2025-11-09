@@ -606,11 +606,17 @@ if ($view == 'week') {
 }
 
 .schedule-item.ongoing {
-    background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%);
+    background: linear-gradient(135deg, #dbd81fff 0%, #e2d10fff 100%);
 }
 
 .schedule-item.completed {
     background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+}
+
+.schedule-item.session-complete,
+.schedule-item.session-completed,
+.schedule-item.sessioncomplete {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%) !important;
 }
 
 .schedule-item.pending {
@@ -777,8 +783,13 @@ if ($view == 'week') {
 
 .status-Pending { background-color: gray; }
 .status-Confirmed { background-color: #007bff; }
-.status-Ongoing { background-color: #17a2b8; }
+.status-Ongoing { background-color:  #e2d10fff ; }
 .status-Completed { background-color: #28a745; }
+.status-Session-Complete,
+.status-session-complete,
+.status-SessionComplete { 
+    background-color: #28a745 !important; 
+}
 .status-Cancelled { background-color: #dc3545; }
 .status-No\Show,
 .status-NoShow,
@@ -1029,12 +1040,20 @@ if ($view == 'week') {
                             <span>Pending</span>
                         </div>
                         <div class="legend-item">
+                            <div class="legend-color" style="background: linear-gradient(135deg, #dbd81fff 0%, #e2d10fff 100%);"></div>
+                            <span>ongoing</span>
+                        </div>
+                        <div class="legend-item">
                             <div class="legend-color" style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);"></div>
                             <span>Confirmed</span>
                         </div>
                         <div class="legend-item">
                             <div class="legend-color" style="background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);"></div>
                             <span>Completed</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);"></div>
+                            <span>Session-Complete</span>
                         </div>
                     </div>
 
