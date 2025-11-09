@@ -1346,7 +1346,7 @@ $status_colors = [
             <div class="form-group">
                 <label>
                     <i class='bx bx-group'></i> Select Pre-defined Group
-                    <span style="font-size: 0.9em; color: #6c757d;">(Groups sorted by location match)</span>
+                    <span style="font-size: 0.9em; color: #6c757d;"></span>
                     <a href="manage_groups.php" target="_blank" style="margin-left: 10px; color: #007bff; font-size: 0.9em;">
                         <i class='bx bx-cog'></i> Manage Groups
                     </a>
