@@ -1,16 +1,6 @@
 <?php
-$servername = "localhost";
-$username = "root"; // default for XAMPP
-$password = ""; // default for XAMPP
-$dbname = "alazima";
+require_once 'connection.php';
 
-// Create connection
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
 
 // SQL to create table
 $sql = "CREATE TABLE IF NOT EXISTS bookings (

@@ -2,22 +2,7 @@
 session_start();
 
 
-// $servername = "localhost";
-// $username = "u665838367_alazimaa";
-// $password = '6$HvZ#Vd'; // safer
-
-// $dbname = "u665838367_alazima";
-
-// $conn = new mysqli($servername, $username, $password, $dbname);
-// if ($conn->connect_error) {
-//     die("Connection failed: " . $conn->connect_error);
-// }
-$servername = "localhost";
-$username = "root";
-$password = ""; // empty
-$dbname = "alazima";
-
-$conn = new mysqli($servername, $username, $password, $dbname);
+require_once 'connection.php';
 
 
 // --- 2. Initialize error array ---

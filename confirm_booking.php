@@ -1,30 +1,37 @@
 <?php
 // confirm_booking.php
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "alazima";
+session_start();
+require 'connection.php'; // ✅ Use the shared DB connection
 
-$conn = new mysqli($servername, $username, $password, $dbname);
+header('Content-Type: application/json');
 
 if ($conn->connect_error) {
-    die(json_encode(['success' => false, 'message' => 'Connection failed']));
+    echo json_encode(['success' => false, 'message' => 'Connection failed']);
+    exit;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['booking_id'])) {
     $booking_id = (int)$_POST['booking_id'];
-    
+
     $sql = "UPDATE bookings SET status = 'Confirmed' WHERE id = ?";
     $stmt = $conn->prepare($sql);
+
+    if (!$stmt) {
+        echo json_encode(['success' => false, 'message' => 'Prepare failed: '.$conn->error]);
+        exit;
+    }
+
     $stmt->bind_param("i", $booking_id);
-    
+
     if ($stmt->execute()) {
         echo json_encode(['success' => true]);
     } else {
         echo json_encode(['success' => false, 'message' => $stmt->error]);
     }
-    
+
     $stmt->close();
+} else {
+    echo json_encode(['success' => false, 'message' => 'Invalid request']);
 }
 
 $conn->close();

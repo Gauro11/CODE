@@ -2,16 +2,8 @@
 header('Content-Type: application/json');
 error_reporting(0); // hide warnings/notices
 
-$host = 'localhost';
-$db   = 'alazima';
-$user = 'root';
-$pass = '';
-
-$conn = new mysqli($host, $user, $pass, $db);
-if ($conn->connect_error) {
-    echo json_encode(['success' => false, 'message' => 'DB connection failed']);
-    exit;
-}
+// ✅ USE EXISTING DATABASE CONNECTION
+require_once 'connection.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'message' => 'Invalid request method']);
@@ -39,5 +31,8 @@ if ($stmt->execute()) {
 } else {
     echo json_encode(['success' => false, 'message' => 'Failed to cancel appointment']);
 }
+
+$stmt->close();
+$conn->close();
 
 // ✅ No closing PHP tag needed

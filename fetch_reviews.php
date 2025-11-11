@@ -1,14 +1,11 @@
 <?php
 header('Content-Type: application/json');
 
-// Database configuration
-$host = 'localhost';
-$dbname = 'alazima';
-$username = 'root';
-$password = '';
+// ✅ USE EXISTING DATABASE CONNECTION
+require_once 'connection.php';
 
 try {
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
+        $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
     
     $sql = "SELECT rating_stars, rating_comment, full_name, created_at 
             FROM bookings 

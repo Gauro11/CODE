@@ -1,19 +1,6 @@
 <?php
 // PHP code for database connection and data fetching
-$servername = "localhost";
-$username = "root"; // Your database username
-$password = "";     // Your database password
-$dbname = "alazima"; // Your database database name
-
-// Create connection
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-// Check connection
-if ($conn->connect_error) {
-    // In a production environment, you might log this error and display a generic message
-    // For now, we'll let it die to show the error during development.
-    die("Connection failed: " . $conn->connect_error);
-}
+require_once 'connection.php';
 
 // SQL query to fetch feedback data
 // Joining ratings, appointments, and clients tables to get all necessary information
