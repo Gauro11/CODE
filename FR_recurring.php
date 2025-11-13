@@ -10,6 +10,7 @@ $client_email = $_SESSION['email'] ?? null;
 $sql = "SELECT * FROM bookings 
 WHERE booking_type = 'Recurring' ";
 
+
 if ($client_email) {
     $sql .= "AND email = '" . $conn->real_escape_string($client_email) . "' ";
 }
@@ -117,6 +118,7 @@ function renderRecurringBookingCard($booking) {
     <div class="appointment-list-item" 
     data-booking-id="<?= htmlspecialchars($booking['id']) ?>"
     data-date="<?= htmlspecialchars($booking['service_date']) ?>" 
+    data-start-date="<?= htmlspecialchars($booking['start_date'] ?? $booking['service_date']) ?>"
     data-end-date="<?= htmlspecialchars($booking['end_date'] ?? '2025-12-31') ?>" 
     data-time="<?= htmlspecialchars($booking['service_time']) ?>"
     data-duration="<?= htmlspecialchars($booking['duration'] ?? 'N/A') ?>"
@@ -137,6 +139,7 @@ function renderRecurringBookingCard($booking) {
     data-plan-status="<?= htmlspecialchars($status) ?>"
     data-ref-no="<?= htmlspecialchars($refNo) ?>"
     data-frequency="<?= htmlspecialchars($booking['frequency'] ?? 'N/A') ?>"
+    data-sessions="<?= htmlspecialchars($booking['estimated_sessions'] ?? 0) ?>"
     data-sessions-completed="<?= htmlspecialchars($booking['sessions_completed'] ?? 0) ?>"
     data-total-sessions="<?= htmlspecialchars($booking['total_sessions'] ?? 0) ?>"
     data-has-issue="<?= $hasIssue ? 'true' : 'false' ?>"
@@ -193,12 +196,12 @@ function renderRecurringBookingCard($booking) {
 
     <div class="appointment-details">
         <p class="full-width-detail ref-no-detail"><strong>Reference No:</strong> <span class="ref-no-value"><?= htmlspecialchars($refNo) ?></span></p>
-        <p><i class='bx bx-calendar-check'></i> <strong>Start Date:</strong> <?= formatDate($booking['service_date']) ?></p>
+        <p><i class='bx bx-calendar-check'></i> <strong>Start Date:</strong> <?= formatDate($booking['start_date']) ?></p>
         <p class="end-date-detail"><i class='bx bx-calendar-check'></i> <strong>End Date:</strong> <?= formatDate($booking['end_date'] ?? '') ?></p>
         <p><i class='bx bx-time'></i> <strong>Time:</strong> <?= formatTime($booking['service_time']) ?></p>
         <p class="duration-detail"><i class='bx bx-stopwatch'></i> <strong>Duration:</strong> <?= htmlspecialchars($booking['duration'] ?? 'N/A') ?> hours</p>
         <p class="frequency-detail"><i class='bx bx-sync'></i> <strong>Frequency:</strong> <?= htmlspecialchars($booking['frequency'] ?? 'N/A') ?></p>
-        <p class="sessions-detail"><i class='bx bx-list-ol'></i> <strong>Sessions:</strong> <?= htmlspecialchars($booking['sessions_completed'] ?? 0) ?> of <?= htmlspecialchars($booking['total_sessions'] ?? 0) ?></p>
+        <p class="sessions-detail"><i class='bx bx-list-ol'></i> <strong>Sessions:</strong> <?= htmlspecialchars($booking['estimated_sessions'] ?? 0) ?> </p>
         <p class="full-width-detail"><i class='bx bx-map-alt'></i> <strong>Address:</strong> <?= htmlspecialchars($booking['address'] ?? 'N/A') ?></p>
         <hr class="divider full-width-detail">
         <p><i class='bx bx-building-house'></i> <strong>Client Type:</strong> <?= htmlspecialchars($booking['client_type'] ?? 'N/A') ?></p>
@@ -254,6 +257,7 @@ $conn->close();
 
 <style>
     /* ===== Force ALL modals to center on screen ===== */
+    
 .modal {
     position: fixed !important;
     top: 50% !important;
@@ -769,6 +773,13 @@ $conn->close();
         <button onclick="closeLogoutModal()" class="no-cancel">Cancel</button>
     </div>
 </div>
+<div class="modal" id="detailsModal" onclick="if(event.target.id === 'detailsModal') closeModal('detailsModal')">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal('detailsModal')">&times;</span> 
+        <h3><i class='bx bx-list-ul'></i> Booking Details</h3>
+        <div id="modal-details-content"></div>
+    </div>
+</div>
 
 <script>
 
@@ -816,25 +827,7 @@ window.addEventListener('click', e => {
 });
 
 /* OPEN DETAILS MODAL */
-function showRecurringDetailsModal(card) {
-    const ref = card.dataset.refNo;
-    const date = card.dataset.date;
-    const time = card.dataset.time;
-    const address = card.dataset.address;
-    const service = card.dataset.serviceType;
-    const freq = card.dataset.frequency;
 
-    document.getElementById('detailsModalContent').innerHTML = `
-        <h3><i class='bx bx-info-circle'></i> Booking Details</h3>
-        <p><strong>Reference:</strong> ${ref}</p>
-        <p><strong>Date:</strong> ${date}</p>
-        <p><strong>Time:</strong> ${time}</p>
-        <p><strong>Service:</strong> ${service}</p>
-        <p><strong>Frequency:</strong> ${freq}</p>
-        <p><strong>Address:</strong> ${address}</p>
-    `;
-    document.getElementById('recurringDetailsModal').style.display = 'flex';
-}
 
 /* RATING VIEW MODAL */
 function showViewRatingModal(card) {
@@ -870,6 +863,7 @@ function closeDetailsModal(){document.getElementById('recurringDetailsModal').st
 function closeViewRatingModal(){document.getElementById('viewRatingModal').style.display='none';}
 
 </script>
+<script src="HIS_function.js"></script> 
 
 </body>
 </html>

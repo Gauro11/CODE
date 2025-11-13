@@ -174,7 +174,11 @@ $ratings = $stmt->get_result();
                     
                     <td><?= htmlspecialchars($row['full_name']) ?></td>
                     <td><?= htmlspecialchars($row['address'] ?? 'N/A') ?></td>
-                    <td><?= htmlspecialchars($row['service_date']) ?></td>
+                    <td>
+    <?= htmlspecialchars($row['service_date']) ?><br>
+    <?= ($row['start_date'] && $row['start_date'] != '0000-00-00') ? htmlspecialchars($row['start_date']) : '' ?>
+</td>
+
                     <td><?= htmlspecialchars($row['service_time'] ?? 'N/A') ?></td>
                     <td><?= htmlspecialchars($row['booking_type'] ?? 'N/A') ?></td>
                     <td><?= htmlspecialchars($row['materials_provided'] ?? 'Not Set') ?></td>

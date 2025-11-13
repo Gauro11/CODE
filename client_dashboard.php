@@ -1,57 +1,81 @@
-
 <?php
 session_start();
-require 'connection.php'; // your DB connection file
+require 'connection.php';
 
-// Fetch logged-in client info
 $client_email = $_SESSION['email'] ?? null;
 $client_name = $_SESSION['full_name'] ?? 'Client';
 
-// Fetch One-Time bookings
-$one_time_query = "SELECT * FROM bookings WHERE booking_type = 'One-Time' AND status IN ('Pending','Confirmed','Ongoing') ";
-if ($client_email) {
-    $one_time_query .= "AND email = '$client_email' ";
-}
-$one_time_query .= "ORDER BY service_date DESC";
-
-$one_time_result = $conn->query($one_time_query);
-$one_time_count = $one_time_result ? $one_time_result->num_rows : 0;
-
-// Fetch Recurring bookings for summary
-// Fetch Recurring bookings
-$recurring_query = "
-    SELECT * FROM bookings 
-    WHERE booking_type = 'Recurring'
-    AND status IN ('Pending', 'Active', 'Paused')
-";
-
-if ($client_email) {
-    $recurring_query .= " AND email = '$client_email' ";
-}
-
-$recurring_query .= " ORDER BY start_date DESC";
-
-$recurring_result = $conn->query($recurring_query);
-$recurring_count = $recurring_result ? $recurring_result->num_rows : 0;
-
-
-// Count total services
-$total_services = $one_time_result->num_rows + $recurring_count;
-
-// Since your table has no feedback/status, we can remove pending feedback completely
-$pending_feedback_count = 0; // default
 // Fetch client first name from clients table
-$client_name = "Client"; // default
-
 if ($client_email) {
     $query = "SELECT first_name FROM clients WHERE email = '$client_email' LIMIT 1";
     $result = $conn->query($query);
-
     if ($result && $result->num_rows > 0) {
         $row = $result->fetch_assoc();
         $client_name = $row['first_name'];
     }
 }
+
+// Count One-Time bookings
+$one_time_count_query = "SELECT COUNT(*) as count FROM bookings WHERE booking_type = 'One-Time' AND status IN ('Pending','Confirmed','Ongoing')";
+if ($client_email) {
+    $one_time_count_query .= " AND email = '$client_email'";
+}
+$count_result = $conn->query($one_time_count_query);
+$one_time_count = ($count_result && $count_result->num_rows > 0) ? $count_result->fetch_assoc()['count'] : 0;
+
+// Count Recurring bookings
+$recurring_count_query = "SELECT COUNT(*) as count FROM bookings WHERE booking_type = 'Recurring' AND status IN ('Pending','Active','Paused')";
+if ($client_email) {
+    $recurring_count_query .= " AND email = '$client_email'";
+}
+$count_result = $conn->query($recurring_count_query);
+$recurring_count = ($count_result && $count_result->num_rows > 0) ? $count_result->fetch_assoc()['count'] : 0;
+
+// Total services
+$total_services = $one_time_count + $recurring_count;
+
+// Fetch COMBINED bookings (One-Time + Recurring) with LIMIT 3
+$combined_query = "
+    SELECT 
+        id,
+        booking_type,
+        service_date,
+        service_time,
+        duration,
+        status,
+        service_type,
+        client_type,
+        address,
+        property_type,
+        materials_provided,
+        materials_needed,
+        comments,
+        media1,
+        media2,
+        media3,
+        start_date,
+        end_date,
+        frequency
+    FROM bookings 
+    WHERE (
+        (booking_type = 'One-Time' AND status IN ('Pending','Confirmed','Ongoing'))
+        OR 
+        (booking_type = 'Recurring' AND status IN ('Pending','Active','Paused'))
+    )
+";
+
+if ($client_email) {
+    $combined_query .= " AND email = '$client_email' ";
+}
+
+$combined_query .= " ORDER BY 
+    CASE 
+        WHEN booking_type = 'One-Time' THEN service_date 
+        ELSE start_date 
+    END DESC
+    LIMIT 3";
+
+$combined_result = $conn->query($combined_query);
 ?>
 
 <!DOCTYPE html>
@@ -911,198 +935,193 @@ margin-bottom: 20px;
 
 <div class="appointment-list-container" id="one-time-appointments-list">
 <?php
-$one_time_result->data_seek(0); // Reset pointer
-
-if ($one_time_result->num_rows > 0) {
-    while ($row = $one_time_result->fetch_assoc()) {
-
-        // Generate reference number for display
-        $ref_number = "ALZ-OT-" . date("ymd", strtotime($row['service_date'])) . "-" . str_pad($row['id'], 4, "0", STR_PAD_LEFT);
-
-
-        $service_date = date("F d, Y", strtotime($row['service_date']));
-        $service_time = date("g:i A", strtotime($row['service_time']));
-        $duration = $row['duration'] ?? "N/A";
-        $status = $row['status'] ?? "Pending"; // Use actual status
-        $service_type = $row['service_type'] ?? "Service";
-        $client_type = $row['client_type'] ?? "N/A";
-        $address = $row['address'] ?? "";
-        $property_type = $row['property_type'] ?? "N/A";
-
-        $materials_provided = $row['materials_provided'] ?? "No";
-        $comments = $row['comments'] ?? "";
-        $media1 = $row['media1'] ?? "";
-        $media2 = $row['media2'] ?? "";
-        $media3 = $row['media3'] ?? "";
-$materials_needed = $row['materials_needed'] ?? ""; // fetch from DB
-        echo '<div class="appointment-list-item" 
-            data-date="'.htmlspecialchars($row['service_date']).'" 
-            data-time="'.htmlspecialchars($row['service_time']).'"
-            data-status="'.htmlspecialchars($status).'"
-            data-search-terms="'.htmlspecialchars("$ref_number $service_date $service_time $address $client_type $status").'"
-            data-property-layout="'.htmlspecialchars($property_type).'"
-            data-materials-required="'.htmlspecialchars($materials_provided).'"
-            
-            data-additional-request="'.htmlspecialchars($comments).'"
-            data-materials-description="'.htmlspecialchars($materials_needed).'"
-            data-image-1="'.htmlspecialchars($media1).'"
-            data-image-2="'.htmlspecialchars($media2).'"
-            data-image-3="'.htmlspecialchars($media3).'"
-        >
-            <div class="button-group-top">
-                <a href="javascript:void(0)" class="action-btn view-details-btn" onclick="showDetailsModal(this.closest(\'.appointment-list-item\'))"><i class="bx bx-show"></i> View Details</a>
-                <a href="EDIT_one-time.php?booking_id='.$row['id'].'" class="action-btn edit-btn"><i class="bx bx-edit"></i> Edit</a>
-                <div class="dropdown-menu-container">
-                    <button class="more-options-btn" onclick="toggleDropdown(this)"><i class="bx bx-dots-vertical-rounded"></i></button>
-                    <ul class="dropdown-menu">
-                        <li>
-                            <a href="javascript:void(0)" class="cancel-link" 
-                               onclick="showCancelModal('.$row['id'].', \''.$ref_number.'\')">
-                               <i class="bx bx-x-circle" style="color: #B32133;"></i> Cancel
-                            </a>
-                        </li>
-                          <li>
-                        <a href="https://wa.me/971529009188" target="_blank" class="whatsapp-chat-link">
-                            <i class="bx bxl-whatsapp"></i> Chat on WhatsApp
-                        </a>
-                    </li>
-                    </ul>
-                </div>
-            </div>
-           <div class="appointment-details">
-    <p class="full-width-detail ref-no-detail"><strong>Reference No:</strong> <span class="ref-no-value">'.$ref_number.'</span></p>
-    <p class="full-width-detail"><i class="bx bx-calendar-check"></i> <strong>Date:</strong> '.$service_date.'</p>
-    <p><i class="bx bx-time"></i> <strong>Time:</strong> '.$service_time.'</p>
-    <p class="duration-detail"><i class="bx bx-stopwatch"></i> <strong>Duration:</strong> '.$duration.'</p>
-    <p class="full-width-detail"><i class="bx bx-map-alt"></i> <strong>Address:</strong> '.$address.'</p>
-    <hr class="divider full-width-detail">
-    <p><i class="bx bx-building-house"></i> <strong>Client Type:</strong> '.$client_type.'</p>
-    <p class="service-type-detail"><i class="bx bx-wrench"></i> <strong>Service Type:</strong> '.$service_type.'</p>
-    <p class="full-width-detail status-detail">
-        <strong>Status:</strong>
-        <span class="status-tag '.strtolower($status).'"><i class="bx bx-hourglass"></i> '.$status.'</span>
-    </p>
-    
-
-</div>
-
-        </div>';
-    }
-} else {
-    echo '<p class="no-appointments-message">No upcoming one-time appointments found.</p>';
-}
-?>
-<?php
-// Fetch Recurring bookings
-$recurring_query = "
-    SELECT * FROM bookings 
-    WHERE booking_type = 'Recurring'
-    AND status IN ('Pending','Active','Paused')
-";
-
-if ($client_email) {
-    $recurring_query .= " AND email = '$client_email' ";
-}
-
-$recurring_query .= " ORDER BY start_date DESC";
-
-$recurring_result = $conn->query($recurring_query);
-
-if ($recurring_result && $recurring_result->num_rows > 0) {
-    while ($row = $recurring_result->fetch_assoc()) {
-
-        $ref_number = "ALZ-RC-" . date("ymd") . "-" . str_pad($row['id'], 4, "0", STR_PAD_LEFT);
-
-        $start_date = date("F d, Y", strtotime($row['start_date']));
-        $end_date = date("F d, Y", strtotime($row['end_date']));
-        $frequency = $row['frequency'] ?? "N/A";
+if ($combined_result && $combined_result->num_rows > 0) {
+    while ($row = $combined_result->fetch_assoc()) {
+        $booking_type = $row['booking_type'];
         $status = $row['status'] ?? "Pending";
-        $service_type = $row['service_type'] ?? "Service";
-        $client_type = $row['client_type'] ?? "N/A";
-        $address = $row['address'] ?? "";
-         $property_type = $row['property_type'] ?? "N/A";
-        $materials_needed = $row['materials_needed'] ?? "Not Provided";
-        $materials_provided = $row['materials_provided'] ?? "No";
-        $comments = $row['comments'] ?? "";
-        $service_time = $row['service_time'] ?? "N/A";
-        $duration = $row['duration'] ?? "N/A";
-        $media1 = $row['media1'] ?? "";
-        $media2 = $row['media2'] ?? "";
-        $media3 = $row['media3'] ?? "";
+        $isPending = (strtolower($status) === 'pending');
+        
+        if ($booking_type === 'One-Time') {
+            // ONE-TIME BOOKING DISPLAY
+            $ref_number = "ALZ-OT-" . date("ymd", strtotime($row['service_date'])) . "-" . str_pad($row['id'], 4, "0", STR_PAD_LEFT);
+            
+            $service_date = date("F d, Y", strtotime($row['service_date']));
+            $service_time = date("g:i A", strtotime($row['service_time']));
+            $duration = $row['duration'] ?? "N/A";
+            $service_type = $row['service_type'] ?? "Service";
+            $client_type = $row['client_type'] ?? "N/A";
+            $address = $row['address'] ?? "";
+            $property_type = $row['property_type'] ?? "N/A";
+            $materials_provided = $row['materials_provided'] ?? "No";
+            $materials_needed = $row['materials_needed'] ?? "";
+            $comments = $row['comments'] ?? "";
+            $media1 = $row['media1'] ?? "";
+            $media2 = $row['media2'] ?? "";
+            $media3 = $row['media3'] ?? "";
 
-        // frequency → count sessions
-        $start_dt = new DateTime($row['start_date']);
-        $end_dt = new DateTime($row['end_date']);
-        $freq_lower = strtolower($frequency);
-
-        if ($freq_lower === 'weekly')       $interval = new DateInterval('P1W');
-        elseif ($freq_lower === 'bi-weekly') $interval = new DateInterval('P2W');
-        elseif ($freq_lower === 'monthly')  $interval = new DateInterval('P1M');
-        else                                $interval = new DateInterval('P1W');
-
-        $period = new DatePeriod($start_dt, $interval, $end_dt->modify('+1 day'));
-        $no_of_sessions = iterator_count($period);
-
-        echo '
-        <div class="appointment-list-item"
-            data-start-date="'.htmlspecialchars($row['start_date']).'"
-            data-end-date="'.htmlspecialchars($row['end_date']).'"
-            data-time="'.htmlspecialchars($service_time).'"
-            data-duration="'.htmlspecialchars($duration).'"
-            data-frequency="'.htmlspecialchars($frequency).'"
-            data-sessions-count="'.htmlspecialchars($no_of_sessions).'"
-             data-plan-status="'.htmlspecialchars($status).'"
-            data-property-layout="'.htmlspecialchars($property_type).'"
-           
-            data-materials-required="'.htmlspecialchars($materials_provided).'"
-            data-materials-description="'.htmlspecialchars($materials_needed).'"
-            data-additional-request="'.htmlspecialchars($comments).'"
-            data-image-1="'.htmlspecialchars($media1).'"
-            data-image-2="'.htmlspecialchars($media2).'"
-            data-image-3="'.htmlspecialchars($media3).'"
-        >
-            <div class="button-group-top">
-                <a href="javascript:void(0)" class="action-btn view-details-btn" onclick="showRecurringDetailsModal(this.closest(\'.appointment-list-item\'))"><i class="bx bx-show"></i> View Details</a>
-                <a href="EDIT_recurring.php?booking_id='.$row['id'].'" class="action-btn edit-btn"><i class="bx bx-edit"></i> Edit</a>
-                <div class="dropdown-menu-container">
-                    <button class="more-options-btn" onclick="toggleDropdown(this)"><i class="bx bx-dots-vertical-rounded"></i></button>
-                    <ul class="dropdown-menu">
-                        <li>
-                            <a href="javascript:void(0)" class="cancel-link"
-                               onclick="showCancelModal('.$row['id'].', \''.$ref_number.'\')">
-                               <i class="bx bx-x-circle" style="color: #B32133;"></i> Cancel
-                            </a>
-                        </li>
-                          <li>
+            echo '<div class="appointment-list-item" 
+                data-date="'.htmlspecialchars($row['service_date']).'" 
+                data-time="'.htmlspecialchars($row['service_time']).'"
+                data-status="'.htmlspecialchars($status).'"
+                data-search-terms="'.htmlspecialchars("$ref_number $service_date $service_time $address $client_type $status").'"
+                data-property-layout="'.htmlspecialchars($property_type).'"
+                data-materials-required="'.htmlspecialchars($materials_provided).'"
+                data-additional-request="'.htmlspecialchars($comments).'"
+                data-materials-description="'.htmlspecialchars($materials_needed).'"
+                data-image-1="'.htmlspecialchars($media1).'"
+                data-image-2="'.htmlspecialchars($media2).'"
+                data-image-3="'.htmlspecialchars($media3).'"
+            >
+                <div class="button-group-top">
+                    <a href="javascript:void(0)" class="action-btn view-details-btn" onclick="showDetailsModal(this.closest(\'.appointment-list-item\'))"><i class="bx bx-show"></i> View Details</a>';
+                    
+            // Only show Edit button if status is Pending
+            if ($isPending) {
+                echo '<a href="EDIT_one-time.php?booking_id='.$row['id'].'" class="action-btn edit-btn"><i class="bx bx-edit"></i> Edit</a>';
+            }
+            
+            echo '<div class="dropdown-menu-container">
+                        <button class="more-options-btn" onclick="toggleDropdown(this)"><i class="bx bx-dots-vertical-rounded"></i></button>
+                        <ul class="dropdown-menu">';
+            
+            // Only show Cancel option if status is Pending
+            if ($isPending) {
+                echo '<li>
+                        <a href="javascript:void(0)" class="cancel-link" 
+                           onclick="showCancelModal('.$row['id'].', \''.$ref_number.'\')">
+                           <i class="bx bx-x-circle" style="color: #B32133;"></i> Cancel
+                        </a>
+                    </li>';
+            }
+            
+            echo '<li>
                         <a href="https://wa.me/971529009188" target="_blank" class="whatsapp-chat-link">
                             <i class="bx bxl-whatsapp"></i> Chat on WhatsApp
                         </a>
                     </li>
-                    </ul>
+                        </ul>
+                    </div>
                 </div>
-            </div>
+                
+                <div class="appointment-details">
+                    <p class="full-width-detail ref-no-detail"><strong>Reference No:</strong> <span class="ref-no-value">'.$ref_number.'</span></p>
+                    <p class="full-width-detail"><i class="bx bx-calendar-check"></i> <strong>Date:</strong> '.$service_date.'</p>
+                    <p><i class="bx bx-time"></i> <strong>Time:</strong> '.$service_time.'</p>
+                    <p class="duration-detail"><i class="bx bx-stopwatch"></i> <strong>Duration:</strong> '.$duration.'</p>
+                    <p class="full-width-detail"><i class="bx bx-map-alt"></i> <strong>Address:</strong> '.$address.'</p>
+                    <hr class="divider full-width-detail">
+                    <p><i class="bx bx-building-house"></i> <strong>Client Type:</strong> '.$client_type.'</p>
+                    <p class="service-type-detail"><i class="bx bx-wrench"></i> <strong>Service Type:</strong> '.$service_type.'</p>
+                    <p class="full-width-detail status-detail">
+                        <strong>Status:</strong>
+                        <span class="status-tag '.strtolower($status).'"><i class="bx bx-hourglass"></i> '.$status.'</span>
+                    </p>
+                </div>
+            </div>';
+            
+        } else {
+            // RECURRING BOOKING DISPLAY
+            $ref_number = "ALZ-RC-" . date("ymd") . "-" . str_pad($row['id'], 4, "0", STR_PAD_LEFT);
+            
+            $start_date = date("F d, Y", strtotime($row['start_date']));
+            $end_date = date("F d, Y", strtotime($row['end_date']));
+            $frequency = $row['frequency'] ?? "N/A";
+            $service_type = $row['service_type'] ?? "Service";
+            $client_type = $row['client_type'] ?? "N/A";
+            $address = $row['address'] ?? "";
+            $property_type = $row['property_type'] ?? "N/A";
+            $materials_provided = $row['materials_provided'] ?? "No";
+            $materials_needed = $row['materials_needed'] ?? "";
+            $comments = $row['comments'] ?? "";
+            $service_time = $row['service_time'] ?? "N/A";
+            $duration = $row['duration'] ?? "N/A";
+            $media1 = $row['media1'] ?? "";
+            $media2 = $row['media2'] ?? "";
+            $media3 = $row['media3'] ?? "";
 
-            <div class="appointment-details">
-                <p class="full-width-detail ref-no-detail"><strong>Reference No:</strong> <span class="ref-no-value">'.$ref_number.'</span></p>
-                <p class="full-width-detail"><i class="bx bx-calendar-check"></i> <strong>Start:</strong> '.$start_date.'</p>
-                <p class="full-width-detail"><i class="bx bx-calendar-check"></i> <strong>End:</strong> '.$end_date.'</p>
-                <p><i class="bx bx-repeat"></i> <strong>Frequency:</strong> '.$frequency.'</p>
-                <p><i class="bx bx-time"></i> <strong>Time:</strong> '.$service_time.'</p>
-                <p class="duration-detail"><i class="bx bx-stopwatch"></i> <strong>Duration:</strong> '.$duration.'</p>
-                <p class="full-width-detail"><i class="bx bx-map-alt"></i> <strong>Address:</strong> '.$address.'</p>
-                <p style="font-size:0.95em;"><strong>No. of Sessions:</strong> '.$no_of_sessions.'</p>
-                <hr class="divider full-width-detail">
-                <p><i class="bx bx-building-house"></i> <strong>Client Type:</strong> '.$client_type.'</p>
-                <p class="service-type-detail"><i class="bx bx-wrench"></i> <strong>Service Type:</strong> '.$service_type.'</p>
-                <p class="full-width-detail status-detail">
-                    <strong>Status:</strong>
-                    <span class="status-tag '.strtolower($status).'"><i class="bx bx-hourglass"></i> '.$status.'</span>
-                </p>
-            </div>
-        </div>';
+            // Calculate sessions
+            $start_dt = new DateTime($row['start_date']);
+            $end_dt = new DateTime($row['end_date']);
+            $freq_lower = strtolower($frequency);
+
+            if ($freq_lower === 'weekly')       $interval = new DateInterval('P1W');
+            elseif ($freq_lower === 'bi-weekly') $interval = new DateInterval('P2W');
+            elseif ($freq_lower === 'monthly')  $interval = new DateInterval('P1M');
+            else                                $interval = new DateInterval('P1W');
+
+            $period = new DatePeriod($start_dt, $interval, $end_dt->modify('+1 day'));
+            $no_of_sessions = iterator_count($period);
+
+            echo '
+            <div class="appointment-list-item"
+                data-start-date="'.htmlspecialchars($row['start_date']).'"
+                data-end-date="'.htmlspecialchars($row['end_date']).'"
+                data-time="'.htmlspecialchars($service_time).'"
+                data-duration="'.htmlspecialchars($duration).'"
+                data-frequency="'.htmlspecialchars($frequency).'"
+                data-sessions-count="'.htmlspecialchars($no_of_sessions).'"
+                data-plan-status="'.htmlspecialchars($status).'"
+                data-property-layout="'.htmlspecialchars($property_type).'"
+                data-materials-required="'.htmlspecialchars($materials_provided).'"
+                data-materials-description="'.htmlspecialchars($materials_needed).'"
+                data-additional-request="'.htmlspecialchars($comments).'"
+                data-image-1="'.htmlspecialchars($media1).'"
+                data-image-2="'.htmlspecialchars($media2).'"
+                data-image-3="'.htmlspecialchars($media3).'"
+            >
+                <div class="button-group-top">
+                    <a href="javascript:void(0)" class="action-btn view-details-btn" onclick="showRecurringDetailsModal(this.closest(\'.appointment-list-item\'))"><i class="bx bx-show"></i> View Details</a>';
+            
+            // Only show Edit button if status is Pending
+            if ($isPending) {
+                echo '<a href="EDIT_recurring.php?booking_id='.$row['id'].'" class="action-btn edit-btn"><i class="bx bx-edit"></i> Edit</a>';
+            }
+            
+            echo '<div class="dropdown-menu-container">
+                        <button class="more-options-btn" onclick="toggleDropdown(this)"><i class="bx bx-dots-vertical-rounded"></i></button>
+                        <ul class="dropdown-menu">';
+            
+            // Only show Cancel option if status is Pending
+            if ($isPending) {
+                echo '<li>
+                        <a href="javascript:void(0)" class="cancel-link"
+                           onclick="showCancelModal('.$row['id'].', \''.$ref_number.'\')">
+                           <i class="bx bx-x-circle" style="color: #B32133;"></i> Cancel
+                        </a>
+                    </li>';
+            }
+            
+            echo '<li>
+                        <a href="https://wa.me/971529009188" target="_blank" class="whatsapp-chat-link">
+                            <i class="bx bxl-whatsapp"></i> Chat on WhatsApp
+                        </a>
+                    </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="appointment-details">
+                    <p class="full-width-detail ref-no-detail"><strong>Reference No:</strong> <span class="ref-no-value">'.$ref_number.'</span></p>
+                    <p class="full-width-detail"><i class="bx bx-calendar-check"></i> <strong>Start:</strong> '.$start_date.'</p>
+                    <p class="full-width-detail"><i class="bx bx-calendar-check"></i> <strong>End:</strong> '.$end_date.'</p>
+                    <p><i class="bx bx-repeat"></i> <strong>Frequency:</strong> '.$frequency.'</p>
+                    <p><i class="bx bx-time"></i> <strong>Time:</strong> '.$service_time.'</p>
+                    <p class="duration-detail"><i class="bx bx-stopwatch"></i> <strong>Duration:</strong> '.$duration.'</p>
+                    <p class="full-width-detail"><i class="bx bx-map-alt"></i> <strong>Address:</strong> '.$address.'</p>
+                    <p style="font-size:0.95em;"><strong>No. of Sessions:</strong> '.$no_of_sessions.'</p>
+                    <hr class="divider full-width-detail">
+                    <p><i class="bx bx-building-house"></i> <strong>Client Type:</strong> '.$client_type.'</p>
+                    <p class="service-type-detail"><i class="bx bx-wrench"></i> <strong>Service Type:</strong> '.$service_type.'</p>
+                    <p class="full-width-detail status-detail">
+                        <strong>Status:</strong>
+                        <span class="status-tag '.strtolower($status).'"><i class="bx bx-hourglass"></i> '.$status.'</span>
+                    </p>
+                </div>
+            </div>';
+        }
     }
 } else {
-    echo '<p class="no-appointments-message">No upcoming recurring appointments found.</p>';
+    echo '<p class="no-appointments-message">No upcoming appointments found.</p>';
 }
 ?>
 

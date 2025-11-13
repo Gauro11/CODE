@@ -311,428 +311,515 @@
 
     <script src="client_db.js"></script>
     <script>
-        
-        
         document.addEventListener("DOMContentLoaded", () => {
-            // BAGONG JS PARA SA CLEANING MATERIALS
-            const materialsNeededContainer = document.querySelector('.hidden-materials-input');
-            const materialsYes = document.getElementById('materialsYes');
-            const materialsNo = document.getElementById('materialsNo');
-            const cleaningMaterialsGroup = document.getElementById('cleaningMaterialsGroup'); // Added to group the radio buttons for validation
+    // ========== CLEANING MATERIALS TOGGLE ==========
+    const materialsNeededContainer = document.querySelector('.hidden-materials-input');
+    const materialsYes = document.getElementById('materialsYes');
+    const materialsNo = document.getElementById('materialsNo');
+    const cleaningMaterialsGroup = document.getElementById('cleaningMaterialsGroup');
 
-            if (materialsYes && materialsNo && materialsNeededContainer) {
-                materialsYes.addEventListener('change', () => {
-                    materialsNeededContainer.style.display = 'flex';
-                    // Ensure 'materialsNeeded' is marked as required if 'Yes' is selected
-                    document.getElementById('materialsNeeded').setAttribute('required', ''); 
-                });
-                materialsNo.addEventListener('change', () => {
-                    materialsNeededContainer.style.display = 'none';
-                    // Clear the value if "No" is selected and remove 'required' attribute
-                    const materialsNeededInput = document.getElementById('materialsNeeded');
-                    if (materialsNeededInput) {
-                        materialsNeededInput.value = '';
-                        materialsNeededInput.removeAttribute('required'); // Remove required attribute
-                        materialsNeededInput.classList.remove('is-invalid'); // Remove validation if cleared
+    if (materialsYes && materialsNo && materialsNeededContainer) {
+        materialsYes.addEventListener('change', () => {
+            materialsNeededContainer.style.display = 'flex';
+            document.getElementById('materialsNeeded').setAttribute('required', '');
+        });
+        materialsNo.addEventListener('change', () => {
+            materialsNeededContainer.style.display = 'none';
+            const materialsNeededInput = document.getElementById('materialsNeeded');
+            if (materialsNeededInput) {
+                materialsNeededInput.value = '';
+                materialsNeededInput.removeAttribute('required');
+                materialsNeededInput.classList.remove('is-invalid');
+            }
+        });
+    }
+
+    // ========== FORM AND WAIVER ELEMENTS ==========
+    const form = document.getElementById("oneTimeBookingForm");
+    const nextToWaiverBtn = document.getElementById("nextToWaiverBtn");
+    const waiverSection = document.getElementById("waiverSection");
+    const agreeWaiver = document.getElementById("agreeWaiver");
+    const finalSubmitBtn = document.getElementById("finalSubmitBtn");
+    const backToFormBtn = document.getElementById("backToFormBtn");
+    const waiverRequiredModal = document.getElementById("waiverRequiredModal");
+    const closeWaiverModal = document.getElementById("closeWaiverModal");
+
+    // ========== TIME AND DURATION ELEMENTS ==========
+    const bookingTimeInput = document.getElementById('bookingTime');
+    const durationSelect = document.getElementById('duration');
+    const estimatedTimeDisplay = document.getElementById('estimatedTimeDisplay');
+
+    let timeHelper = document.createElement('small');
+    timeHelper.style.display = 'none';
+    timeHelper.style.color = 'red';
+    timeHelper.style.marginTop = '0.25rem';
+    timeHelper.textContent = 'Please choose between 9 AM and 6 PM';
+    if (bookingTimeInput) {
+        bookingTimeInput.parentNode.appendChild(timeHelper);
+    }
+
+    // ========== UTILITY FUNCTIONS ==========
+    function formatTime12Hour(timeString) {
+        const [hours, minutes] = timeString.split(':').map(Number);
+        const period = hours >= 12 ? 'PM' : 'AM';
+        const adjustedHours = hours % 12 || 12;
+        const formattedMinutes = minutes < 10 ? '0' + minutes : minutes;
+        return `${adjustedHours}:${formattedMinutes} ${period}`;
+    }
+
+    // ========== RESTRICTED TIME SLOTS ==========
+    function isTimeRestricted(timeString) {
+        if (!timeString) return { restricted: false };
+        
+        const [hours, minutes] = timeString.split(':').map(Number);
+        const timeInMinutes = hours * 60 + minutes;
+        
+        // 1:00 PM - 2:00 PM (13:00 - 14:00) - Prayer/Lunch Break
+        const prayerLunchStart = 13 * 60; // 780 minutes
+        const prayerLunchEnd = 14 * 60;   // 840 minutes
+        
+        // 5:00 PM - 5:30 PM (17:00 - 17:30) - Short Break
+        const shortBreakStart = 17 * 60;      // 1020 minutes
+        const shortBreakEnd = 17 * 60 + 30;   // 1050 minutes
+        
+        if (timeInMinutes >= prayerLunchStart && timeInMinutes < prayerLunchEnd) {
+            return { restricted: true, reason: '1:00 PM - 2:00 PM is reserved for Prayer/Lunch Break' };
+        }
+        
+        if (timeInMinutes >= shortBreakStart && timeInMinutes < shortBreakEnd) {
+            return { restricted: true, reason: '5:00 PM - 5:30 PM is reserved for Short Break' };
+        }
+        
+        return { restricted: false };
+    }
+
+    // Function removed - only validating start time, not duration overlap
+
+    // ========== UAE BREAK CALCULATION ==========
+    function includesBreakTime(startTime, workHours) {
+        if (!startTime || !workHours) return false;
+        
+        const [hours, minutes] = startTime.split(':').map(Number);
+        const startMinutes = hours * 60 + minutes;
+        
+        const breakStart = 13 * 60; // 1:00 PM
+        const breakEnd = 14 * 60;   // 2:00 PM
+        const endMinutes = startMinutes + (workHours * 60);
+        
+        return startMinutes < breakEnd && endMinutes > breakStart;
+    }
+
+    function calculateActualDuration(startTime, workHours) {
+        const hasBreak = includesBreakTime(startTime, workHours);
+        const breakDuration = hasBreak ? 1 : 0;
+        const totalHours = workHours + breakDuration;
+        
+        return {
+            workHours: workHours,
+            breakHours: breakDuration,
+            totalHours: totalHours,
+            hasBreak: hasBreak
+        };
+    }
+
+    function checkConsecutiveHours(workHours) {
+        return workHours > 5;
+    }
+
+    // ========== UPDATE AVAILABLE DURATIONS BASED ON START TIME ==========
+    function updateAvailableDurations(startTime) {
+        if (!startTime || !durationSelect) return;
+        
+        const [hours, minutes] = startTime.split(':').map(Number);
+        const startMinutes = hours * 60 + minutes;
+        const endOfDayMinutes = 20 * 60; // 8:00 PM (20:00)
+        
+        // Calculate maximum available work hours until 8 PM
+        let maxAvailableMinutes = endOfDayMinutes - startMinutes;
+        
+        // Check if the time period includes the 1:00-2:00 PM break
+        const breakStart = 13 * 60;
+        const breakEnd = 14 * 60;
+        
+        // If booking starts before 1 PM and could extend past 1 PM, account for break
+        if (startMinutes < breakStart && (startMinutes + maxAvailableMinutes) > breakStart) {
+            maxAvailableMinutes -= 60; // Subtract 1 hour for break
+        }
+        
+        const maxWorkHours = Math.floor(maxAvailableMinutes / 60);
+        
+        // Save current selection
+        const currentValue = durationSelect.value;
+        
+        // Clear and repopulate duration options
+        durationSelect.innerHTML = '<option value="">Select duration...</option>';
+        
+        for (let i = 2; i <= 8; i++) {
+            if (i <= maxWorkHours) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = `${i} hrs`;
+                durationSelect.appendChild(option);
+            }
+        }
+        
+        // Restore selection if still valid
+        if (currentValue && parseInt(currentValue) <= maxWorkHours) {
+            durationSelect.value = currentValue;
+        } else {
+            durationSelect.value = '';
+        }
+        
+        // Show helper text if limited
+        if (maxWorkHours < 8) {
+            const durationHelper = durationSelect.parentNode.querySelector('small') || document.createElement('small');
+            durationHelper.style.display = 'block';
+            durationHelper.style.color = '#856404';
+            durationHelper.style.marginTop = '0.25rem';
+            // durationHelper.textContent = `Maximum ${maxWorkHours} hours available (bookings must end by 8:00 PM)`;
+            if (!durationSelect.parentNode.querySelector('small')) {
+                durationSelect.parentNode.appendChild(durationHelper);
+            }
+        } else {
+            const existingHelper = durationSelect.parentNode.querySelector('small');
+            if (existingHelper) {
+                existingHelper.style.display = 'none';
+            }
+        }
+    }
+
+    // ========== FORM VALIDATION FUNCTION ==========
+    function validateForm() {
+        const requiredFields = form.querySelectorAll('[required]');
+        let allFieldsFilled = true;
+
+        // Reset previous invalid states
+        form.querySelectorAll('.is-invalid, .is-invalid-group').forEach(el => {
+            el.classList.remove('is-invalid', 'is-invalid-group');
+        });
+
+        requiredFields.forEach(field => {
+            const isVisible = field.offsetWidth > 0 && field.offsetHeight > 0;
+            const isRadioOrCheckbox = field.type === 'radio' || field.type === 'checkbox';
+            const isValuePresent = field.value.trim() !== '';
+            const isChecked = field.checked;
+            const fieldParent = field.closest('.form-group');
+
+            if (isVisible && ((isRadioOrCheckbox && !isChecked) || (!isRadioOrCheckbox && !isValuePresent))) {
+                field.classList.add('is-invalid');
+                if (fieldParent) {
+                    fieldParent.classList.add('is-invalid-group');
+                }
+                allFieldsFilled = false;
+            }
+        });
+
+        // Custom validation for service type selection
+        const serviceTypeHidden = document.getElementById('serviceTypeHidden');
+        const serviceOptionsGroup = document.querySelector('.service-options');
+        const serviceLabel = document.querySelector('label[for="serviceType"]');
+        
+        if (serviceTypeHidden && serviceTypeHidden.value === '') {
+            allFieldsFilled = false;
+            serviceOptionsGroup.classList.add('is-invalid-group');
+            if (serviceLabel && serviceLabel.closest('.form-group')) {
+                serviceLabel.closest('.form-group').classList.add('is-invalid-group');
+            }
+        } else {
+            serviceOptionsGroup.classList.remove('is-invalid-group');
+            if (serviceLabel && serviceLabel.closest('.form-group')) {
+                serviceLabel.closest('.form-group').classList.remove('is-invalid-group');
+            }
+        }
+        
+        // Custom validation for cleaning materials radio group
+        const cleaningMaterialsRadios = document.querySelectorAll('input[name="cleaningMaterials"]');
+        const cleaningMaterialsParent = cleaningMaterialsGroup.closest('.form-group');
+        let isCleaningMaterialSelected = false;
+        cleaningMaterialsRadios.forEach(radio => {
+            if (radio.checked) {
+                isCleaningMaterialSelected = true;
+            }
+        });
+
+        if (!isCleaningMaterialSelected) {
+            allFieldsFilled = false;
+            if (cleaningMaterialsParent) {
+                cleaningMaterialsParent.classList.add('is-invalid-group');
+            }
+        } else {
+            if (cleaningMaterialsParent) {
+                cleaningMaterialsParent.classList.remove('is-invalid-group');
+            }
+        }
+
+        // Custom validation for 'materialsNeeded' if 'materialsYes' is checked
+        if (materialsYes.checked) {
+            const materialsNeededInput = document.getElementById('materialsNeeded');
+            if (materialsNeededInput && materialsNeededInput.value.trim() === '') {
+                allFieldsFilled = false;
+                materialsNeededInput.classList.add('is-invalid');
+                materialsNeededInput.closest('.form-group').classList.add('is-invalid-group');
+            } else if (materialsNeededInput) {
+                materialsNeededInput.classList.remove('is-invalid');
+                materialsNeededInput.closest('.form-group').classList.remove('is-invalid-group');
+            }
+        }
+
+        // Validate restricted times - START TIME ONLY
+        const bookingTime = document.getElementById('bookingTime');
+        
+        if (bookingTime && bookingTime.value) {
+            // Check if start time is restricted
+            const restrictionCheck = isTimeRestricted(bookingTime.value);
+            if (restrictionCheck.restricted) {
+                allFieldsFilled = false;
+                bookingTime.classList.add('is-invalid');
+            }
+        }
+
+        return allFieldsFilled;
+    }
+
+    // ========== REAL-TIME VALIDATION ==========
+    const requiredFields = form.querySelectorAll('[required]');
+    
+    requiredFields.forEach(field => {
+        const isRadioOrCheckbox = field.type === 'radio' || field.type === 'checkbox';
+        const eventType = isRadioOrCheckbox ? 'change' : 'input';
+
+        field.addEventListener(eventType, () => {
+            let isValid = false;
+            if (isRadioOrCheckbox) {
+                const fieldName = field.name;
+                const radioGroup = form.querySelectorAll(`[name="${fieldName}"]`);
+                radioGroup.forEach(radio => {
+                    if (radio.checked) {
+                        isValid = true;
                     }
                 });
+            } else {
+                isValid = field.value.trim() !== '';
             }
 
-            const form = document.getElementById("oneTimeBookingForm");
-            const nextToWaiverBtn = document.getElementById("nextToWaiverBtn");
-            const waiverSection = document.getElementById("waiverSection");
-            const agreeWaiver = document.getElementById("agreeWaiver");
-            const finalSubmitBtn = document.getElementById("finalSubmitBtn");
-            const backToFormBtn = document.getElementById("backToFormBtn");
-
-            const waiverRequiredModal = document.getElementById("waiverRequiredModal");
-            const closeWaiverModal = document.getElementById("closeWaiverModal");
-
-            // --- Form Validation Logic ---
-            function validateForm() {
-                const requiredFields = form.querySelectorAll('[required]');
-                let allFieldsFilled = true;
-
-                // Reset previous invalid states
-                form.querySelectorAll('.is-invalid, .is-invalid-group').forEach(el => {
-                    el.classList.remove('is-invalid', 'is-invalid-group');
-                });
-
-                requiredFields.forEach(field => {
-                    const isVisible = field.offsetWidth > 0 && field.offsetHeight > 0; // Check if element is visible
-                    const isRadioOrCheckbox = field.type === 'radio' || field.type === 'checkbox';
-                    const isValuePresent = field.value.trim() !== '';
-                    const isChecked = field.checked;
-                    const fieldParent = field.closest('.form-group');
-
-                    // Only validate visible and required fields
-                    if (isVisible && ((isRadioOrCheckbox && !isChecked) || (!isRadioOrCheckbox && !isValuePresent))) {
-                        field.classList.add('is-invalid');
-                        if (fieldParent) {
-                            fieldParent.classList.add('is-invalid-group');
-                        }
-                        allFieldsFilled = false;
-                    }
-                });
-
-                // Custom validation for service type selection
-                const serviceTypeHidden = document.getElementById('serviceTypeHidden');
-                const serviceOptionsGroup = document.querySelector('.service-options');
-                const serviceLabel = document.querySelector('label[for="serviceType"]');
-                
-                if (serviceTypeHidden && serviceTypeHidden.value === '') {
-                    allFieldsFilled = false;
-                    serviceOptionsGroup.classList.add('is-invalid-group');
-                    // Added: Apply is-invalid-group to the parent of the label
-                    if (serviceLabel && serviceLabel.closest('.form-group')) {
-                        serviceLabel.closest('.form-group').classList.add('is-invalid-group');
-                    }
-                } else {
-                    serviceOptionsGroup.classList.remove('is-invalid-group');
-                    // Added: Remove is-invalid-group from the parent of the label
-                    if (serviceLabel && serviceLabel.closest('.form-group')) {
-                        serviceLabel.closest('.form-group').classList.remove('is-invalid-group');
-                    }
+            if (isValid) {
+                field.classList.remove('is-invalid');
+                const fieldParent = field.closest('.form-group');
+                if (fieldParent) {
+                    fieldParent.classList.remove('is-invalid-group');
                 }
-                
-                // Custom validation for cleaning materials radio group
+            }
+
+            // Special handling for cleaning materials group
+            if (isRadioOrCheckbox && field.name === 'cleaningMaterials') {
+                const cleaningMaterialsParent = cleaningMaterialsGroup.closest('.form-group');
                 const cleaningMaterialsRadios = document.querySelectorAll('input[name="cleaningMaterials"]');
-                const cleaningMaterialsParent = cleaningMaterialsGroup.closest('.form-group'); // Get the parent .form-group
-                let isCleaningMaterialSelected = false;
+                let isSelected = false;
                 cleaningMaterialsRadios.forEach(radio => {
                     if (radio.checked) {
-                        isCleaningMaterialSelected = true;
+                        isSelected = true;
                     }
                 });
-
-                if (!isCleaningMaterialSelected) {
-                    allFieldsFilled = false;
-                    if (cleaningMaterialsParent) {
-                        cleaningMaterialsParent.classList.add('is-invalid-group');
-                    }
-                } else {
+                if (isSelected) {
                     if (cleaningMaterialsParent) {
                         cleaningMaterialsParent.classList.remove('is-invalid-group');
                     }
                 }
-
-                // Custom validation for 'materialsNeeded' if 'materialsYes' is checked and it's required
-                if (materialsYes.checked) {
-                    const materialsNeededInput = document.getElementById('materialsNeeded');
-                    if (materialsNeededInput && materialsNeededInput.value.trim() === '') {
-                        allFieldsFilled = false;
-                        materialsNeededInput.classList.add('is-invalid');
-                        materialsNeededInput.closest('.form-group').classList.add('is-invalid-group');
-                    } else if (materialsNeededInput) {
-                        materialsNeededInput.classList.remove('is-invalid');
-                        materialsNeededInput.closest('.form-group').classList.remove('is-invalid-group');
-                    }
-                }
-
-                return allFieldsFilled;
-            }
-            // --- End of Form Validation Logic ---
-
-            // ** START OF NEW REAL-TIME VALIDATION LOGIC **
-            const requiredFields = form.querySelectorAll('[required]');
-            
-            requiredFields.forEach(field => {
-                const isRadioOrCheckbox = field.type === 'radio' || field.type === 'checkbox';
-                const eventType = isRadioOrCheckbox ? 'change' : 'input';
-
-                field.addEventListener(eventType, () => {
-                    // Check if the field is no longer empty or unchecked
-                    let isValid = false;
-                    if (isRadioOrCheckbox) {
-                        const fieldName = field.name;
-                        const radioGroup = form.querySelectorAll(`[name="${fieldName}"]`);
-                        radioGroup.forEach(radio => {
-                            if (radio.checked) {
-                                isValid = true;
-                            }
-                        });
-                    } else {
-                        isValid = field.value.trim() !== '';
-                    }
-
-                    // Remove the invalid class if the field is now valid
-                    if (isValid) {
-                        field.classList.remove('is-invalid');
-                        const fieldParent = field.closest('.form-group');
-                        if (fieldParent) {
-                            fieldParent.classList.remove('is-invalid-group');
-                        }
-                    }
-
-                    // Special handling for the cleaning materials group
-                    if (isRadioOrCheckbox && field.name === 'cleaningMaterials') {
-                        const cleaningMaterialsParent = cleaningMaterialsGroup.closest('.form-group');
-                        const cleaningMaterialsRadios = document.querySelectorAll('input[name="cleaningMaterials"]');
-                        let isSelected = false;
-                        cleaningMaterialsRadios.forEach(radio => {
-                            if (radio.checked) {
-                                isSelected = true;
-                            }
-                        });
-                        if (isSelected) {
-                            if (cleaningMaterialsParent) {
-                                cleaningMaterialsParent.classList.remove('is-invalid-group');
-                            }
-                        }
-                    }
-
-                    // Special handling for the service type buttons
-                    if (field.id === 'serviceTypeHidden' && field.value !== '') {
-                        const serviceOptionsGroup = document.querySelector('.service-options');
-                        serviceOptionsGroup.classList.remove('is-invalid-group');
-                    }
-                });
-            });
-            // ** END OF NEW REAL-TIME VALIDATION LOGIC **
-
-            // Next -> show waiver section
-            nextToWaiverBtn.addEventListener("click", () => {
-                if (validateForm()) {
-                    form.style.display = "none";
-                    waiverSection.style.display = "block";
-                } else {
-                    const requiredFieldsModal = document.getElementById("requiredFieldsModal");
-                    if (requiredFieldsModal) {
-                        requiredFieldsModal.classList.add("show");
-                    }
-                }
-            });
-
-            // Back -> return to form
-            backToFormBtn.addEventListener("click", () => {
-                waiverSection.style.display = "none";
-                form.style.display = "block";
-            });
-
-            // Prevent submit if waiver not checked
-            finalSubmitBtn.addEventListener("click", (e) => {
-                e.preventDefault(); // Prevent default form submission first
-                if (!agreeWaiver.checked) {
-                    waiverRequiredModal.classList.add("show");
-                } else {
-                    // Additional check before submitting the form itself
-                    // If validation passes 'Next', and waiver is checked, then submit.
-                    form.submit();
-                }
-            });
-
-            // Close waiver modal
-            closeWaiverModal.addEventListener("click", () => {
-                waiverRequiredModal.classList.remove("show");
-            });
-
-            // Close required fields modal
-            const confirmRequiredFieldsBtn = document.getElementById("confirmRequiredFields");
-            if (confirmRequiredFieldsBtn) {
-                confirmRequiredFieldsBtn.addEventListener("click", () => {
-                    document.getElementById("requiredFieldsModal").classList.remove("show");
-                });
             }
 
-            // Optional: close modal pag click sa labas
-            window.addEventListener("click", (e) => {
-                if (e.target === waiverRequiredModal) {
-                    waiverRequiredModal.classList.remove("show");
-                }
-                if (e.target === document.getElementById("requiredFieldsModal")) {
-                    document.getElementById("requiredFieldsModal").classList.remove("show");
-                }
-            });
-
-            // --- DATE VALIDATION (NEW) ---
-            const bookingDateInput = document.getElementById('bookingDate');
-            if (bookingDateInput) {
-                const today = new Date().toISOString().split('T')[0];
-                bookingDateInput.setAttribute('min', today);
+            // Special handling for service type buttons
+            if (field.id === 'serviceTypeHidden' && field.value !== '') {
+                const serviceOptionsGroup = document.querySelector('.service-options');
+                serviceOptionsGroup.classList.remove('is-invalid-group');
             }
-            // --- END DATE VALIDATION ---
-
-            // --- HELPER TEXT ELEMENTS ---
-            const bookingTimeInput = document.getElementById('bookingTime');
-            const durationSelect = document.getElementById('duration');
-            const estimatedTimeDisplay = document.getElementById('estimatedTimeDisplay');
-
-            let timeHelper = document.createElement('small');
-            timeHelper.style.display = 'none';
-            timeHelper.style.color = 'red';
-            timeHelper.style.marginTop = '0.25rem';
-            timeHelper.textContent = 'Please choose between 9 AM and 6 PM';
-            if (bookingTimeInput) {
-                bookingTimeInput.parentNode.appendChild(timeHelper);
-            }
-
-            let durationHelper = document.createElement('small');
-            durationHelper.style.display = 'none'; // Initially hidden
-            durationHelper.style.color = '#555';
-            durationHelper.style.marginTop = '0.25rem';
-            if (durationSelect) {
-                durationSelect.parentNode.appendChild(durationHelper);
-            }
-
-            // Function to format time to 12-hour format
-            function formatTime12Hour(timeString) {
-                const [hours, minutes] = timeString.split(':').map(Number);
-                const period = hours >= 12 ? 'PM' : 'AM';
-                const adjustedHours = hours % 12 || 12; // Convert 0 to 12 for midnight/noon
-                const formattedMinutes = minutes < 10 ? '0' + minutes : minutes;
-                return `${adjustedHours}:${formattedMinutes} ${period}`;
-            }
-
-            // ========== UAE BREAK CALCULATION FUNCTIONS ==========
-            
-            // Check if work period includes the 1:00 PM - 2:00 PM break
-            function includesBreakTime(startTime, workHours) {
-                if (!startTime || !workHours) return false;
-                
-                const [hours, minutes] = startTime.split(':').map(Number);
-                const startMinutes = hours * 60 + minutes;
-                
-                // Prayer + Lunch break is 1:00 PM - 2:00 PM (13:00 - 14:00)
-                const breakStart = 13 * 60; // 1:00 PM in minutes
-                const breakEnd = 14 * 60;   // 2:00 PM in minutes
-                
-                // Calculate end time in minutes (without break)
-                const endMinutes = startMinutes + (workHours * 60);
-                
-                // Check if the work period overlaps with break time
-                return startMinutes < breakEnd && endMinutes > breakStart;
-            }
-
-            // Calculate actual duration with break
-            function calculateActualDuration(startTime, workHours) {
-                const hasBreak = includesBreakTime(startTime, workHours);
-                const breakDuration = hasBreak ? 1 : 0;
-                const totalHours = workHours + breakDuration;
-                
-                return {
-                    workHours: workHours,
-                    breakHours: breakDuration,
-                    totalHours: totalHours,
-                    hasBreak: hasBreak
-                };
-            }
-
-            // Check if duration exceeds 5 consecutive hours
-            function checkConsecutiveHours(workHours) {
-                return workHours > 5;
-            }
-
-            // ========== END UAE BREAK CALCULATION ==========
-
-            if (bookingTimeInput) {
-                bookingTimeInput.addEventListener('change', () => {
-                    const selectedTime = bookingTimeInput.value;
-                    // Check if time is outside 09:00 to 18:00 (6 PM)
-                    if (selectedTime && (selectedTime < '09:00' || selectedTime > '18:00')) {
-                        timeHelper.style.display = 'block';
-                        // If time is invalid, disable duration and clear estimate
-                        if (durationSelect) durationSelect.disabled = true;
-                        estimatedTimeDisplay.style.display = 'none';
-                    } else {
-                        timeHelper.style.display = 'none';
-                        // If time is valid, enable duration and update estimate
-                        if (durationSelect) durationSelect.disabled = false;
-                        updateEstimatedCompletion(); // Update estimate when time is valid
-                    }
-                });
-            }
-
-            if (durationSelect) {
-                durationSelect.addEventListener('change', () => {
-                    updateEstimatedCompletion(); // Update completion time when duration changes
-                });
-            }
-
-            function updateEstimatedCompletion() {
-                const selectedTimeStr = bookingTimeInput.value;
-                const selectedDuration = parseInt(durationSelect.value);
-
-                // Only proceed if time is valid, duration is selected, and inputs are enabled
-                if (!selectedTimeStr || isNaN(selectedDuration) || bookingTimeInput.classList.contains('is-invalid') || durationSelect.disabled) {
-                    estimatedTimeDisplay.style.display = 'none';
-                    return;
-                }
-
-                // Calculate UAE break requirements
-                const duration = calculateActualDuration(selectedTimeStr, selectedDuration);
-
-                const [hours, minutes] = selectedTimeStr.split(':').map(Number);
-                const startDate = new Date();
-                startDate.setHours(hours, minutes, 0, 0);
-
-                // Add TOTAL hours (work + break)
-                const endDate = new Date(startDate.getTime() + duration.totalHours * 60 * 60 * 1000);
-
-                const formattedStartTime = formatTime12Hour(selectedTimeStr);
-                const formattedCompletionTime = formatTime12Hour(
-                    endDate.getHours().toString().padStart(2, '0') + ':' + 
-                    endDate.getMinutes().toString().padStart(2, '0')
-                );
-
-                let completionText = `${formattedStartTime} - ${formattedCompletionTime}`;
-                
-                // Show work hours
-                completionText += ` (${selectedDuration} hrs work`;
-                
-                // Add break information if applicable
-                if (duration.hasBreak) {
-                    completionText += ` + 1 hr break [1:00 PM - 2:00 PM Prayer/Lunch]`;
-                }
-                
-                completionText += `)`;
-
-                // Warning if exceeds 5 consecutive hours without break
-                if (checkConsecutiveHours(selectedDuration) && !duration.hasBreak) {
-                    completionText += ` ⚠️ Exceeds 5 hours without break`;
-                    estimatedTimeDisplay.style.color = '#d9534f';
-                } else {
-                    estimatedTimeDisplay.style.color = '#555';
-                }
-
-                estimatedTimeDisplay.textContent = completionText;
-                estimatedTimeDisplay.style.display = 'block';
-            }
-
-            const serviceCards = document.querySelectorAll('.service-card');
-            const serviceTypeHiddenInput = document.getElementById('serviceTypeHidden');
-
-            serviceCards.forEach(card => {
-                card.addEventListener('click', () => {
-                    serviceCards.forEach(c => c.classList.remove('selected'));
-                    card.classList.add('selected');
-                    serviceTypeHiddenInput.value = card.dataset.serviceType;
-                    
-                    // Enable client type select and reset if needed
-                    const clientTypeSelect = document.getElementById('clientType');
-                    if (clientTypeSelect) {
-                        clientTypeSelect.disabled = false;
-                        clientTypeSelect.value = ""; // Reset to default prompt
-                    }
-                    // Also enable duration select when service type is selected
-                    if (durationSelect) {
-                        durationSelect.disabled = false;
-                        durationSelect.value = ""; // Reset to default prompt
-                        updateEstimatedCompletion(); // Clear estimate if duration is reset
-                    }
-                    // Clear any previous validation on service options
-                    const serviceOptionsGroup = document.querySelector('.service-options');
-                    const serviceLabel = document.querySelector('label[for="serviceType"]');
-                    serviceOptionsGroup.classList.remove('is-invalid-group');
-                    if (serviceLabel && serviceLabel.closest('.form-group')) {
-                        serviceLabel.closest('.form-group').classList.remove('is-invalid-group');
-                    }
-                });
-            });
-
-            // Initial call to set the correct state on load if values are pre-filled (though unlikely in this setup)
-            // and to ensure correct display of time validation and estimates.
-            updateEstimatedCompletion(); 
         });
+    });
+
+    // ========== DATE VALIDATION ==========
+    const bookingDateInput = document.getElementById('bookingDate');
+    if (bookingDateInput) {
+        const today = new Date().toISOString().split('T')[0];
+        bookingDateInput.setAttribute('min', today);
+    }
+
+    // ========== TIME INPUT VALIDATION ==========
+    if (bookingTimeInput) {
+        bookingTimeInput.addEventListener('change', () => {
+            const selectedTime = bookingTimeInput.value;
+            
+            // Check if time is outside 09:00 to 18:00
+            if (selectedTime && (selectedTime < '09:00' || selectedTime > '18:00')) {
+                timeHelper.textContent = 'Please choose between 9 AM and 6 PM';
+                timeHelper.style.display = 'block';
+                bookingTimeInput.classList.add('is-invalid');
+                if (durationSelect) durationSelect.disabled = true;
+                estimatedTimeDisplay.style.display = 'none';
+                return;
+            }
+            
+            // Check if time is in restricted period
+            const restrictionCheck = isTimeRestricted(selectedTime);
+            if (restrictionCheck.restricted) {
+                timeHelper.textContent = '⛔ ' + restrictionCheck.reason;
+                timeHelper.style.display = 'block';
+                bookingTimeInput.classList.add('is-invalid');
+                if (durationSelect) durationSelect.disabled = true;
+                estimatedTimeDisplay.style.display = 'none';
+                return;
+            }
+            
+            // Time is valid - update available durations
+            timeHelper.style.display = 'none';
+            bookingTimeInput.classList.remove('is-invalid');
+            if (durationSelect) {
+                durationSelect.disabled = false;
+                updateAvailableDurations(selectedTime);
+            }
+            updateEstimatedCompletion();
+        });
+    }
+
+    if (durationSelect) {
+        durationSelect.addEventListener('change', () => {
+            updateEstimatedCompletion();
+        });
+    }
+
+    // ========== ESTIMATED COMPLETION TIME ==========
+    function updateEstimatedCompletion() {
+        const selectedTimeStr = bookingTimeInput.value;
+        const selectedDuration = parseInt(durationSelect.value);
+
+        if (!selectedTimeStr || isNaN(selectedDuration) || bookingTimeInput.classList.contains('is-invalid') || durationSelect.disabled) {
+            estimatedTimeDisplay.style.display = 'none';
+            return;
+        }
+
+        // No overlap check - only start time is validated
+        durationSelect.classList.remove('is-invalid');
+
+        const duration = calculateActualDuration(selectedTimeStr, selectedDuration);
+
+        const [hours, minutes] = selectedTimeStr.split(':').map(Number);
+        const startDate = new Date();
+        startDate.setHours(hours, minutes, 0, 0);
+
+        const endDate = new Date(startDate.getTime() + duration.totalHours * 60 * 60 * 1000);
+
+        const formattedStartTime = formatTime12Hour(selectedTimeStr);
+        const formattedCompletionTime = formatTime12Hour(
+            endDate.getHours().toString().padStart(2, '0') + ':' + 
+            endDate.getMinutes().toString().padStart(2, '0')
+        );
+
+        let completionText = `${formattedStartTime} - ${formattedCompletionTime}`;
+        completionText += ` (${selectedDuration} hrs work`;
+        
+        if (duration.hasBreak) {
+            completionText += ` + 1 hr break [1:00 PM - 2:00 PM Prayer/Lunch]`;
+        }
+        
+        completionText += `)`;
+
+        if (checkConsecutiveHours(selectedDuration) && !duration.hasBreak) {
+            completionText += ` ⚠️ Exceeds 5 hours without break`;
+            estimatedTimeDisplay.style.color = '#d9534f';
+        } else {
+            estimatedTimeDisplay.style.color = '#555';
+        }
+
+        estimatedTimeDisplay.textContent = completionText;
+        estimatedTimeDisplay.style.display = 'block';
+    }
+
+    // ========== SERVICE TYPE SELECTION ==========
+    const serviceCards = document.querySelectorAll('.service-card');
+    const serviceTypeHiddenInput = document.getElementById('serviceTypeHidden');
+
+    serviceCards.forEach(card => {
+        card.addEventListener('click', () => {
+            serviceCards.forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            serviceTypeHiddenInput.value = card.dataset.serviceType;
+            
+            // Enable client type select
+            const clientTypeSelect = document.getElementById('clientType');
+            if (clientTypeSelect) {
+                clientTypeSelect.disabled = false;
+                clientTypeSelect.value = "";
+            }
+            
+            // Enable duration select
+            if (durationSelect) {
+                durationSelect.disabled = false;
+                durationSelect.value = "";
+                updateEstimatedCompletion();
+            }
+            
+            // Clear validation
+            const serviceOptionsGroup = document.querySelector('.service-options');
+            const serviceLabel = document.querySelector('label[for="serviceType"]');
+            serviceOptionsGroup.classList.remove('is-invalid-group');
+            if (serviceLabel && serviceLabel.closest('.form-group')) {
+                serviceLabel.closest('.form-group').classList.remove('is-invalid-group');
+            }
+        });
+    });
+
+    // ========== WAIVER NAVIGATION ==========
+    nextToWaiverBtn.addEventListener("click", () => {
+        if (validateForm()) {
+            form.style.display = "none";
+            waiverSection.style.display = "block";
+        } else {
+            const requiredFieldsModal = document.getElementById("requiredFieldsModal");
+            if (requiredFieldsModal) {
+                requiredFieldsModal.classList.add("show");
+            }
+        }
+    });
+
+    backToFormBtn.addEventListener("click", () => {
+        waiverSection.style.display = "none";
+        form.style.display = "block";
+    });
+
+    finalSubmitBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (!agreeWaiver.checked) {
+            waiverRequiredModal.classList.add("show");
+        } else {
+            form.submit();
+        }
+    });
+
+    closeWaiverModal.addEventListener("click", () => {
+        waiverRequiredModal.classList.remove("show");
+    });
+
+    // ========== MODAL CLOSE HANDLERS ==========
+    const confirmRequiredFieldsBtn = document.getElementById("confirmRequiredFields");
+    if (confirmRequiredFieldsBtn) {
+        confirmRequiredFieldsBtn.addEventListener("click", () => {
+            document.getElementById("requiredFieldsModal").classList.remove("show");
+        });
+    }
+
+    window.addEventListener("click", (e) => {
+        if (e.target === waiverRequiredModal) {
+            waiverRequiredModal.classList.remove("show");
+        }
+        if (e.target === document.getElementById("requiredFieldsModal")) {
+            document.getElementById("requiredFieldsModal").classList.remove("show");
+        }
+    });
+
+    // ========== INITIAL CALL ==========
+    updateEstimatedCompletion();
+});
+        
+        
+     
     </script>
 
 </body>

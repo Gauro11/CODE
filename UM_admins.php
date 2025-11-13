@@ -1,5 +1,32 @@
 <?php
 include 'connection.php'; // ✅ DB connection
+session_start();
+
+// ✅ Ensure user is logged in
+if (!isset($_SESSION['email'])) {
+    echo "<script>alert('Please log in first.'); window.location.href='login.php';</script>";
+    exit;
+}
+
+// Handle Update Admin
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_admin'])) {
+    $admin_id = $_POST['admin_id'];
+    $first_name = trim($_POST['first_name']);
+    $last_name = trim($_POST['last_name']);
+    $email = trim($_POST['email']);
+    $contact_number = trim($_POST['contact_number']);
+    $birthday = $_POST['birthday'];
+    
+    $stmt = $conn->prepare("UPDATE admins SET first_name=?, last_name=?, email=?, contact_number=?, birthday=? WHERE id=?");
+    $stmt->bind_param("sssssi", $first_name, $last_name, $email, $contact_number, $birthday, $admin_id);
+    
+    if ($stmt->execute()) {
+        echo "<script>alert('Admin updated successfully!'); window.location.href='UM_admins.php';</script>";
+    } else {
+        echo "<script>alert('Error updating admin');</script>";
+    }
+    $stmt->close();
+}
 
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 $sort = isset($_GET['sort']) ? $_GET['sort'] : '';
@@ -74,6 +101,187 @@ th { background: #f4f4f4; }
 /* Sidebar dropdown fix */
 .has-dropdown .dropdown__menu { display: none; }
 .has-dropdown.open .dropdown__menu { display: block; }
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.modal.show {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 1;
+}
+
+.modal-content {
+    background: white;
+    padding: 0;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    animation: slideDown 0.3s;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-header {
+    padding: 20px 30px;
+    background: #007bff;
+    color: white;
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+}
+
+.close-btn {
+    font-size: 28px;
+    cursor: pointer;
+    color: white;
+    line-height: 1;
+}
+
+.close-btn:hover {
+    color: #f8f9fa;
+}
+
+#adminForm {
+    padding: 30px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #495057;
+    font-weight: 500;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px 15px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 15px;
+    transition: all 0.3s;
+    box-sizing: border-box;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+}
+
+.form-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+}
+
+.btn-cancel, .btn-submit {
+    padding: 12px 30px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.btn-cancel {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-cancel:hover {
+    background: #5a6268;
+}
+
+.btn-submit {
+    background: #007bff;
+    color: white;
+}
+
+.btn-submit:hover {
+    background: #0056b3;
+}
+
+.modal__title {
+    padding: 20px;
+    margin: 0;
+    text-align: center;
+}
+
+.modal__actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    padding: 20px;
+}
+
+.btn {
+    padding: 12px 30px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.btn--secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn--secondary:hover {
+    background: #5a6268;
+}
+
+.btn--primary {
+    background: #007bff;
+    color: white;
+}
+
+.btn--primary:hover {
+    background: #0056b3;
+}
 </style>
 </head>
 <body>
@@ -117,7 +325,6 @@ th { background: #f4f4f4; }
             <li class="menu__item"><a href="ES.php" class="menu__link"><i class='bx bx-time'></i> Employee Scheduling</a></li>
             <li class="menu__item"><a href="manage_groups.php" class="menu__link "><i class='bx bx-group'></i> Manage Groups</a></li>
              <li class="menu__item"><a href="admin_feedback_dashboard.php" class="menu__link "><i class='bx bx-star'></i> Feedback Overview</a></li>
-            <!-- <li class="menu__item"><a href="FR.php" class="menu__link"><i class='bx bx-star'></i> Feedback & Ratings</a></li> -->
             <li class="menu__item"><a href="Reports.php" class="menu__link"><i class='bx bx-file'></i> Reports</a></li>
                <li class="menu__item"><a href="concern.php?content=profile" class="menu__link" data-content="profile"><i class='bx bx-info-circle'></i> Issues&Concerns</a></li>
             <li class="menu__item"><a href="admin_profile.php" class="menu__link"><i class='bx bx-user'></i> Profile</a></li>
@@ -164,7 +371,7 @@ th { background: #f4f4f4; }
                                     <td><?= htmlspecialchars($row['contact_number']) ?></td>
                                     <td><?= htmlspecialchars($row['birthday']) ?></td>
                                     <td class="actions">
-                                        <button class="edit" onclick="editAdmin(<?= $row['id'] ?>)">Edit</button>
+                                        <button class="edit" onclick='openEditModal(<?= htmlspecialchars(json_encode($row), ENT_QUOTES) ?>)'>Edit</button>
                                         <button class="archive" onclick="archiveAdmin(<?= $row['id'] ?>)">Archive</button>
                                     </td>
                                 </tr>
@@ -178,15 +385,64 @@ th { background: #f4f4f4; }
         </section>
     </main>
 </div>
+
+<!-- Edit Admin Modal -->
+<div id="adminModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class='bx bx-edit'></i> Edit Admin</h3>
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+        </div>
+        
+        <form method="POST" id="adminForm">
+            <input type="hidden" name="admin_id" id="admin_id">
+            
+            <div class="form-group">
+                <label>First Name *</label>
+                <input type="text" name="first_name" id="first_name" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Last Name *</label>
+                <input type="text" name="last_name" id="last_name" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Email *</label>
+                <input type="email" name="email" id="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Contact Number *</label>
+                <input type="text" name="contact_number" id="contact_number" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Birthday *</label>
+                <input type="date" name="birthday" id="birthday" required>
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
+                <button type="submit" name="update_admin" class="btn-submit">Update Admin</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Logout Modal -->
 <div id="logoutModal" class="modal">
-<div class="modal__content">
+<div class="modal-content">
 <h3 class="modal__title">Are you sure you want to log out?</h3>
 <div class="modal__actions">
 <button id="cancelLogout" class="btn btn--secondary">Cancel</button>
 <button id="confirmLogout" class="btn btn--primary">Log Out</button>
+</div>
+</div>
+</div>
 
 <script>
-    const navLinks = document.querySelectorAll('.sidebar__menu .menu__link');
+const navLinks = document.querySelectorAll('.sidebar__menu .menu__link');
 const logoutLink = document.querySelector('.sidebar__menu .menu__link[data-content="logout"]');
 const logoutModal = document.getElementById('logoutModal');
 const cancelLogoutBtn = document.getElementById('cancelLogout');
@@ -208,31 +464,59 @@ if (confirmLogoutBtn) {
         window.location.href = "landing_page2.html";
     });
 }
-function editAdmin(id) { window.location.href='edit_admin.php?id='+id; }
+
+// Edit Admin Modal Functions
+function openEditModal(admin) {
+    document.getElementById('adminModal').classList.add('show');
+    document.getElementById('admin_id').value = admin.id;
+    document.getElementById('first_name').value = admin.first_name;
+    document.getElementById('last_name').value = admin.last_name;
+    document.getElementById('email').value = admin.email;
+    document.getElementById('contact_number').value = admin.contact_number;
+    document.getElementById('birthday').value = admin.birthday;
+}
+
+function closeModal() {
+    document.getElementById('adminModal').classList.remove('show');
+}
+
+// Archive
 function archiveAdmin(id) {
     if(confirm('Are you sure you want to archive this admin?')) {
         window.location.href='archive_admin.php?id='+id;
     }
 }
 
-// Sidebar dropdown JS
-(function(){
-  const nav = document.querySelector('.sidebar__menu');
-  if (!nav) return;
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('adminModal');
+    const logoutModal = document.getElementById('logoutModal');
+    if (event.target === modal) {
+        closeModal();
+    }
+    if (event.target === logoutModal) {
+        logoutModal.classList.remove('show');
+    }
+}
 
-  const dropdownParents = nav.querySelectorAll('.has-dropdown');
+// Sidebar dropdown toggle
+document.querySelectorAll('.has-dropdown > .menu__link').forEach(link => {
+  link.addEventListener('click', e => {
+    e.preventDefault();
+    const parent = link.parentElement;
 
-  dropdownParents.forEach(parent => {
-    const parentLink = parent.querySelector('.menu__link');
-    if (!parentLink) return;
-
-    parentLink.addEventListener('click', function(e) {
-      e.preventDefault();
-      parent.classList.toggle('open');
+    // close others
+    document.querySelectorAll('.has-dropdown').forEach(item => {
+      if (item !== parent) item.classList.remove('open');
     });
+
+    // toggle current
+    parent.classList.toggle('open');
   });
-})();
+});
 </script>
 
 </body>
 </html>
+
+<?php $conn->close(); ?>

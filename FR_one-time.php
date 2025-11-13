@@ -1596,6 +1596,93 @@ function closeModal(modalId) {
         console.log("✅ Success modal closed, button should now show 'Edit Report'");
     }
 }
+// Add this function to your JavaScript code (in FR_function2.js or inline script)
+
+function viewIssueDetails(button) {
+    console.log("🔍 View Issue Details clicked");
+    
+    // Get the issue card element
+    const issueCard = button.closest('.issue-card');
+    
+    if (!issueCard) {
+        console.error("❌ Issue card not found");
+        alert("Error: Could not load issue details");
+        return;
+    }
+    
+    // Extract data from the card
+    const refNo = issueCard.getAttribute('data-ref-no') || 'N/A';
+    const serviceDate = issueCard.getAttribute('data-service-date') || 'N/A';
+    const serviceTime = issueCard.getAttribute('data-service-time') || 'N/A';
+    const submissionDate = issueCard.getAttribute('data-submission-date') || 'N/A';
+    const submissionTime = issueCard.getAttribute('data-submission-time') || 'N/A';
+    const issueType = issueCard.getAttribute('data-issue-type') || 'N/A';
+    const issueDescription = issueCard.getAttribute('data-issue-description') || 'No description provided.';
+    const photo1 = issueCard.getAttribute('data-photo1') || '';
+    const photo2 = issueCard.getAttribute('data-photo2') || '';
+    const photo3 = issueCard.getAttribute('data-photo3') || '';
+    
+    console.log("📋 Issue Data:", { refNo, issueType, issueDescription });
+    
+    // Populate the modal with data
+    document.getElementById('view-issue-ref').textContent = refNo;
+    document.getElementById('view-issue-service-date').textContent = formatDate(serviceDate);
+    document.getElementById('view-issue-service-time').textContent = formatTime(serviceTime);
+    document.getElementById('view-issue-submission-date').textContent = formatDate(submissionDate);
+    document.getElementById('view-issue-submission-time').textContent = formatTime(submissionTime);
+    document.getElementById('view-issue-type-detail').textContent = issueType;
+    document.getElementById('view-issue-description-detail').textContent = issueDescription;
+    
+    // Handle attachments
+    const attachmentsContainer = document.getElementById('view-issue-attachments-detail');
+    attachmentsContainer.innerHTML = ''; // Clear previous content
+    
+    const photos = [photo1, photo2, photo3].filter(p => p && p.trim() !== '');
+    
+    if (photos.length > 0) {
+        photos.forEach((photo, index) => {
+            const imgWrapper = document.createElement('div');
+            imgWrapper.style.cssText = 'display: inline-block; margin: 5px; border: 1px solid #ddd; border-radius: 4px; overflow: hidden;';
+            
+            const img = document.createElement('img');
+            img.src = 'uploads/issues/' + photo;
+            img.alt = `Attachment ${index + 1}`;
+            img.style.cssText = 'max-width: 150px; max-height: 150px; display: block; cursor: pointer;';
+            img.onclick = function() {
+                window.open(this.src, '_blank');
+            };
+            
+            imgWrapper.appendChild(img);
+            attachmentsContainer.appendChild(imgWrapper);
+        });
+    } else {
+        attachmentsContainer.innerHTML = '<p style="color: #999; font-style: italic;">No attachments uploaded</p>';
+    }
+    
+    // Show the modal
+    document.getElementById('viewIssueDetailsModal').style.display = 'flex';
+    console.log("✅ Modal opened");
+}
+
+// Helper function to format date (if not already defined)
+function formatDate(dateString) {
+    if (!dateString || dateString === 'N/A') return 'N/A';
+    
+    const date = new Date(dateString);
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    return date.toLocaleDateString('en-US', options);
+}
+
+// Helper function to format time (if not already defined)
+function formatTime(timeString) {
+    if (!timeString || timeString === 'N/A') return 'N/A';
+    
+    const [hours, minutes] = timeString.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${minutes} ${ampm}`;
+}
 </script>
 
 

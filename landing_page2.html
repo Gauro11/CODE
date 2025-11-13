@@ -556,6 +556,7 @@
 
             <div class="forms-wrapper">
                 <!-- Login Form -->
+                 
                 <form action="login_process.php" method="POST" class="login-form active-form" id="loginFormContainer">
                     <div class="error-message" id="loginError">
                         <i class='bx bx-error-circle'></i>
@@ -715,78 +716,94 @@
                 </form>
 
                 <!-- Sign Up Form -->
-                <form action="signup_process.php" method="POST" class="login-form" id="signupFormContainer" novalidate>
-                    <div class="error-message" id="signupError">
-                        <i class='bx bx-error-circle'></i>
-                        <span id="signupErrorText">Please check the form for errors.</span>
-                    </div>
+                <!-- Sign Up Form -->
+<form action="sign_up.php" method="POST" class="login-form" id="signupFormContainer" novalidate>
+    <div class="error-message" id="signupError">
+        <i class='bx bx-error-circle'></i>
+        <span id="signupErrorText">Please check the form for errors.</span>
+    </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="firstName"><span class="required">*</span> First Name</label>
-                            <div class="input-wrapper">
-                                <i class='bx bx-user'></i>
-                                <input type="text" id="firstName" name="firstName" placeholder="First name" required>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="lastName"><span class="required">*</span> Last Name</label>
-                            <div class="input-wrapper">
-                                <i class='bx bx-user'></i>
-                                <input type="text" id="lastName" name="lastName" placeholder="Last name" required>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="birthday"><span class="required">*</span> Birthday</label>
-                            <div class="input-wrapper">
-                                <i class='bx bx-calendar'></i>
-                                <input type="date" id="birthday" name="birthday" required>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="contactNumber"><span class="required">*</span> Contact Number</label>
-                            <div class="input-wrapper">
-                                <i class='bx bx-phone'></i>
-                                <input type="tel" id="contactNumber" name="contactNumber" placeholder="+971XXXXXXXXX" pattern="^\+971[0-9]{9}$" maxlength="13" required>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group full-width">
-                        <label for="signupEmail"><span class="required">*</span> Email Address</label>
-                        <div class="input-wrapper">
-                            <i class='bx bx-envelope'></i>
-                            <input type="email" id="signupEmail" name="email" placeholder="Enter your email address" required>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="signupPassword"><span class="required">*</span> Password</label>
-                            <div class="input-wrapper has-toggle">
-                                <i class='bx bx-lock-alt'></i>
-                                <input type="password" id="signupPassword" name="password" placeholder="Create password" required>
-                                <i class='bx bx-show-alt password-toggle' data-target="signupPassword"></i>
-                            </div>
-                            <div class="password-requirements" id="confirmPasswordMatch">
-                                <ul>
-                                    <li id="matchCheck"><i class='bx bx-x'></i> Passwords must match</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="login-button">
-                        <i class='bx bx-user-plus'></i>
-                        <span>Create Account</span>
-                    </button>
-                </form>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="firstName"><span class="required">*</span> First Name</label>
+            <div class="input-wrapper">
+                <i class='bx bx-user'></i>
+                <input type="text" id="firstName" name="firstName" placeholder="First name" required>
             </div>
+        </div>
+
+        <div class="form-group">
+            <label for="lastName"><span class="required">*</span> Last Name</label>
+            <div class="input-wrapper">
+                <i class='bx bx-user'></i>
+                <input type="text" id="lastName" name="lastName" placeholder="Last name" required>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label for="birthday"><span class="required">*</span> Birthday</label>
+            <div class="input-wrapper">
+                <i class='bx bx-calendar'></i>
+                <input type="date" id="birthday" name="birthday" max="" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="contactNumber"><span class="required">*</span> Contact Number</label>
+            <div class="input-wrapper">
+                <i class='bx bx-phone'></i>
+                <input type="tel" id="contactNumber" name="contactNumber" placeholder="+971XXXXXXXXX" pattern="^\+971[0-9]{9}$" maxlength="13" required>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group full-width">
+        <label for="signupEmail"><span class="required">*</span> Email Address</label>
+        <div class="input-wrapper">
+            <i class='bx bx-envelope'></i>
+            <input type="email" id="signupEmail" name="email" placeholder="Enter your email address" required>
+        </div>
+    </div>
+
+    <div class="form-group full-width">
+        <label for="signupPassword"><span class="required">*</span> Password</label>
+        <div class="input-wrapper has-toggle">
+            <i class='bx bx-lock-alt'></i>
+            <input type="password" id="signupPassword" name="password" placeholder="Create password" required>
+            <i class='bx bx-show-alt password-toggle' data-target="signupPassword"></i>
+        </div>
+        <div class="password-requirements" id="signupPasswordRequirements">
+            <ul>
+                <li id="signupLengthCheck"><i class='bx bx-x'></i> At least 8 characters</li>
+                <li id="signupUppercaseCheck"><i class='bx bx-x'></i> One uppercase letter (A-Z)</li>
+                <li id="signupLowercaseCheck"><i class='bx bx-x'></i> One lowercase letter (a-z)</li>
+                <li id="signupNumberCheck"><i class='bx bx-x'></i> One number (0-9)</li>
+                <li id="signupSymbolCheck"><i class='bx bx-x'></i> One symbol (!@#$%&*)</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="form-group full-width">
+        <label for="confirmPassword"><span class="required">*</span> Confirm Password</label>
+        <div class="input-wrapper has-toggle">
+            <i class='bx bx-lock-alt'></i>
+            <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm password" required>
+            <i class='bx bx-show-alt password-toggle' data-target="confirmPassword"></i>
+        </div>
+        <div class="password-requirements" id="confirmPasswordMatch">
+            <ul>
+                <li id="matchCheck"><i class='bx bx-x'></i> Passwords must match</li>
+            </ul>
+        </div>
+    </div>
+
+    <button type="submit" class="login-button">
+        <i class='bx bx-user-plus'></i>
+        <span>Create Account</span>
+    </button>
+</form>
         </div>
     </main>
 
@@ -795,496 +812,573 @@
     </footer>
 
     <script>
-        // Tab switching functionality
-        const loginTab = document.getElementById('loginTab');
-        const signupTab = document.getElementById('signupTab');
-        const loginFormContainer = document.getElementById('loginFormContainer');
-        const signupFormContainer = document.getElementById('signupFormContainer');
-        const forgotPasswordFormContainer = document.getElementById('forgotPasswordFormContainer');
-        const verifyOtpFormContainer = document.getElementById('verifyOtpFormContainer');
-        const resetPasswordFormContainer = document.getElementById('resetPasswordFormContainer');
+// Tab switching functionality
+const loginTab = document.getElementById('loginTab');
+const signupTab = document.getElementById('signupTab');
+const loginFormContainer = document.getElementById('loginFormContainer');
+const signupFormContainer = document.getElementById('signupFormContainer');
+const forgotPasswordFormContainer = document.getElementById('forgotPasswordFormContainer');
+const verifyOtpFormContainer = document.getElementById('verifyOtpFormContainer');
+const resetPasswordFormContainer = document.getElementById('resetPasswordFormContainer');
 
-        function showForm(formToShow) {
-            [loginFormContainer, signupFormContainer, 
-             forgotPasswordFormContainer, verifyOtpFormContainer, resetPasswordFormContainer].forEach(form => {
-                form.classList.remove('active-form');
-            });
-            formToShow.classList.add('active-form');
+function showForm(formToShow) {
+    [loginFormContainer, signupFormContainer, 
+     forgotPasswordFormContainer, verifyOtpFormContainer, resetPasswordFormContainer].forEach(form => {
+        form.classList.remove('active-form');
+    });
+    formToShow.classList.add('active-form');
+    hideAllErrors();
+}
+
+loginTab.addEventListener('click', () => {
+    loginTab.classList.add('active');
+    signupTab.classList.remove('active');
+    showForm(loginFormContainer);
+});
+
+signupTab.addEventListener('click', () => {
+    signupTab.classList.add('active');
+    loginTab.classList.remove('active');
+    showForm(signupFormContainer);
+});
+
+// Forgot password link
+document.getElementById('forgotPasswordLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    loginTab.classList.remove('active');
+    signupTab.classList.remove('active');
+    showForm(forgotPasswordFormContainer);
+});
+
+// Back to login links
+document.getElementById('backToLoginFromForgot').addEventListener('click', (e) => {
+    e.preventDefault();
+    loginTab.click();
+});
+
+document.getElementById('backToLoginFromVerify').addEventListener('click', (e) => {
+    e.preventDefault();
+    loginTab.click();
+});
+
+document.getElementById('backToLoginFromReset').addEventListener('click', (e) => {
+    e.preventDefault();
+    loginTab.click();
+});
+
+// Error message functions
+function showError(errorId, message) {
+    const errorElement = document.getElementById(errorId);
+    const errorTextElement = document.getElementById(errorId + 'Text');
+    if (message) {
+        errorTextElement.textContent = message;
+    }
+    errorElement.classList.add('show');
+}
+
+function hideError(errorId) {
+    const errorElement = document.getElementById(errorId);
+    errorElement.classList.remove('show');
+}
+
+function showSuccess(successId, message) {
+    const successElement = document.getElementById(successId);
+    const successTextElement = document.getElementById(successId + 'Text');
+    if (message) {
+        successTextElement.textContent = message;
+    }
+    successElement.classList.add('show');
+}
+
+function hideSuccess(successId) {
+    const successElement = document.getElementById(successId);
+    successElement.classList.remove('show');
+}
+
+function hideAllErrors() {
+    hideError('loginError');
+    hideError('signupError');
+    hideError('forgotPasswordError');
+    hideError('verifyOtpError');
+    hideError('resetPasswordError');
+    hideSuccess('forgotPasswordSuccess');
+    hideSuccess('verifyOtpSuccess');
+    hideSuccess('resetPasswordSuccess');
+}
+
+// Check for error/success in URL
+window.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const error = urlParams.get('error');
+    const success = urlParams.get('success');
+    const tab = urlParams.get('tab');
+    const message = urlParams.get('message');
+    
+    // Handle LOGIN errors
+    if (error === 'invalid_credentials') {
+        showError('loginError', 'Invalid email or password. Please try again.');
+        document.getElementById('email')?.classList.add('error-border');
+        document.getElementById('password')?.classList.add('error-border');
+    }
+    
+    // Handle SIGNUP errors
+    else if (error === 'email_error') {
+        signupTab.click();
+        showError('signupError', message || 'This email is already registered.');
+        document.getElementById('signupEmail')?.classList.add('error-border');
+    } else if (error === 'contact_error') {
+        signupTab.click();
+        showError('signupError', message || 'This contact number is already registered.');
+        document.getElementById('contactNumber')?.classList.add('error-border');
+    } else if (error === 'password_error') {
+        signupTab.click();
+        showError('signupError', message || 'Password does not meet the requirements.');
+        document.getElementById('signupPassword')?.classList.add('error-border');
+        document.getElementById('confirmPassword')?.classList.add('error-border');
+    } else if (error === 'name_error') {
+        signupTab.click();
+        showError('signupError', message || 'Please enter a valid name.');
+        document.getElementById('firstName')?.classList.add('error-border');
+        document.getElementById('lastName')?.classList.add('error-border');
+    } else if (error === 'birthday_error') {
+        signupTab.click();
+        showError('signupError', message || 'Please enter a valid birthday.');
+        document.getElementById('birthday')?.classList.add('error-border');
+    } else if (error === 'validation_failed') {
+        signupTab.click();
+        showError('signupError', message || 'Please check the form for errors and try again.');
+    } else if (error === 'database_error') {
+        signupTab.click();
+        showError('signupError', 'Registration failed. Please try again later.');
+    }
+    
+    // Handle FORGOT PASSWORD errors
+    else if (error === 'email_not_found') {
+        showForm(forgotPasswordFormContainer);
+        showError('forgotPasswordError', 'Email address not found in our records.');
+        document.getElementById('forgotEmail')?.classList.add('error-border');
+    } else if (error === 'invalid_email') {
+        showForm(forgotPasswordFormContainer);
+        showError('forgotPasswordError', 'Please enter a valid email address.');
+    } else if (error === 'email_send_failed') {
+        showForm(forgotPasswordFormContainer);
+        showError('forgotPasswordError', 'Failed to send OTP. Please try again later.');
+    }
+    
+    // Handle OTP errors
+    else if (error === 'invalid_otp') {
+        showForm(verifyOtpFormContainer);
+        showError('verifyOtpError', 'Please enter a valid 6-digit OTP.');
+    } else if (error === 'incorrect_otp') {
+        showForm(verifyOtpFormContainer);
+        showError('verifyOtpError', 'The OTP you entered is incorrect. Please try again.');
+    } else if (error === 'otp_expired') {
+        showForm(verifyOtpFormContainer);
+        showError('verifyOtpError', 'OTP has expired. Please request a new one.');
+    } else if (error === 'session_expired') {
+        showForm(forgotPasswordFormContainer);
+        showError('forgotPasswordError', 'Your session has expired. Please start again.');
+    } else if (error === 'user_not_found') {
+        showForm(forgotPasswordFormContainer);
+        showError('forgotPasswordError', 'User not found. Please try again.');
+    }
+    
+    // Handle RESET PASSWORD errors
+    else if (error === 'passwords_mismatch') {
+        showForm(resetPasswordFormContainer);
+        showError('resetPasswordError', 'Passwords do not match. Please try again.');
+    } else if (error === 'weak_password') {
+        showForm(resetPasswordFormContainer);
+        showError('resetPasswordError', 'Password does not meet security requirements.');
+    } else if (error === 'reset_failed') {
+        showForm(resetPasswordFormContainer);
+        showError('resetPasswordError', 'Password reset failed. Please try again.');
+    } else if (error === 'unauthorized') {
+        showForm(forgotPasswordFormContainer);
+        showError('forgotPasswordError', 'Unauthorized access. Please verify your OTP first.');
+    }
+
+    // Handle SUCCESS messages
+    if (success === 'registration_complete') {
+        signupTab.click();
+        const signupError = document.getElementById('signupError');
+        signupError.classList.remove('error-message');
+        signupError.classList.add('success-message');
+        const icon = signupError.querySelector('i');
+        icon.classList.remove('bx-error-circle');
+        icon.classList.add('bx-check-circle');
+        showError('signupError', '✓ Registration successful! You can now log in with your credentials.');
+        
+        // Clear the form
+        document.getElementById('signupFormContainer').reset();
+        document.getElementById('contactNumber').value = '+971';
+        
+        // Automatically switch to login tab after 3 seconds
+        setTimeout(() => {
+            loginTab.click();
+            // Reset the error box back to error styling
+            signupError.classList.remove('success-message');
+            signupError.classList.add('error-message');
+            icon.classList.remove('bx-check-circle');
+            icon.classList.add('bx-error-circle');
             hideAllErrors();
+        }, 3000);
+    } else if (success === 'otp_sent') {
+        showForm(verifyOtpFormContainer);
+        showSuccess('verifyOtpSuccess', 'OTP has been sent to your email. Please check your inbox.');
+        startResendTimer();
+    } else if (success === 'otp_verified') {
+        showForm(resetPasswordFormContainer);
+        showSuccess('resetPasswordSuccess', 'OTP verified! You can now create a new password.');
+    } else if (success === 'password_reset') {
+        loginTab.click();
+        const loginError = document.getElementById('loginError');
+        loginError.classList.remove('error-message');
+        loginError.classList.add('success-message');
+        const icon = loginError.querySelector('i');
+        icon.classList.remove('bx-error-circle');
+        icon.classList.add('bx-check-circle');
+        showError('loginError', '✓ Password reset successful! You can now log in with your new password.');
+        setTimeout(() => {
+            loginError.classList.remove('success-message');
+            loginError.classList.add('error-message');
+            icon.classList.remove('bx-check-circle');
+            icon.classList.add('bx-error-circle');
+            hideAllErrors();
+        }, 5000);
+    }
+
+    // Show specific tab if requested
+    if (tab === 'signup' && !success) {
+        signupTab.click();
+    } else if (tab === 'verify') {
+        showForm(verifyOtpFormContainer);
+    } else if (tab === 'reset') {
+        showForm(resetPasswordFormContainer);
+    } else if (tab === 'forgot') {
+        showForm(forgotPasswordFormContainer);
+    }
+    
+    // Clean URL after handling (wait a bit to ensure messages are shown)
+    if (error || success || tab) {
+        setTimeout(() => {
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }, 100);
+    }
+});
+
+// Remove error styling on input
+document.querySelectorAll('input').forEach(input => {
+    input.addEventListener('input', () => {
+        input.classList.remove('error-border');
+    });
+});
+
+// Password toggle functionality
+document.querySelectorAll('.password-toggle').forEach(toggle => {
+    toggle.addEventListener('click', function() {
+        const targetId = this.dataset.target;
+        const passwordInput = document.getElementById(targetId);
+
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            this.classList.remove('bx-show-alt');
+            this.classList.add('bx-hide');
+        } else {
+            passwordInput.type = 'password';
+            this.classList.remove('bx-hide');
+            this.classList.add('bx-show-alt');
+        }
+    });
+});
+
+// OTP Input handling
+const otpInputs = document.querySelectorAll('.otp-input');
+const otpValue = document.getElementById('otpValue');
+
+otpInputs.forEach((input, index) => {
+    input.addEventListener('input', (e) => {
+        const value = e.target.value;
+        
+        // Only allow numbers
+        if (!/^[0-9]$/.test(value)) {
+            e.target.value = '';
+            return;
         }
 
-        loginTab.addEventListener('click', () => {
-            loginTab.classList.add('active');
-            signupTab.classList.remove('active');
-            showForm(loginFormContainer);
-        });
-
-        signupTab.addEventListener('click', () => {
-            signupTab.classList.add('active');
-            loginTab.classList.remove('active');
-            showForm(signupFormContainer);
-        });
-
-        // Forgot password link
-        document.getElementById('forgotPasswordLink').addEventListener('click', (e) => {
-            e.preventDefault();
-            loginTab.classList.remove('active');
-            signupTab.classList.remove('active');
-            showForm(forgotPasswordFormContainer);
-        });
-
-        // Back to login links
-        document.getElementById('backToLoginFromForgot').addEventListener('click', (e) => {
-            e.preventDefault();
-            loginTab.click();
-        });
-
-        document.getElementById('backToLoginFromVerify').addEventListener('click', (e) => {
-            e.preventDefault();
-            loginTab.click();
-        });
-
-        document.getElementById('backToLoginFromReset').addEventListener('click', (e) => {
-            e.preventDefault();
-            loginTab.click();
-        });
-
-        // Error message functions
-        function showError(errorId, message) {
-            const errorElement = document.getElementById(errorId);
-            const errorTextElement = document.getElementById(errorId + 'Text');
-            if (message) {
-                errorTextElement.textContent = message;
-            }
-            errorElement.classList.add('show');
+        // Move to next input
+        if (value && index < otpInputs.length - 1) {
+            otpInputs[index + 1].focus();
         }
 
-        function hideError(errorId) {
-            const errorElement = document.getElementById(errorId);
-            errorElement.classList.remove('show');
+        // Update hidden input with complete OTP
+        updateOtpValue();
+    });
+
+    input.addEventListener('keydown', (e) => {
+        // Move to previous input on backspace
+        if (e.key === 'Backspace' && !input.value && index > 0) {
+            otpInputs[index - 1].focus();
         }
 
-        function showSuccess(successId, message) {
-            const successElement = document.getElementById(successId);
-            const successTextElement = document.getElementById(successId + 'Text');
-            if (message) {
-                successTextElement.textContent = message;
-            }
-            successElement.classList.add('show');
+        // Move left/right with arrow keys
+        if (e.key === 'ArrowLeft' && index > 0) {
+            otpInputs[index - 1].focus();
         }
-
-        function hideSuccess(successId) {
-            const successElement = document.getElementById(successId);
-            successElement.classList.remove('show');
+        if (e.key === 'ArrowRight' && index < otpInputs.length - 1) {
+            otpInputs[index + 1].focus();
         }
+    });
 
-        function hideAllErrors() {
-            hideError('loginError');
-            hideError('signupError');
-            hideError('forgotPasswordError');
-            hideError('verifyOtpError');
-            hideError('resetPasswordError');
-            hideSuccess('forgotPasswordSuccess');
-            hideSuccess('verifyOtpSuccess');
-            hideSuccess('resetPasswordSuccess');
-        }
-
-        // Check for error/success in URL
-        window.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const error = urlParams.get('error');
-            const success = urlParams.get('success');
-            const tab = urlParams.get('tab');
-            
-            // Handle errors
-            if (error === 'invalid_credentials') {
-                showError('loginError', 'Invalid email or password. Please try again.');
-                document.getElementById('email').classList.add('error-border');
-                document.getElementById('password').classList.add('error-border');
-            } else if (error === 'email_exists') {
-                signupTab.click();
-                showError('signupError', 'This email address is already registered.');
-                document.getElementById('signupEmail').classList.add('error-border');
-            } else if (error === 'signup_failed') {
-                signupTab.click();
-                showError('signupError', 'Registration failed. Please try again.');
-            } else if (error === 'email_not_found') {
-                showForm(forgotPasswordFormContainer);
-                showError('forgotPasswordError', 'Email address not found in our records.');
-                document.getElementById('forgotEmail')?.classList.add('error-border');
-            } else if (error === 'invalid_email') {
-                showForm(forgotPasswordFormContainer);
-                showError('forgotPasswordError', 'Please enter a valid email address.');
-            } else if (error === 'email_send_failed') {
-                showForm(forgotPasswordFormContainer);
-                showError('forgotPasswordError', 'Failed to send OTP. Please try again later.');
-            } else if (error === 'invalid_otp') {
-                showForm(verifyOtpFormContainer);
-                showError('verifyOtpError', 'Please enter a valid 6-digit OTP.');
-            } else if (error === 'incorrect_otp') {
-                showForm(verifyOtpFormContainer);
-                showError('verifyOtpError', 'The OTP you entered is incorrect. Please try again.');
-            } else if (error === 'otp_expired') {
-                showForm(verifyOtpFormContainer);
-                showError('verifyOtpError', 'OTP has expired. Please request a new one.');
-            } else if (error === 'session_expired') {
-                showForm(forgotPasswordFormContainer);
-                showError('forgotPasswordError', 'Your session has expired. Please start again.');
-            } else if (error === 'user_not_found') {
-                showForm(forgotPasswordFormContainer);
-                showError('forgotPasswordError', 'User not found. Please try again.');
-            } else if (error === 'passwords_mismatch') {
-                showForm(resetPasswordFormContainer);
-                showError('resetPasswordError', 'Passwords do not match. Please try again.');
-            } else if (error === 'weak_password') {
-                showForm(resetPasswordFormContainer);
-                showError('resetPasswordError', 'Password does not meet security requirements.');
-            } else if (error === 'reset_failed') {
-                showForm(resetPasswordFormContainer);
-                showError('resetPasswordError', 'Password reset failed. Please try again.');
-            } else if (error === 'unauthorized') {
-                showForm(forgotPasswordFormContainer);
-                showError('forgotPasswordError', 'Unauthorized access. Please verify your OTP first.');
-            }
-
-            // Handle success messages
-            if (success === 'otp_sent') {
-                showForm(verifyOtpFormContainer);
-                showSuccess('verifyOtpSuccess', 'OTP has been sent to your email. Please check your inbox.');
-                startResendTimer();
-            } else if (success === 'otp_verified') {
-                showForm(resetPasswordFormContainer);
-                showSuccess('resetPasswordSuccess', 'OTP verified! You can now create a new password.');
-            } else if (success === 'password_reset') {
-                loginTab.click();
-                showError('loginError', 'Password reset successful! You can now log in with your new password.');
-                document.getElementById('loginError').classList.remove('error-message');
-                document.getElementById('loginError').classList.add('success-message');
-                setTimeout(() => {
-                    hideAllErrors();
-                }, 5000);
-            }
-
-            // Show specific tab if requested
-            if (tab === 'verify') {
-                showForm(verifyOtpFormContainer);
-            } else if (tab === 'reset') {
-                showForm(resetPasswordFormContainer);
-            } else if (tab === 'forgot') {
-                showForm(forgotPasswordFormContainer);
+    input.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+        
+        pastedData.split('').forEach((char, i) => {
+            if (i < otpInputs.length) {
+                otpInputs[i].value = char;
             }
         });
 
-        // Remove error styling on input
-        document.querySelectorAll('input').forEach(input => {
-            input.addEventListener('input', () => {
-                input.classList.remove('error-border');
-            });
+        updateOtpValue();
+        
+        // Focus last filled input or first empty one
+        const lastIndex = Math.min(pastedData.length, otpInputs.length - 1);
+        otpInputs[lastIndex].focus();
+    });
+});
+
+function updateOtpValue() {
+    const otp = Array.from(otpInputs).map(input => input.value).join('');
+    otpValue.value = otp;
+}
+
+// Resend OTP functionality
+let resendTimer;
+let resendCountdown = 60;
+
+function startResendTimer() {
+    const resendLink = document.getElementById('resendOtpLink');
+    const resendTimerElement = document.getElementById('resendTimer');
+    const countdownElement = document.getElementById('countdown');
+
+    resendLink.classList.add('disabled');
+    resendTimerElement.style.display = 'inline';
+    resendCountdown = 60;
+
+    resendTimer = setInterval(() => {
+        resendCountdown--;
+        countdownElement.textContent = resendCountdown;
+
+        if (resendCountdown <= 0) {
+            clearInterval(resendTimer);
+            resendLink.classList.remove('disabled');
+            resendTimerElement.style.display = 'none';
+        }
+    }, 1000);
+}
+
+document.getElementById('resendOtpLink').addEventListener('click', function(e) {
+    e.preventDefault();
+    
+    if (this.classList.contains('disabled')) {
+        return;
+    }
+
+    // Clear OTP inputs
+    otpInputs.forEach(input => input.value = '');
+    otpInputs[0].focus();
+
+    // Trigger resend by submitting forgot password form again
+    const forgotEmail = document.getElementById('forgotEmail').value;
+    if (forgotEmail) {
+        fetch('forgot_password_process.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'email=' + encodeURIComponent(forgotEmail)
+        })
+        .then(response => {
+            showSuccess('verifyOtpSuccess', 'New OTP has been sent to your email.');
+            startResendTimer();
+        })
+        .catch(error => {
+            showError('verifyOtpError', 'Failed to resend OTP. Please try again.');
         });
+    }
+});
 
-        // Password toggle functionality
-        document.querySelectorAll('.password-toggle').forEach(toggle => {
-            toggle.addEventListener('click', function() {
-                const targetId = this.dataset.target;
-                const passwordInput = document.getElementById(targetId);
+// Phone number input restriction
+const contactNumberInput = document.getElementById('contactNumber');
+const prefix = '+971';
 
-                if (passwordInput.type === 'password') {
-                    passwordInput.type = 'text';
-                    this.classList.remove('bx-show-alt');
-                    this.classList.add('bx-hide');
-                } else {
-                    passwordInput.type = 'password';
-                    this.classList.remove('bx-hide');
-                    this.classList.add('bx-show-alt');
-                }
-            });
-        });
+if (contactNumberInput) {
+    contactNumberInput.value = prefix;
 
-        // OTP Input handling
-        const otpInputs = document.querySelectorAll('.otp-input');
-        const otpValue = document.getElementById('otpValue');
-
-        otpInputs.forEach((input, index) => {
-            input.addEventListener('input', (e) => {
-                const value = e.target.value;
-                
-                // Only allow numbers
-                if (!/^[0-9]$/.test(value)) {
-                    e.target.value = '';
-                    return;
-                }
-
-                // Move to next input
-                if (value && index < otpInputs.length - 1) {
-                    otpInputs[index + 1].focus();
-                }
-
-                // Update hidden input with complete OTP
-                updateOtpValue();
-            });
-
-            input.addEventListener('keydown', (e) => {
-                // Move to previous input on backspace
-                if (e.key === 'Backspace' && !input.value && index > 0) {
-                    otpInputs[index - 1].focus();
-                }
-
-                // Move left/right with arrow keys
-                if (e.key === 'ArrowLeft' && index > 0) {
-                    otpInputs[index - 1].focus();
-                }
-                if (e.key === 'ArrowRight' && index < otpInputs.length - 1) {
-                    otpInputs[index + 1].focus();
-                }
-            });
-
-            input.addEventListener('paste', (e) => {
-                e.preventDefault();
-                const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-                
-                pastedData.split('').forEach((char, i) => {
-                    if (i < otpInputs.length) {
-                        otpInputs[i].value = char;
-                    }
-                });
-
-                updateOtpValue();
-                
-                // Focus last filled input or first empty one
-                const lastIndex = Math.min(pastedData.length, otpInputs.length - 1);
-                otpInputs[lastIndex].focus();
-            });
-        });
-
-        function updateOtpValue() {
-            const otp = Array.from(otpInputs).map(input => input.value).join('');
-            otpValue.value = otp;
+    contactNumberInput.addEventListener('focus', () => {
+        if (contactNumberInput.selectionStart < prefix.length) {
+            contactNumberInput.setSelectionRange(prefix.length, prefix.length);
         }
+    });
 
-        // Resend OTP functionality
-        let resendTimer;
-        let resendCountdown = 60;
-
-        function startResendTimer() {
-            const resendLink = document.getElementById('resendOtpLink');
-            const resendTimerElement = document.getElementById('resendTimer');
-            const countdownElement = document.getElementById('countdown');
-
-            resendLink.classList.add('disabled');
-            resendTimerElement.style.display = 'inline';
-            resendCountdown = 60;
-
-            resendTimer = setInterval(() => {
-                resendCountdown--;
-                countdownElement.textContent = resendCountdown;
-
-                if (resendCountdown <= 0) {
-                    clearInterval(resendTimer);
-                    resendLink.classList.remove('disabled');
-                    resendTimerElement.style.display = 'none';
-                }
-            }, 1000);
+    contactNumberInput.addEventListener('input', function() {
+        let value = this.value;
+        if (!value.startsWith(prefix)) {
+            value = prefix + value.replace(/^\+/, '').replace(/[^0-9]/g, '');
         }
+        let afterPrefix = value.substring(prefix.length).replace(/[^0-9]/g, '');
+        this.value = prefix + afterPrefix;
 
-        document.getElementById('resendOtpLink').addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            if (this.classList.contains('disabled')) {
-                return;
-            }
-
-            // Clear OTP inputs
-            otpInputs.forEach(input => input.value = '');
-            otpInputs[0].focus();
-
-            // Trigger resend by submitting forgot password form again
-            const forgotEmail = document.getElementById('forgotEmail').value;
-            if (forgotEmail) {
-                fetch('forgot_password_process.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: 'email=' + encodeURIComponent(forgotEmail)
-                })
-                .then(response => {
-                    showSuccess('verifyOtpSuccess', 'New OTP has been sent to your email.');
-                    startResendTimer();
-                })
-                .catch(error => {
-                    showError('verifyOtpError', 'Failed to resend OTP. Please try again.');
-                });
-            }
-        });
-
-        // Phone number input restriction
-        const contactNumberInput = document.getElementById('contactNumber');
-        const prefix = '+971';
-
-        if (contactNumberInput) {
-            contactNumberInput.value = prefix;
-
-            contactNumberInput.addEventListener('focus', () => {
-                if (contactNumberInput.selectionStart < prefix.length) {
-                    contactNumberInput.setSelectionRange(prefix.length, prefix.length);
-                }
-            });
-
-            contactNumberInput.addEventListener('input', function() {
-                let value = this.value;
-                if (!value.startsWith(prefix)) {
-                    value = prefix + value.replace(/^\+/, '').replace(/[^0-9]/g, '');
-                }
-                let afterPrefix = value.substring(prefix.length).replace(/[^0-9]/g, '');
-                this.value = prefix + afterPrefix;
-
-                if (this.value.length > 13) {
-                    this.value = this.value.substring(0, 13);
-                }
-            });
-
-            contactNumberInput.addEventListener('keydown', function(event) {
-                const cursorStart = this.selectionStart;
-                if (event.key === 'Backspace' && cursorStart <= prefix.length) {
-                    event.preventDefault();
-                }
-                if (event.key.length === 1 && !/^[0-9]$/.test(event.key) && !event.metaKey && !event.ctrlKey) {
-                    event.preventDefault();
-                }
-            });
+        if (this.value.length > 13) {
+            this.value = this.value.substring(0, 13);
         }
+    });
 
-        // Name input restriction
-        function restrictNameInput(event) {
-            const input = event.target;
-            input.value = input.value.replace(/[^a-zA-Z\s\-]/g, '');
+    contactNumberInput.addEventListener('keydown', function(event) {
+        const cursorStart = this.selectionStart;
+        if (event.key === 'Backspace' && cursorStart <= prefix.length) {
+            event.preventDefault();
         }
-
-        document.getElementById('firstName')?.addEventListener('input', restrictNameInput);
-        document.getElementById('lastName')?.addEventListener('input', restrictNameInput);
-
-        // Password validation helper
-        function updateRequirement(element, isValid) {
-            const icon = element.querySelector('i');
-            element.classList.toggle('valid', isValid);
-            if (isValid) {
-                icon.classList.remove('bx-x');
-                icon.classList.add('bx-check');
-            } else {
-                icon.classList.remove('bx-check');
-                icon.classList.add('bx-x');
-            }
+        if (event.key.length === 1 && !/^[0-9]$/.test(event.key) && !event.metaKey && !event.ctrlKey) {
+            event.preventDefault();
         }
+    });
+}
 
-        // Password validation for signup
-        const signupPassword = document.getElementById('signupPassword');
-        const confirmPasswordInput = document.getElementById('confirmPassword');
-        const passwordRequirements = document.getElementById('passwordRequirements');
-        const confirmPasswordMatch = document.getElementById('confirmPasswordMatch');
+// Name input restriction
+function restrictNameInput(event) {
+    const input = event.target;
+    input.value = input.value.replace(/[^a-zA-Z\s\-]/g, '');
+}
 
-        function validatePasswordStrength() {
-            const password = signupPassword.value;
-            updateRequirement(document.getElementById('lengthCheck'), password.length >= 8);
-            updateRequirement(document.getElementById('uppercaseCheck'), /[A-Z]/.test(password));
-            updateRequirement(document.getElementById('lowercaseCheck'), /[a-z]/.test(password));
-            updateRequirement(document.getElementById('numberCheck'), /[0-9]/.test(password));
-            updateRequirement(document.getElementById('symbolCheck'), /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password));
-            checkPasswordMatch();
-        }
+document.getElementById('firstName')?.addEventListener('input', restrictNameInput);
+document.getElementById('lastName')?.addEventListener('input', restrictNameInput);
 
-        function checkPasswordMatch() {
-            const password = signupPassword.value;
-            const confirmPassword = confirmPasswordInput.value;
-            const passwordsMatch = password === confirmPassword && confirmPassword !== '';
-            updateRequirement(document.getElementById('matchCheck'), passwordsMatch);
-        }
+// Password validation helper function
+function updateRequirement(element, isValid) {
+    if (!element) return;
+    const icon = element.querySelector('i');
+    element.classList.toggle('valid', isValid);
+    if (isValid) {
+        icon.classList.remove('bx-x');
+        icon.classList.add('bx-check');
+    } else {
+        icon.classList.remove('bx-check');
+        icon.classList.add('bx-x');
+    }
+}
 
-        if (signupPassword) {
-            signupPassword.addEventListener('focus', () => {
-                passwordRequirements.classList.add('show');
-                validatePasswordStrength();
-            });
-            signupPassword.addEventListener('input', validatePasswordStrength);
-        }
+// Password validation for RESET PASSWORD
+const resetNewPassword = document.getElementById('resetNewPassword');
+const resetConfirmPassword = document.getElementById('resetConfirmPassword');
+const resetPasswordRequirements = document.getElementById('resetPasswordRequirements');
+const resetConfirmPasswordMatch = document.getElementById('resetConfirmPasswordMatch');
 
-        if (confirmPasswordInput) {
-            confirmPasswordInput.addEventListener('focus', () => {
-                confirmPasswordMatch.classList.add('show');
-                checkPasswordMatch();
-            });
-            confirmPasswordInput.addEventListener('input', checkPasswordMatch);
-        }
+function validateResetPasswordStrength() {
+    const password = resetNewPassword.value;
+    updateRequirement(document.getElementById('resetLengthCheck'), password.length >= 8);
+    updateRequirement(document.getElementById('resetUppercaseCheck'), /[A-Z]/.test(password));
+    updateRequirement(document.getElementById('resetLowercaseCheck'), /[a-z]/.test(password));
+    updateRequirement(document.getElementById('resetNumberCheck'), /[0-9]/.test(password));
+    updateRequirement(document.getElementById('resetSymbolCheck'), /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password));
+    checkResetPasswordMatch();
+}
 
-        // Password validation for reset password
-        const resetNewPassword = document.getElementById('resetNewPassword');
-        const resetConfirmPassword = document.getElementById('resetConfirmPassword');
-        const resetPasswordRequirements = document.getElementById('resetPasswordRequirements');
-        const resetConfirmPasswordMatch = document.getElementById('resetConfirmPasswordMatch');
+function checkResetPasswordMatch() {
+    const password = resetNewPassword.value;
+    const confirmPassword = resetConfirmPassword.value;
+    const passwordsMatch = password === confirmPassword && confirmPassword !== '';
+    updateRequirement(document.getElementById('resetMatchCheck'), passwordsMatch);
+}
 
-        function validateResetPasswordStrength() {
-            const password = resetNewPassword.value;
-            updateRequirement(document.getElementById('resetLengthCheck'), password.length >= 8);
-            updateRequirement(document.getElementById('resetUppercaseCheck'), /[A-Z]/.test(password));
-            updateRequirement(document.getElementById('resetLowercaseCheck'), /[a-z]/.test(password));
-            updateRequirement(document.getElementById('resetNumberCheck'), /[0-9]/.test(password));
-            updateRequirement(document.getElementById('resetSymbolCheck'), /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password));
-            checkResetPasswordMatch();
-        }
+if (resetNewPassword) {
+    resetNewPassword.addEventListener('focus', () => {
+        resetPasswordRequirements.classList.add('show');
+        validateResetPasswordStrength();
+    });
+    resetNewPassword.addEventListener('input', validateResetPasswordStrength);
+}
 
-        function checkResetPasswordMatch() {
-            const password = resetNewPassword.value;
-            const confirmPassword = resetConfirmPassword.value;
-            const passwordsMatch = password === confirmPassword && confirmPassword !== '';
-            updateRequirement(document.getElementById('resetMatchCheck'), passwordsMatch);
-        }
+if (resetConfirmPassword) {
+    resetConfirmPassword.addEventListener('focus', () => {
+        resetConfirmPasswordMatch.classList.add('show');
+        checkResetPasswordMatch();
+    });
+    resetConfirmPassword.addEventListener('input', checkResetPasswordMatch);
+}
 
-        if (resetNewPassword) {
-            resetNewPassword.addEventListener('focus', () => {
-                resetPasswordRequirements.classList.add('show');
-                validateResetPasswordStrength();
-            });
-            resetNewPassword.addEventListener('input', validateResetPasswordStrength);
-        }
+// Form validation for reset password
+document.getElementById('resetPasswordFormContainer').addEventListener('submit', function(e) {
+    const newPass = resetNewPassword.value;
+    const confirmPass = resetConfirmPassword.value;
 
-        if (resetConfirmPassword) {
-            resetConfirmPassword.addEventListener('focus', () => {
-                resetConfirmPasswordMatch.classList.add('show');
-                checkResetPasswordMatch();
-            });
-            resetConfirmPassword.addEventListener('input', checkResetPasswordMatch);
-        }
+    if (!newPass || !confirmPass) {
+        e.preventDefault();
+        showError('resetPasswordError', 'Please fill in all required fields.');
+        return false;
+    }
 
-        // Form validation for reset password
-        document.getElementById('resetPasswordFormContainer').addEventListener('submit', function(e) {
-            const newPass = resetNewPassword.value;
-            const confirmPass = resetConfirmPassword.value;
+    const hasLength = newPass.length >= 8;
+    const hasUppercase = /[A-Z]/.test(newPass);
+    const hasLowercase = /[a-z]/.test(newPass);
+    const hasNumber = /[0-9]/.test(newPass);
+    const hasSymbol = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPass);
 
-            if (!newPass || !confirmPass) {
-                e.preventDefault();
-                showError('resetPasswordError', 'Please fill in all required fields.');
-                return false;
-            }
+    if (!hasLength || !hasUppercase || !hasLowercase || !hasNumber || !hasSymbol) {
+        e.preventDefault();
+        showError('resetPasswordError', 'Password does not meet the security requirements.');
+        return false;
+    }
 
-            const hasLength = newPass.length >= 8;
-            const hasUppercase = /[A-Z]/.test(newPass);
-            const hasLowercase = /[a-z]/.test(newPass);
-            const hasNumber = /[0-9]/.test(newPass);
-            const hasSymbol = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPass);
+    if (newPass !== confirmPass) {
+        e.preventDefault();
+        showError('resetPasswordError', 'Passwords do not match.');
+        return false;
+    }
 
-            if (!hasLength || !hasUppercase || !hasLowercase || !hasNumber || !hasSymbol) {
-                e.preventDefault();
-                showError('resetPasswordError', 'Password does not meet the security requirements.');
-                return false;
-            }
+    return true;
+});
 
-            if (newPass !== confirmPass) {
-                e.preventDefault();
-                showError('resetPasswordError', 'Passwords do not match.');
-                return false;
-            }
+// Password validation for SIGNUP
+const signupPassword = document.getElementById('signupPassword');
+const confirmPasswordInput = document.getElementById('confirmPassword');
+const signupPasswordRequirements = document.getElementById('signupPasswordRequirements');
+const confirmPasswordMatch = document.getElementById('confirmPasswordMatch');
 
-            return true;
-        });
-    </script>
+function validateSignupPasswordStrength() {
+    const password = signupPassword.value;
+    updateRequirement(document.getElementById('signupLengthCheck'), password.length >= 8);
+    updateRequirement(document.getElementById('signupUppercaseCheck'), /[A-Z]/.test(password));
+    updateRequirement(document.getElementById('signupLowercaseCheck'), /[a-z]/.test(password));
+    updateRequirement(document.getElementById('signupNumberCheck'), /[0-9]/.test(password));
+    updateRequirement(document.getElementById('signupSymbolCheck'), /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password));
+    checkSignupPasswordMatch();
+}
+
+function checkSignupPasswordMatch() {
+    if (!confirmPasswordInput) return;
+    const password = signupPassword.value;
+    const confirmPassword = confirmPasswordInput.value;
+    const passwordsMatch = password === confirmPassword && confirmPassword !== '';
+    updateRequirement(document.getElementById('matchCheck'), passwordsMatch);
+}
+
+if (signupPassword) {
+    signupPassword.addEventListener('focus', () => {
+        signupPasswordRequirements.classList.add('show');
+        validateSignupPasswordStrength();
+    });
+    signupPassword.addEventListener('input', validateSignupPasswordStrength);
+}
+
+if (confirmPasswordInput) {
+    confirmPasswordInput.addEventListener('focus', () => {
+        confirmPasswordMatch.classList.add('show');
+        checkSignupPasswordMatch();
+    });
+    confirmPasswordInput.addEventListener('input', checkSignupPasswordMatch);
+}
+</script>
 </body>
 </html>

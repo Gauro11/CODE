@@ -28,13 +28,6 @@ if ($result->num_rows === 0) {
 }
 
 $booking = $result->fetch_assoc();
-// ✅ Detect Edit Mode and Pre-Fill Rating
-$isEdit = isset($_GET['edit_rating']) && $_GET['edit_rating'] == 1;
-
-// When editing, existing rating + comment will automatically show
-$existing_stars = isset($booking['rating_stars']) ? $booking['rating_stars'] : '';
-$existing_comment = isset($booking['rating_comment']) ? $booking['rating_comment'] : '';
-
 
 $cleaner_names = !empty($booking['cleaners']) ? array_map('trim', explode(',', $booking['cleaners'])) : [];
 $driver_names = !empty($booking['drivers']) ? array_map('trim', explode(',', $booking['drivers'])) : [];
@@ -158,11 +151,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt_driver->execute();
             }
 
-            $emoji = $sentiment === 'Positive' ? '😊' : ($sentiment === 'Negative' ? '😔' : '😐');
-            echo "<script>alert('✅ Thank you for your feedback! {$emoji}'); window.location.href='FR_one-time.php';</script>";
+            echo "<script>alert('Thank you for your feedback!'); window.location.href='FR_one-time.php';</script>";
             exit;
         } else {
-          echo "<script>alert('❌ Error saving review. Please try again.');</script>";
+          echo "<script>alert('Error saving review. Please try again.');</script>";
         }
     }
 }
@@ -180,72 +172,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body { 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #f5f5f5;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             min-height: 100vh;
-            position: relative;
-            overflow-x: hidden;
+            padding: 20px 0;
         }
-        
-        .bg-decoration {
-            position: fixed;
-            opacity: 0.15;
-            pointer-events: none;
-            z-index: 1;
-            animation: float 20s infinite ease-in-out;
-        }
-        
-        @keyframes float {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            50% { transform: translateY(-40px) rotate(5deg); }
-        }
-        
-        .bg-decoration:nth-child(1) { top: 10%; left: 5%; font-size: 60px; animation-delay: 0s; }
-        .bg-decoration:nth-child(2) { top: 60%; right: 8%; font-size: 50px; animation-delay: 3s; }
-        .bg-decoration:nth-child(3) { bottom: 15%; left: 10%; font-size: 55px; animation-delay: 6s; }
         
         .container {
-            max-width: 650px;
-            margin: 40px auto;
+            max-width: 700px;
+            margin: 0 auto;
             padding: 20px;
-            position: relative;
-            z-index: 10;
         }
         
         .card {
-            background: rgba(255, 255, 255, 0.98);
-            border-radius: 20px;
+            background: #ffffff;
+            border-radius: 8px;
             padding: 40px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border: 1px solid #e0e0e0;
         }
         
         .header {
             text-align: center;
-            margin-bottom: 35px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #007bff;
         }
         
         .header h1 {
-            font-size: 2.2em;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-weight: 700;
-            margin-bottom: 10px;
+            font-size: 2em;
+            color: #007bff;
+            font-weight: 600;
+            margin-bottom: 8px;
         }
         
         .header p {
-            color: #666;
+            color: #6c757d;
             font-size: 0.95em;
         }
         
         .booking-info {
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-            border-radius: 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
             padding: 20px;
             margin-bottom: 30px;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid #007bff;
         }
         
         .booking-info p {
@@ -257,6 +228,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .booking-info strong {
             color: #212529;
             font-weight: 600;
+            min-width: 80px;
+            display: inline-block;
         }
         
         .section {
@@ -264,13 +237,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         .section-title {
-            font-size: 1.2em;
-            color: #333;
+            font-size: 1.1em;
+            color: #007bff;
             margin-bottom: 15px;
             font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e9ecef;
         }
         
         .star-rating {
@@ -285,46 +257,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         .star-rating label {
             font-size: 50px;
-            color: #e0e0e0;
+            color: #dee2e6;
             cursor: pointer;
             transition: all 0.2s ease;
-            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.1));
         }
         
         .star-rating input:checked ~ label,
         .star-rating label:hover,
         .star-rating label:hover ~ label {
             color: #ffc107;
-            transform: scale(1.1);
         }
         
         .staff-card {
-            background: #fff;
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 15px;
-            transition: all 0.3s ease;
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 18px;
+            margin-bottom: 12px;
+            transition: all 0.2s ease;
         }
         
         .staff-card:hover {
-            border-color: #667eea;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
-            transform: translateY(-2px);
+            border-color: #007bff;
+            box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
         }
         
         .staff-name {
-            font-size: 1.1em;
-            color: #333;
+            font-size: 1.05em;
+            color: #212529;
             font-weight: 600;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
         }
         
         .staff-position {
             font-size: 0.9em;
             color: #6c757d;
             margin-bottom: 12px;
-            font-style: italic;
         }
         
         .small-star-rating {
@@ -338,7 +306,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         .small-star-rating label {
             font-size: 32px;
-            color: #e0e0e0;
+            color: #dee2e6;
             cursor: pointer;
             transition: all 0.2s ease;
         }
@@ -347,7 +315,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .small-star-rating label:hover,
         .small-star-rating label:hover ~ label {
             color: #ffc107;
-            transform: scale(1.08);
         }
         
         .feedback-wrapper {
@@ -357,70 +324,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         textarea {
             width: 100%;
             padding: 15px;
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
             font-size: 15px;
             font-family: inherit;
             min-height: 120px;
             resize: vertical;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
         }
         
         textarea:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-        
-        .sentiment-indicator {
-            margin-top: 12px;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 0.9em;
-            text-align: center;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            font-weight: 500;
-        }
-        
-        .sentiment-indicator.show { opacity: 1; }
-        
-        .sentiment-positive {
-            background: linear-gradient(135deg, #d4edda, #c3e6cb);
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        
-        .sentiment-negative {
-            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        
-        .sentiment-neutral {
-            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
-            color: #856404;
-            border: 1px solid #ffeaa7;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
         }
         
         .btn-submit {
             width: 100%;
             padding: 16px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: #007bff;
             color: white;
             border: none;
-            border-radius: 12px;
-            font-size: 1.1em;
+            border-radius: 6px;
+            font-size: 1.05em;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: all 0.2s ease;
             margin-top: 20px;
         }
         
         .btn-submit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+            background: #0056b3;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
         }
         
         .btn-submit:active {
@@ -433,7 +369,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border-left: 4px solid #ffc107;
             color: #856404;
             padding: 15px;
-            border-radius: 8px;
+            border-radius: 6px;
             margin-bottom: 20px;
             font-size: 0.9em;
         }
@@ -442,286 +378,230 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             text-align: center;
             padding: 20px;
             color: #6c757d;
-            font-style: italic;
             background: #f8f9fa;
-            border-radius: 8px;
+            border-radius: 6px;
         }
         
-        /* VADER Analysis Section */
-        #vaderAnalysis {
-            margin-top: 20px;
-            animation: slideDown 0.3s ease;
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
         
         @keyframes slideDown {
             from {
+                transform: translateY(-50px);
                 opacity: 0;
-                transform: translateY(-10px);
             }
             to {
-                opacity: 1;
                 transform: translateY(0);
+                opacity: 1;
             }
         }
         
-        .vader-container {
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-            border-radius: 12px;
-            padding: 25px;
-            border: 2px solid #667eea;
-        }
-        
-        .vader-title {
-            color: #667eea;
-            margin-bottom: 20px;
-            font-size: 1.3em;
-            text-align: center;
-        }
-        
-        .vader-steps {
-            background: white;
+        .modal-content {
+            background-color: #ffffff;
+            margin: 5% auto;
+            padding: 0;
+            border: 1px solid #dee2e6;
             border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 15px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
+            animation: slideDown 0.3s ease;
         }
         
-        .vader-steps h4 {
-            color: #333;
-            margin-bottom: 15px;
-            font-size: 1.1em;
+        .modal-header {
+            padding: 20px 25px;
+            background: #007bff;
+            color: white;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         
-        .vader-step {
-            margin-bottom: 15px;
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.4em;
+            font-weight: 600;
         }
         
-        .vader-step strong {
-            color: #667eea;
-            display: block;
-            margin-bottom: 5px;
+        .close {
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+            transition: all 0.2s ease;
         }
         
-        .vader-step p {
-            margin: 5px 0;
-            color: #666;
-            font-size: 0.95em;
-            line-height: 1.6;
+        .close:hover,
+        .close:focus {
+            transform: scale(1.2);
         }
         
-        .vader-formula {
-            text-align: center;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 6px;
+        .modal-body {
+            padding: 25px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        
+        .sentiment-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9em;
             margin: 10px 0;
         }
         
-        .vader-step ul {
-            margin: 10px 0 0 20px;
-            color: #666;
-            font-size: 0.95em;
-        }
-        
-        .vader-step ul li {
-            margin: 5px 0;
-        }
-        
-        .analysis-results {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-        }
-        
-        .analysis-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .analysis-card {
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-        }
-        
-        .analysis-card.positive {
-            background: linear-gradient(135deg, #d4edda, #c3e6cb);
-        }
-        
-        .analysis-card.negative {
-            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
-        }
-        
-        .analysis-card.neutral {
-            background: linear-gradient(135deg, #d1ecf1, #bee5eb);
-        }
-        
-        .analysis-value {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        
-        .analysis-label {
-            font-size: 0.9em;
-        }
-        
-        .compound-score {
-            margin-bottom: 20px;
-        }
-        
-        .compound-score h4 {
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 1.1em;
-        }
-        
-        .score-bar-container {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-        }
-        
-        .score-bar {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 8px;
-        }
-        
-        .score-track {
-            flex: 1;
-            height: 30px;
-            background: linear-gradient(to right, #dc3545 0%, #ffc107 50%, #28a745 100%);
-            border-radius: 15px;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .score-marker {
-            position: absolute;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            width: 20px;
-            height: 20px;
-            background: white;
-            border: 3px solid #333;
-            border-radius: 50%;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            transition: left 0.3s ease;
-        }
-        
-        .score-labels {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.85em;
-            color: #666;
-        }
-        
-        .score-value {
-            font-weight: bold;
-            color: #333;
-            font-size: 1.2em;
-        }
-        
-        .sentiment-result {
-            margin-bottom: 20px;
-        }
-        
-        .sentiment-box {
-            padding: 20px;
-            border-radius: 8px;
-            text-align: center;
-        }
-        
-        .sentiment-emoji {
-            font-size: 48px;
-            margin-bottom: 10px;
-        }
-        
-        .sentiment-label {
-            font-size: 24px;
-            font-weight: bold;
-        }
-        
-        .word-badges {
-            margin-bottom: 15px;
-        }
-        
-        .word-badges h4 {
-            margin-bottom: 8px;
-            font-size: 1em;
-        }
-        
-        .badge-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        
-        .word-badge {
-            padding: 5px 12px;
-            border-radius: 15px;
-            font-size: 0.9em;
-        }
-        
-        .word-badge.positive {
+        .sentiment-badge.positive {
             background: #d4edda;
             color: #155724;
         }
         
-        .word-badge.negative {
+        .sentiment-badge.negative {
             background: #f8d7da;
             color: #721c24;
         }
         
-        .empty-analysis {
+        .sentiment-badge.neutral {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .analysis-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-left: 4px solid #007bff;
+        }
+        
+        .analysis-section h3 {
+            color: #007bff;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+        
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 15px 0;
+        }
+        
+        .analysis-card {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+        }
+        
+        .analysis-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 5px;
+        }
+        
+        .analysis-label {
+            font-size: 0.85em;
+            color: #6c757d;
+        }
+        
+        .score-display {
             text-align: center;
             padding: 20px;
-            color: #999;
+            background: white;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+        
+        .score-number {
+            font-size: 48px;
+            font-weight: bold;
+            color: #007bff;
+            margin: 10px 0;
+        }
+        
+        .score-description {
+            color: #6c757d;
+            font-size: 0.9em;
         }
         
         @media (max-width: 768px) {
             .container { padding: 15px; }
             .card { padding: 25px; }
-            .header h1 { font-size: 1.8em; }
+            .header h1 { font-size: 1.6em; }
             .star-rating label { font-size: 40px; }
             .small-star-rating label { font-size: 28px; }
-            .vader-container { padding: 20px; }
-            .vader-title { font-size: 1.1em; }
-            .analysis-grid { grid-template-columns: 1fr; }
+            .modal-content { 
+                width: 95%; 
+                margin: 10% auto;
+            }
+            .analysis-grid { 
+                grid-template-columns: 1fr; 
+            }
         }
     </style>
 </head>
 <body>
 
-<div class="bg-decoration">⭐</div>
-<div class="bg-decoration">✨</div>
-<div class="bg-decoration">😊</div>
-
 <div class="container">
     <div class="card">
-        <div class="header">
-            <h1>Rate Your Service</h1>
-            
-        </div>
+       <a href="FR_one-time.php" 
+   style="position: absolute; top: 10px; left: 10px; 
+          background-color: #E87722; color: white; 
+          padding: 6px 12px; border-radius: 5px; 
+          text-decoration: none; font-weight: 500; font-size: 14px;">
+    ← Back
+</a>
+
+   <div class="header" style="display: flex; align-items: center; justify-content: center; position: relative; padding: 10px 0;">
+   
+
+  
+    <div style="text-align: center;">
+        <h1 style="margin: 0;">Service Rating Form</h1>
+        <p style="margin: 0; font-size: 13px;">Please share your experience with our service</p>
+    </div>
+
+</div>
+
+
+
 
         <div class="booking-info">
             <p><strong>Service:</strong> <?= htmlspecialchars($booking['service_type']) ?></p>
-            <p><strong>Date:</strong> <?= htmlspecialchars($booking['service_date']) ?></p>
+            <p><strong>Date:</strong> <?= htmlspecialchars($booking['start_date']) ?></p>
             <p><strong>Time:</strong> <?= htmlspecialchars($booking['service_time']) ?></p>
         </div>
 
         <?php if (empty($cleaners) && empty($drivers) && (!empty($booking['cleaners']) || !empty($booking['drivers']))): ?>
         <div class="alert">
-            <strong>⚠️ Notice:</strong> Some assigned staff could not be found in the system.
+            <strong>Notice:</strong> Some assigned staff could not be found in the system.
         </div>
         <?php endif; ?>
 
         <form method="POST">
             <div class="section">
-                <div class="section-title">⭐ Overall Service Rating</div>
+                <div class="section-title">Overall Service Rating</div>
                 <div class="star-rating">
                     <?php for ($i=5; $i>=1; $i--): ?>
                         <input type="radio" id="star<?= $i ?>" name="rating_stars" value="<?= $i ?>" required>
@@ -732,7 +612,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <?php if (!empty($cleaners)): ?>
             <div class="section">
-                <div class="section-title"> Rate Your Cleaners</div>
+                <div class="section-title">Rate Your Cleaners</div>
                 <?php foreach ($cleaners as $cleaner): ?>
                 <div class="staff-card">
                     <div class="staff-name"><?= htmlspecialchars($cleaner['first_name'] . ' ' . $cleaner['last_name']) ?></div>
@@ -751,14 +631,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <?php elseif (!empty($booking['cleaners'])): ?>
             <div class="section">
-                <div class="section-title"> Cleaners</div>
-                <div class="no-staff">⚠️ Staff information unavailable</div>
+                <div class="section-title">Cleaners</div>
+                <div class="no-staff">Staff information unavailable</div>
             </div>
             <?php endif; ?>
 
             <?php if (!empty($drivers)): ?>
             <div class="section">
-                <div class="section-title">  Rate Your Drivers</div>
+                <div class="section-title">Rate Your Drivers</div>
                 <?php foreach ($drivers as $driver): ?>
                 <div class="staff-card">
                     <div class="staff-name"><?= htmlspecialchars($driver['first_name'] . ' ' . $driver['last_name']) ?></div>
@@ -777,75 +657,77 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <?php elseif (!empty($booking['drivers'])): ?>
             <div class="section">
-                <div class="section-title">🚗 Drivers</div>
-                <div class="no-staff">⚠️ Staff information unavailable</div>
+                <div class="section-title">Drivers</div>
+                <div class="no-staff">Staff information unavailable</div>
             </div>
             <?php endif; ?>
 
             <div class="section">
-                <div class="section-title">💬 Written Feedback</div>
+                <div class="section-title">Written Feedback</div>
                 <div class="feedback-wrapper">
                     <textarea 
                         name="rating_comment" 
                         id="feedbackText"
-                        placeholder="Share your experience with us... How was the service? What did you like or dislike?"
+                        placeholder="Please share your detailed feedback about the service..."
                         required
                     ></textarea>
-                    <div id="sentimentIndicator" class="sentiment-indicator"></div>
+                    
                     <button type="submit" class="btn-submit">Submit Feedback</button>
-                    <!-- VADER Analysis Section -->
-                    <div id="vaderAnalysis" style="display: none;">
-                        <!-- <div class="vader-container"> -->
-                            <!-- <h3 class="vader-title">📊 VADER Sentiment Analysis</h3> -->
-                            
-                           
-                            
-                            <div id="analysisResult" class="analysis-results">
-                                <!-- <div class="empty-analysis">
-                                    Start typing to see real-time analysis...
-                                </div> -->
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
-
-            
         </form>
+    </div>
+</div>
+
+<!-- Modal -->
+<div id="sentimentModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Sentiment Analysis</h2>
+            <span class="close">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div id="modalContent"></div>
+        </div>
     </div>
 </div>
 
 <script>
 const feedbackText = document.getElementById('feedbackText');
-const sentimentIndicator = document.getElementById('sentimentIndicator');
-const vaderAnalysis = document.getElementById('vaderAnalysis');
-const analysisResult = document.getElementById('analysisResult');
+const modal = document.getElementById('sentimentModal');
+const closeBtn = document.getElementsByClassName('close')[0];
+const modalContent = document.getElementById('modalContent');
 
 let typingTimer;
-const typingDelay = 1000;
+const typingDelay = 1500;
 
 feedbackText?.addEventListener('input', function() {
     clearTimeout(typingTimer);
     const text = this.value.trim();
     
     if (text.length < 10) {
-        sentimentIndicator.classList.remove('show');
-        vaderAnalysis.style.display = 'none';
         return;
     }
     
-    // Show the VADER analysis section
-    vaderAnalysis.style.display = 'block';
-    
     typingTimer = setTimeout(() => {
         analyzeSentiment(text);
+        modal.style.display = 'block';
     }, typingDelay);
 });
+
+closeBtn.onclick = function() {
+    modal.style.display = 'none';
+}
+
+window.onclick = function(event) {
+    if (event.target == modal) {
+        modal.style.display = 'none';
+    }
+}
 
 function analyzeSentiment(text) {
     const lowerText = text.toLowerCase();
     
-    // Enhanced word lists for better detection
     const positiveWords = [
         'excellent', 'amazing', 'wonderful', 'great', 'good', 'love', 'best', 
         'awesome', 'perfect', 'beautiful', 'happy', 'clean', 'professional', 
@@ -865,149 +747,68 @@ function analyzeSentiment(text) {
     
     let positiveCount = 0;
     let negativeCount = 0;
-    let positiveWordsFound = [];
-    let negativeWordsFound = [];
     
-    // Count positive words
     positiveWords.forEach(word => {
         const regex = new RegExp('\\b' + word + '\\b', 'gi');
         const matches = lowerText.match(regex);
-        if (matches) {
-            positiveCount += matches.length;
-            if (!positiveWordsFound.includes(word)) {
-                positiveWordsFound.push(word);
-            }
-        }
+        if (matches) positiveCount += matches.length;
     });
     
-    // Count negative words
     negativeWords.forEach(word => {
         const regex = new RegExp('\\b' + word + '\\b', 'gi');
         const matches = lowerText.match(regex);
-        if (matches) {
-            negativeCount += matches.length;
-            if (!negativeWordsFound.includes(word)) {
-                negativeWordsFound.push(word);
-            }
-        }
+        if (matches) negativeCount += matches.length;
     });
     
-    // Calculate total words
     const totalWords = text.split(/\s+/).filter(word => word.length > 0).length;
-    
-    // Calculate valence score
     const valenceScore = (positiveCount * 0.5) - (negativeCount * 0.5);
-    
-    // Calculate compound score using VADER-like formula
     const compound = valenceScore / Math.sqrt(Math.pow(valenceScore, 2) + 15);
     
-    // Determine sentiment based on compound score
-    let sentiment, sentimentClass, emoji, sentimentColor;
+    let sentiment, badgeClass;
     if (compound >= 0.05) {
         sentiment = 'Positive';
-        sentimentClass = 'sentiment-positive';
-        emoji = '😊';
-        sentimentColor = '#155724';
+        badgeClass = 'positive';
     } else if (compound <= -0.05) {
         sentiment = 'Negative';
-        sentimentClass = 'sentiment-negative';
-        emoji = '😔';
-        sentimentColor = '#721c24';
+        badgeClass = 'negative';
     } else {
         sentiment = 'Neutral';
-        sentimentClass = 'sentiment-neutral';
-        emoji = '😐';
-        sentimentColor = '#856404';
+        badgeClass = 'neutral';
     }
     
-    // Update sentiment indicator
-    sentimentIndicator.classList.remove('sentiment-positive', 'sentiment-negative', 'sentiment-neutral');
-    sentimentIndicator.textContent = `${emoji} Your feedback sounds ${sentiment.toLowerCase()}!`;
-    sentimentIndicator.className = `sentiment-indicator ${sentimentClass} show`;
-    
-    // Calculate position for marker (0 to 100%)
-    // const markerPosition = ((compound + 1) / 2 * 100);
-    
-    // Update detailed analysis
-//     analysisResult.innerHTML = `
-//         <div style="margin-bottom: 20px;">
-//             <h4 style="color: #333; margin-bottom: 10px; font-size: 1.1em;">Analysis Results:</h4>
-//             <div class="analysis-grid">
-//                 <div class="analysis-card positive">
-//                     <div class="analysis-value" style="color: #155724;">${positiveCount}</div>
-//                     <div class="analysis-label" style="color: #155724;">Positive Words</div>
-//                 </div>
-//                 <div class="analysis-card negative">
-//                     <div class="analysis-value" style="color: #721c24;">${negativeCount}</div>
-//                     <div class="analysis-label" style="color: #721c24;">Negative Words</div>
-//                 </div>
-//                 <div class="analysis-card neutral">
-//                     <div class="analysis-value" style="color: #0c5460;">${totalWords}</div>
-//                     <div class="analysis-label" style="color: #0c5460;">Total Words</div>
-//                 </div>
-//             </div>
-//         </div>
+    modalContent.innerHTML = `
+        <div style="text-align: center; margin-bottom: 20px;">
+            <span class="sentiment-badge ${badgeClass}">${sentiment} Feedback</span>
+        </div>
         
-//         <div class="compound-score">
-//            <h4>Compound Score:</h4>
-// <div class="score-bar-container">
-//     <div class="score-bar">
-//         <div style="position: relative; width: 100%; height: 50px;">
-//             <!-- Score track with sections -->
-//             <div style="display: flex; width: 100%; height: 30px; border-radius: 15px; overflow: hidden;">
-//                 <!-- Negative zone: -1.0 to -0.05 (47.5% of width) -->
-//                 <div style="width: 47.5%; background: linear-gradient(to right, #dc3545, #e67e87); position: relative;">
-//                     <span style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); font-size: 0.7em; color: white; font-weight: bold;">-0.05</span>
-//                 </div>
-//                 <!-- Neutral zone: -0.05 to 0.05 (5% of width) -->
-//                 <div style="width: 5%; background: #ffc107; position: relative;">
-//                     <span style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 0.6em; color: #333; font-weight: bold;">0</span>
-//                 </div>
-//                 <!-- Positive zone: 0.05 to 1.0 (47.5% of width) -->
-//                 <div style="width: 47.5%; background: linear-gradient(to right, #8bc34a, #28a745); position: relative;">
-//                     <span style="position: absolute; left: 5px; top: 50%; transform: translateY(-50%); font-size: 0.7em; color: white; font-weight: bold;">+0.05</span>
-//                 </div>
-//             </div>
-//             <!-- Marker -->
-//             <div class="score-marker" style="position: absolute; left: ${markerPosition}%; top: 15px; transform: translateX(-50%);"></div>
-//         </div>
-//     </div>
-//     <div class="score-labels" style="margin-top: 10px;">
-//         <span>-1.0 (Negative)</span>
-//         <span class="score-value">${compound.toFixed(3)}</span>
-//         <span>+1.0 (Positive)</span>
-//     </div>
-//     <div style="text-align: center; margin-top: 8px; font-size: 0.8em; color: #666;">
-//         <strong>Neutral Zone:</strong> -0.05 to +0.05
-//     </div>
-// </div>
+        <div class="analysis-section">
+            <h3>Word Analysis</h3>
+            <div class="analysis-grid">
+                <div class="analysis-card">
+                    <div class="analysis-value">${positiveCount}</div>
+                    <div class="analysis-label">Positive Words</div>
+                </div>
+                <div class="analysis-card">
+                    <div class="analysis-value">${negativeCount}</div>
+                    <div class="analysis-label">Negative Words</div>
+                </div>
+                <div class="analysis-card">
+                    <div class="analysis-value">${totalWords}</div>
+                    <div class="analysis-label">Total Words</div>
+                </div>
+            </div>
+        </div>
         
-//         <div class="sentiment-result">
-//             <h4 style="color: #333; margin-bottom: 10px; font-size: 1.1em;">Overall Sentiment:</h4>
-//             <div class="sentiment-box" style="background: ${sentiment === 'Positive' ? 'linear-gradient(135deg, #d4edda, #c3e6cb)' : sentiment === 'Negative' ? 'linear-gradient(135deg, #f8d7da, #f5c6cb)' : 'linear-gradient(135deg, #fff3cd, #ffeaa7)'};">
-//                 <div class="sentiment-emoji">${emoji}</div>
-//                 <div class="sentiment-label" style="color: ${sentimentColor};">${sentiment}</div>
-//             </div>
-//         </div>
-        
-//         ${positiveWordsFound.length > 0 ? `
-//         <div class="word-badges">
-//             <h4 style="color: #155724;">✓ Positive words detected:</h4>
-//             <div class="badge-container">
-//                 ${positiveWordsFound.map(word => `<span class="word-badge positive">${word}</span>`).join('')}
-//             </div>
-//         </div>
-//         ` : ''}
-        
-//         ${negativeWordsFound.length > 0 ? `
-//         <div class="word-badges">
-//             <h4 style="color: #721c24;">✗ Negative words detected:</h4>
-//             <div class="badge-container">
-//                 ${negativeWordsFound.map(word => `<span class="word-badge negative">${word}</span>`).join('')}
-//             </div>
-//         </div>
-//         ` : ''}
-//     `;
+        <div class="analysis-section">
+            <h3>Sentiment Score</h3>
+            <div class="score-display">
+                <div class="score-number">${compound.toFixed(3)}</div>
+                <div class="score-description">
+                    Range: -1.0 (Most Negative) to +1.0 (Most Positive)
+                </div>
+            </div>
+        </div>
+    `;
 }
 </script>
 

@@ -78,28 +78,33 @@ function getEmployeeIdsByNames($conn, $names) {
 }
 
 // ✅ UPDATED Function - Check conflicts ONLY based on bookings table (ignore employee status)
+
 function getUnavailableStaff($conn, $service_date, $service_time, $duration, $current_booking_id = null) {
-    // Calculate end time for the new booking
     $duration_hours = durationToHours($duration);
     $new_start = strtotime($service_time);
     $new_end = $new_start + ($duration_hours * 3600);
     $new_end_time = date('H:i:s', $new_end);
     
-    // Get all bookings on the same date (excluding current booking and cancelled/completed)
+    $unavailable = [];
+    $conflicts = [];
+    
+    // ===== STEP 1: Check ONE-TIME bookings on the same date =====
     if ($current_booking_id) {
         $stmt = $conn->prepare("
-            SELECT cleaners, drivers, service_time, duration 
+            SELECT cleaners, drivers, service_time, duration, id
             FROM bookings 
-            WHERE service_date = ? 
+            WHERE booking_type = 'One-Time'
+            AND service_date = ? 
             AND id != ?
             AND status NOT IN ('Cancelled', 'Completed')
         ");
         $stmt->bind_param("si", $service_date, $current_booking_id);
     } else {
         $stmt = $conn->prepare("
-            SELECT cleaners, drivers, service_time, duration 
+            SELECT cleaners, drivers, service_time, duration, id
             FROM bookings 
-            WHERE service_date = ? 
+            WHERE booking_type = 'One-Time'
+            AND service_date = ? 
             AND status NOT IN ('Cancelled', 'Completed')
         ");
         $stmt->bind_param("s", $service_date);
@@ -108,37 +113,103 @@ function getUnavailableStaff($conn, $service_date, $service_time, $duration, $cu
     $stmt->execute();
     $result = $stmt->get_result();
     
-    $unavailable = [];
     while ($row = $result->fetch_assoc()) {
-        // Calculate end time for existing booking
         $existing_start = $row['service_time'];
         $existing_duration_hours = durationToHours($row['duration']);
         $existing_end = strtotime($existing_start) + ($existing_duration_hours * 3600);
         $existing_end_time = date('H:i:s', $existing_end);
         
-        // Check if time ranges overlap
         if (timeRangesOverlap($service_time, $new_end_time, $existing_start, $existing_end_time)) {
-            // Add cleaners to unavailable list
+            $conflict_time = date('H:i', strtotime($existing_start)) . ' - ' . date('H:i', $existing_end);
+            
             if (!empty($row['cleaners'])) {
                 $cleaners = explode(',', $row['cleaners']);
                 foreach ($cleaners as $cleaner) {
-                    $unavailable[] = trim($cleaner);
+                    $name = trim($cleaner);
+                    $unavailable[] = $name;
+                    $conflicts[$name] = $conflict_time . ' (One-Time #' . $row['id'] . ')';
                 }
             }
             
-            // Add drivers to unavailable list
             if (!empty($row['drivers'])) {
                 $drivers = explode(',', $row['drivers']);
                 foreach ($drivers as $driver) {
-                    $unavailable[] = trim($driver);
+                    $name = trim($driver);
+                    $unavailable[] = $name;
+                    $conflicts[$name] = $conflict_time . ' (One-Time #' . $row['id'] . ')';
                 }
             }
         }
     }
     $stmt->close();
     
-    return array_unique($unavailable); // Remove duplicates
+    // ===== STEP 2: Check RECURRING bookings that fall on this date =====
+    $day_of_week = date('l', strtotime($service_date));
+    
+    if ($current_booking_id) {
+        $stmt = $conn->prepare("
+            SELECT cleaners, drivers, service_time, duration, id, preferred_day
+            FROM bookings 
+            WHERE booking_type = 'Recurring'
+            AND preferred_day = ?
+            AND start_date <= ?
+            AND (end_date >= ? OR end_date IS NULL)
+            AND id != ?
+            AND status NOT IN ('Cancelled', 'Completed')
+        ");
+        $stmt->bind_param("sssi", $day_of_week, $service_date, $service_date, $current_booking_id);
+    } else {
+        $stmt = $conn->prepare("
+            SELECT cleaners, drivers, service_time, duration, id, preferred_day
+            FROM bookings 
+            WHERE booking_type = 'Recurring'
+            AND preferred_day = ?
+            AND start_date <= ?
+            AND (end_date >= ? OR end_date IS NULL)
+            AND status NOT IN ('Cancelled', 'Completed')
+        ");
+        $stmt->bind_param("sss", $day_of_week, $service_date, $service_date);
+    }
+    
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    while ($row = $result->fetch_assoc()) {
+        $existing_start = $row['service_time'];
+        $existing_duration_hours = durationToHours($row['duration']);
+        $existing_end = strtotime($existing_start) + ($existing_duration_hours * 3600);
+        $existing_end_time = date('H:i:s', $existing_end);
+        
+        if (timeRangesOverlap($service_time, $new_end_time, $existing_start, $existing_end_time)) {
+            $conflict_time = date('H:i', strtotime($existing_start)) . ' - ' . date('H:i', $existing_end);
+            
+            if (!empty($row['cleaners'])) {
+                $cleaners = explode(',', $row['cleaners']);
+                foreach ($cleaners as $cleaner) {
+                    $name = trim($cleaner);
+                    $unavailable[] = $name;
+                    $conflicts[$name] = $conflict_time . ' (Recurring #' . $row['id'] . ' - Every ' . $row['preferred_day'] . ')';
+                }
+            }
+            
+            if (!empty($row['drivers'])) {
+                $drivers = explode(',', $row['drivers']);
+                foreach ($drivers as $driver) {
+                    $name = trim($driver);
+                    $unavailable[] = $name;
+                    $conflicts[$name] = $conflict_time . ' (Recurring #' . $row['id'] . ' - Every ' . $row['preferred_day'] . ')';
+                }
+            }
+        }
+    }
+    $stmt->close();
+    
+    return [
+        'unavailable_staff' => array_unique($unavailable),
+        'conflicts' => $conflicts
+    ];
 }
+
 
 // ✅ Function to get employee full names from IDs
 function getEmployeeFullNames($conn, $ids) {
@@ -212,13 +283,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assign_staff'])) {
     $booking_id = $_POST['booking_id'];
     $group_id = isset($_POST['group_id']) ? $_POST['group_id'] : null;
     
-    // ✅ Check if group_id is provided
     if (!$group_id) {
         echo "<script>alert('⚠️ Please select a group!'); window.history.back();</script>";
         exit;
     }
     
-    // ✅ Fetch group members from database
+    // Fetch group members from database
     $group_stmt = $conn->prepare("SELECT cleaner1_id, cleaner2_id, cleaner3_id, cleaner4_id, cleaner5_id, driver_id FROM employee_groups WHERE id = ?");
     $group_stmt->bind_param("i", $group_id);
     $group_stmt->execute();
@@ -231,7 +301,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assign_staff'])) {
         exit;
     }
     
-    // ✅ Collect cleaner IDs (filter out nulls)
+    // Collect cleaner IDs (filter out nulls)
     $selected_cleaner_ids = array_filter([
         $group_data['cleaner1_id'],
         $group_data['cleaner2_id'],
@@ -240,7 +310,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assign_staff'])) {
         $group_data['cleaner5_id']
     ]);
     
-    // ✅ Collect driver ID
+    // Collect driver ID
     $selected_driver_ids = array_filter([$group_data['driver_id']]);
     
     // Validate minimum requirements
@@ -271,21 +341,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assign_staff'])) {
     $cleaner_names = getEmployeeFullNames($conn, $selected_cleaner_ids);
     $driver_names = getEmployeeFullNames($conn, $selected_driver_ids);
     
-    // Check if any selected staff has TIME OVERLAP conflict
-    $unavailable = getUnavailableStaff($conn, $booking_data['service_date'], $booking_data['service_time'], $booking_data['duration'], $booking_id);
+    // ✅ IMPROVED: Check conflicts for BOTH one-time AND recurring bookings
+    $availability_result = getUnavailableStaff(
+        $conn, 
+        $booking_data['service_date'], 
+        $booking_data['service_time'], 
+        $booking_data['duration'], 
+        $booking_id
+    );
+    
+    $unavailable = $availability_result['unavailable_staff'];
+    $conflicts = $availability_result['conflicts'];
     
     $selected_names = array_merge(
         $cleaner_names ? explode(', ', $cleaner_names) : [],
         $driver_names ? explode(', ', $driver_names) : []
     );
     
-    $conflicts = array_intersect($selected_names, $unavailable);
+    $conflicting_staff = array_intersect($selected_names, $unavailable);
     
-    if (!empty($conflicts)) {
-        $conflict_list = implode(', ', $conflicts);
+    if (!empty($conflicting_staff)) {
         $duration_hours = durationToHours($booking_data['duration']);
         $end_time = date('H:i', strtotime($booking_data['service_time']) + ($duration_hours * 3600));
-        echo "<script>alert('⚠️ DOUBLE BOOKING DETECTED!\\n\\nThe following staff are already assigned to another booking that overlaps with this time:\\n\\n$conflict_list\\n\\nYour booking: {$booking_data['service_date']} {$booking_data['service_time']} - {$end_time} ({$booking_data['duration']})\\n\\nPlease select different staff or adjust the booking time.'); window.history.back();</script>";
+        
+        // Build detailed conflict message
+        $conflict_details = [];
+        foreach ($conflicting_staff as $staff) {
+            $conflict_details[] = "• $staff: {$conflicts[$staff]}";
+        }
+        $conflict_info = implode("\\n", $conflict_details);
+        
+        echo "<script>
+            alert('⚠️ DOUBLE BOOKING DETECTED!\\n\\n" . count($conflicting_staff) . " staff member(s) are already assigned:\\n\\n$conflict_info\\n\\nYour booking: {$booking_data['service_date']} {$booking_data['service_time']} - {$end_time} ({$booking_data['duration']})\\n\\nThis includes conflicts with BOTH one-time and recurring bookings.\\n\\nPlease select different staff or adjust the booking time.');
+            window.history.back();
+        </script>";
         exit;
     }
     
@@ -295,7 +384,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assign_staff'])) {
     
     if ($stmt->execute()) {
         $stmt->close();
-        echo "<script>alert('✅ Staff assigned successfully!'); window.location.href='AP_one-time.php';</script>";
+        echo "<script>alert('✅ Staff assigned successfully!\\n\\nNo conflicts detected with existing bookings.'); window.location.href='AP_one-time.php';</script>";
         exit;
     } else {
         $stmt->close();
@@ -1031,7 +1120,7 @@ $status_colors = [
         <td><?= htmlspecialchars($row['phone']) ?></td>
         <td><?= htmlspecialchars($row['service_type']) ?></td>
         <td><?= htmlspecialchars($row['service_date']) ?></td>
-        <td><?= htmlspecialchars($row['service_time']) ?></td>
+   <td><?= date("h:i A", strtotime($row['service_time'])) ?></td>
         <td class="staff-names">
             <i class='bx bx-spray-can'></i>
             <?= getEmployeeNames($conn, $row['cleaners']) ?>

@@ -389,7 +389,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const frequencySelect = document.getElementById("frequency");
     const preferredDaySelect = document.getElementById("preferredDay");
     const startDateInput = document.getElementById("startDate");
-    const endDateInput = document.getElementById("endDate"); // Added End Date
+    const endDateInput = document.getElementById("endDate");
     const bookingTimeInput = document.getElementById("bookingTimeRecurring");
     const durationSelect = document.getElementById("duration");
     const materialsRadios = document.querySelectorAll('input[name="cleaningMaterials"]');
@@ -400,7 +400,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const propertyLayoutTextarea = document.getElementById('propertyLayout');
     const addressInput = document.getElementById('addressRecurring');
     const timeErrorMessage = document.getElementById("bookingTimeErrorMessage");
-    const endDateErrorMessage = document.getElementById("endDateErrorMessage"); // Get the End Date error element
+    const endDateErrorMessage = document.getElementById("endDateErrorMessage");
 
     const recurringBookingForm = document.getElementById("recurringBookingForm");
     const nextToWaiverBtn = document.getElementById("nextToWaiverRecurringBtn");
@@ -429,7 +429,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Function to add invalid class
     function addInvalidClass(element) {
         const parentGroup = element.closest('.form-group');
         if (parentGroup) {
@@ -437,13 +436,106 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Function to remove invalid class
     function removeInvalidClass(element) {
         const parentGroup = element.closest('.form-group');
         if (parentGroup) {
             parentGroup.classList.remove('is-invalid-group');
         }
     }
+
+    // ========== RESTRICTED TIME SLOTS (FROM ONE-TIME) ==========
+    function isTimeRestricted(timeString) {
+        if (!timeString) return { restricted: false };
+        
+        const [hours, minutes] = timeString.split(':').map(Number);
+        const timeInMinutes = hours * 60 + minutes;
+        
+        // 1:00 PM - 2:00 PM (13:00 - 14:00) - Prayer/Lunch Break
+        const prayerLunchStart = 13 * 60; // 780 minutes
+        const prayerLunchEnd = 14 * 60;   // 840 minutes
+        
+        // 5:00 PM - 5:30 PM (17:00 - 17:30) - Short Break
+        const shortBreakStart = 17 * 60;      // 1020 minutes
+        const shortBreakEnd = 17 * 60 + 30;   // 1050 minutes
+        
+        if (timeInMinutes >= prayerLunchStart && timeInMinutes < prayerLunchEnd) {
+            return { restricted: true, reason: '1:00 PM - 2:00 PM is reserved for Prayer/Lunch Break' };
+        }
+        
+        if (timeInMinutes >= shortBreakStart && timeInMinutes < shortBreakEnd) {
+            return { restricted: true, reason: '5:00 PM - 5:30 PM is reserved for Short Break' };
+        }
+        
+        return { restricted: false };
+    }
+    
+function updateAvailableDurations(startTime) {
+    if (!startTime || !durationSelect) return;
+    
+    const [hours, minutes] = startTime.split(':').map(Number);
+    const startMinutes = hours * 60 + minutes;
+    const endOfDayMinutes = 20 * 60; // 8:00 PM (20:00)
+    
+    // Calculate maximum available work hours until 8 PM
+    let maxAvailableMinutes = endOfDayMinutes - startMinutes;
+    
+    // Check if the time period includes the 1:00-2:00 PM break
+    const breakStart = 13 * 60;
+    const breakEnd = 14 * 60;
+    
+    // If booking starts before 1 PM and could extend past 1 PM, account for break
+    if (startMinutes < breakStart && (startMinutes + maxAvailableMinutes) > breakStart) {
+        maxAvailableMinutes -= 60; // Subtract 1 hour for break
+    }
+    
+    const maxWorkHours = Math.floor(maxAvailableMinutes / 60);
+    
+    // Save current selection
+    const currentValue = durationSelect.value;
+    
+    // Clear and repopulate duration options
+    durationSelect.innerHTML = '<option value="">Select duration...</option>';
+    
+    for (let i = 2; i <= 8; i++) {
+        if (i <= maxWorkHours) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.textContent = `${i} hrs`;
+            durationSelect.appendChild(option);
+        }
+    }
+    
+    // Restore selection if still valid
+    if (currentValue && parseInt(currentValue) <= maxWorkHours) {
+        durationSelect.value = currentValue;
+    } else {
+        durationSelect.value = '';
+    }
+    
+    // Show helper text if limited
+    if (maxWorkHours < 8) {
+        let durationLimitHelper = durationSelect.parentNode.querySelector('.duration-limit-helper');
+        if (!durationLimitHelper) {
+            durationLimitHelper = document.createElement('small');
+            durationLimitHelper.className = 'duration-limit-helper';
+            durationLimitHelper.style.cssText = 'color: #856404; margin-top: 0.25rem; display: block;';
+            // Insert before completion helper if it exists
+            const completionHelper = durationSelect.parentNode.querySelector('.duration-completion-helper');
+            if (completionHelper) {
+                durationSelect.parentNode.insertBefore(durationLimitHelper, completionHelper);
+            } else {
+                durationSelect.parentNode.appendChild(durationLimitHelper);
+            }
+        }
+        // durationLimitHelper.textContent = `Maximum ${maxWorkHours} hours available (bookings must end by 8:00 PM)`;
+        durationLimitHelper.style.display = 'block';
+    } else {
+        const existingHelper = durationSelect.parentNode.querySelector('.duration-limit-helper');
+        if (existingHelper) {
+            existingHelper.style.display = 'none';
+        }
+    }
+}
     
     // --- SERVICE TYPE BUTTON LOGIC ---
     generalCleaningBtn.addEventListener("click", () => {
@@ -483,22 +575,17 @@ document.addEventListener('DOMContentLoaded', () => {
             resetDependentFields(frequencySelect, preferredDaySelect, startDateInput, endDateInput, bookingTimeInput, durationSelect);
             preferredDaySelect.options[0].textContent = "Select frequency first...";
         }
-        validateDateRange(); // Re-validate when frequency changes
+        validateDateRange();
         updateSessionCountHelper();
         
-        // When frequency changes, clear dates and reset flatpickr limits
         startDateInput.value = "";
         endDateInput.value = "";
-        fpEnd.set('enable', [() => true]); // Reset to enable all days
-        fpEnd.set('minDate', 'today'); // <<< FIX: Reset minDate to 'today'
-        fpEnd.set('defaultDate', null); // <<< FIX: Clear defaultDate so it opens to today's month
+        fpEnd.set('enable', [() => true]);
+        fpEnd.set('minDate', 'today');
+        fpEnd.set('defaultDate', null);
         
-        // **IMPORTANT:** If Preferred Day is already selected, re-trigger the setting of Start Date
         if(preferredDaySelect.value) {
-             enableFlatpickrForPreferredDay(preferredDaySelect.value); // This will set Start Date
-        } else
-         {
-             // If preferred day is also empty, the flatpickr remains disabled until preferredDay is selected
+             enableFlatpickrForPreferredDay(preferredDaySelect.value);
         }
     });
 
@@ -508,17 +595,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (hasPreferredDay) {
             removeInvalidClass(preferredDaySelect);
             
-            // Enable Start Date
             startDateInput.disabled = false;
             startDateInput.style.pointerEvents = 'auto';
             startDateInput.style.backgroundColor = 'transparent';
             startDateInput.placeholder = "Select your desired date";
             
-            // Disable/Reset dependent fields 
             resetDependentFields(startDateInput, endDateInput, bookingTimeInput, durationSelect);
             endDateInput.placeholder = "Please select a start date first.";
             
-            enableFlatpickrForPreferredDay(chosenDay); // This will set Start Date
+            enableFlatpickrForPreferredDay(chosenDay);
         } else {
             resetDependentFields(preferredDaySelect, startDateInput, endDateInput, bookingTimeInput, durationSelect);
             startDateInput.placeholder = "Please select a preferred day first.";
@@ -533,41 +618,33 @@ document.addEventListener('DOMContentLoaded', () => {
         if (hasStartDate) {
             removeInvalidClass(startDateInput);
             
-            // Enable End Date fields
             endDateInput.disabled = false;
             endDateInput.style.pointerEvents = 'auto';
             endDateInput.style.backgroundColor = 'transparent';
             endDateInput.placeholder = "Select your end date";
             
-            // --- LOGIC FOR MIN DATE & INTERVAL RESTRICTIONS ---
             const freq = frequencySelect.value;
             const rawStartDate = new Date(startDateInput.value);
-            // Normalize start date to ensure accurate time calculations
             const startDate = new Date(rawStartDate.getFullYear(), rawStartDate.getMonth(), rawStartDate.getDate());
             
-            // Kunin ang preferred day number (0-6)
             const preferredDayNumber = startDate.getDay(); 
             
             let minEndDate;
-            let defaultEndDate = null; // Variable for the nearest applicable date
+            let defaultEndDate = null;
             let enableFunction;
 
-            // Function to restrict End Date to the Preferred Day
             function isPreferredDay(date) {
                 return date.getDay() === preferredDayNumber;
             }
             
-            // Set minDate to Start Date (General rule: End Date cannot be before Start Date)
             minEndDate = startDateInput.value;
             
             if (freq === 'Weekly') {
-                // For Weekly, the minimum end date must be 7 days AFTER the start date.
                 let minEndWeekly = new Date(startDate.getTime());
                 minEndWeekly.setDate(minEndWeekly.getDate() + 7);
                 minEndDate = minEndWeekly.toISOString().split('T')[0];
-                defaultEndDate = minEndDate; // Set default to 7 days after
+                defaultEndDate = minEndDate;
 
-                // Enable only dates that are on the preferred day AND are at least 7 days after the Start Date.
                 enableFunction = [
                     function (date) {
                         const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -580,42 +657,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 let minEndBiWeekly = new Date(startDate.getTime());
                 minEndBiWeekly.setDate(minEndBiWeekly.getDate() + intervalDays);
                 minEndDate = minEndBiWeekly.toISOString().split('T')[0];
-                defaultEndDate = minEndDate; // Set default to 14 days after
+                defaultEndDate = minEndDate;
 
-                // STRICT Bi-Weekly INTERVAL LOGIC
                 enableFunction = [
                     function (date) {
                         const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
                         const timeDiff = dateOnly.getTime() - startDate.getTime();
-                        // Day difference calculation (must be accurate to avoid DST issues)
                         const dayDiff = Math.round(timeDiff / (1000 * 3600 * 24)); 
                         
-                        // 1. Must be on or after the minimum date (14 days after Start Date)
-                        // 2. The day difference must be an exact multiple of 14 (14, 28, 42, ...)
                         return dayDiff >= intervalDays && dayDiff % intervalDays === 0;
                     }
                 ];
 
-            } else { // Monthly
-                 // Minimum End Date is 1 Month after Start Date
+            } else {
                  let minEndMonthly = new Date(startDate.getTime());
                  minEndMonthly.setMonth(minEndMonthly.getMonth() + 1);
                  minEndDate = minEndMonthly.toISOString().split('T')[0];
-                 defaultEndDate = minEndDate; // Set default to 1 month after
+                 defaultEndDate = minEndDate;
 
-                 // STRICT Monthly INTERVAL Logic: Must be the same day of the month, N months later
                  const startDayOfMonth = startDate.getDate();
                 
                  enableFunction = [
                     function (date) {
                         const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
                         
-                        // Rule 1: Must be on the same day of the month as the Start Date 
                         if (dateOnly.getDate() !== startDayOfMonth) {
                             return false; 
                         }
                         
-                        // Rule 2: Must be an exact number of months after Start Date (at least 1)
                         const monthDiff = (dateOnly.getFullYear() - startDate.getFullYear()) * 12 + (dateOnly.getMonth() - startDate.getMonth());
                         
                         return monthDiff >= 1;
@@ -623,50 +692,37 @@ document.addEventListener('DOMContentLoaded', () => {
                  ];
             }
 
-            // --- APPLY RESTRICTIONS AND AUTO-ADJUST CALENDAR VIEW (FIXED) ---
             fpEnd.set('minDate', minEndDate);
             fpEnd.set('enable', enableFunction);
             
-            // **FIX: Use `defaultDate` to make the calendar view jump to the earliest valid date**
             if (defaultEndDate) {
-                // Set the default date for the picker's view (triggers auto-navigation)
                 fpEnd.set('defaultDate', defaultEndDate);
-                
-                // Clear the actual input value to force user selection, 
-                // but the picker will open to the right month 
                 fpEnd.clear(); 
                 endDateInput.value = "";
-                
             } else {
                 fpEnd.clear(); 
                 endDateInput.value = ""; 
             }
             
-            // Reset dependent fields as End Date is now cleared
             resetDependentFields(startDateInput, bookingTimeInput, durationSelect);
-            
-            // Re-check validation and helper count (will be hidden since End Date is cleared)
             validateDateRange(); 
 
         } else {
             resetDependentFields(startDateInput, endDateInput, bookingTimeInput, durationSelect);
             endDateInput.placeholder = "Please select a start date first.";
             
-            // IMPORTANT: Reset the enable property to allow all days when start date is cleared
             fpEnd.set('enable', [() => true]); 
             fpEnd.set('minDate', 'today');
-            fpEnd.set('defaultDate', null); // FIX: Clear defaultDate
+            fpEnd.set('defaultDate', null);
         }
     });
 
     endDateInput.addEventListener("change", () => {
         const hasEndDate = endDateInput.value !== "";
         
-        // Always remove the group border (if it was applied by another validation)
         removeInvalidClass(endDateInput); 
 
         if (hasEndDate) {
-            // Re-check date range to make sure it's valid before enabling next field
             if(validateDateRange()) {
                 bookingTimeInput.disabled = false;
             } else {
@@ -678,13 +734,11 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSessionCountHelper();
     });
     
-    // ** MODIFIED VALIDATION LOGIC (ONLY GENERAL CHECKS) **
     function validateDateRange() {
         const freq = frequencySelect.value;
         const startDate = startDateInput.value;
         const endDate = endDateInput.value;
         
-        // Clear previous error first
         endDateErrorMessage.textContent = "";
         endDateErrorMessage.classList.remove("show");
         removeInvalidClass(endDateInput); 
@@ -693,7 +747,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return true;
         }
         
-        // 1. Weekly/Bi-Weekly/Monthly Start Date == End Date Check (Essential for ensuring recurring)
         if (freq === 'Weekly' || freq === 'Bi-Weekly' || freq === 'Monthly') {
             if (startDate === endDate) {
                 const serviceType = freq === 'Weekly' ? 'Weekly' : freq === 'Bi-Weekly' ? 'Bi-Weekly' : 'Monthly';
@@ -704,7 +757,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // 2. Existing date comparison validation (End Date cannot be before Start Date)
         const start = new Date(startDate);
         const end = new Date(endDate);
         if (end < start) {
@@ -716,142 +768,154 @@ document.addEventListener('DOMContentLoaded', () => {
         
         return true;
     }
-    // ** END OF MODIFIED VALIDATION LOGIC **
 
-    // --- SESSION COUNT HELPER (UNCHANGED) ---
-   // --- SESSION COUNT HELPER (MODIFIED) ---
-function updateSessionCountHelper() {
-    const startDateStr = startDateInput.value;
-    const endDateStr = endDateInput.value;
-    const frequency = frequencySelect.value;
-    const helperElementId = 'sessionCountHelper';
-    const hiddenSessionInput = document.getElementById('estimatedSessionsHidden'); // Add this line
+    function updateSessionCountHelper() {
+        const startDateStr = startDateInput.value;
+        const endDateStr = endDateInput.value;
+        const frequency = frequencySelect.value;
+        const helperElementId = 'sessionCountHelper';
+        const hiddenSessionInput = document.getElementById('estimatedSessionsHidden');
 
-    // Find or create the helper element
-    let helperElement = endDateInput.parentNode.querySelector('#' + helperElementId);
-    if (!helperElement) {
-        helperElement = document.createElement('small');
-        helperElement.className = 'session-count-helper';
-        helperElement.id = helperElementId;
-        helperElement.style.cssText = 'color: rgb(85, 85, 85); margin-top: 0.25rem; display: block;'; 
-        endDateInput.parentNode.appendChild(helperElement);
-    }
-
-    // Hide if required conditions are not met or if validation fails
-    if (!startDateStr || !endDateStr || !frequency || !validateDateRange()) {
-        helperElement.style.display = 'none';
-        if (hiddenSessionInput) hiddenSessionInput.value = ''; // Clear hidden value
-        return;
-    }
-
-    // Normalize dates to start of day for accurate comparison
-    const startDate = new Date(startDateStr + 'T00:00:00');
-    const endDate = new Date(endDateStr + 'T00:00:00');
-    let sessionCount = 0;
-
-    if (frequency === 'Weekly' || frequency === 'Bi-Weekly') {
-        const intervalDays = frequency === 'Weekly' ? 7 : 14;
-        let currentDate = new Date(startDate.getTime());
-        
-        while (currentDate.getTime() <= endDate.getTime()) {
-            sessionCount++;
-            currentDate.setDate(currentDate.getDate() + intervalDays);
+        let helperElement = endDateInput.parentNode.querySelector('#' + helperElementId);
+        if (!helperElement) {
+            helperElement = document.createElement('small');
+            helperElement.className = 'session-count-helper';
+            helperElement.id = helperElementId;
+            helperElement.style.cssText = 'color: rgb(85, 85, 85); margin-top: 0.25rem; display: block;'; 
+            endDateInput.parentNode.appendChild(helperElement);
         }
-        
-    } else if (frequency === 'Monthly') {
-        const startDay = startDate.getDate();
-        let currentDate = new Date(startDate.getTime());
-        
-        if(currentDate.getTime() <= endDate.getTime()) {
-            sessionCount = 1; 
-        } else {
-            sessionCount = 0;
-        }
-        
-        let nextDate = new Date(startDate.getTime());
 
-        while (true) {
-            nextDate.setMonth(nextDate.getMonth() + 1); 
+        if (!startDateStr || !endDateStr || !frequency || !validateDateRange()) {
+            helperElement.style.display = 'none';
+            if (hiddenSessionInput) hiddenSessionInput.value = '';
+            return;
+        }
+
+        const startDate = new Date(startDateStr + 'T00:00:00');
+        const endDate = new Date(endDateStr + 'T00:00:00');
+        let sessionCount = 0;
+
+        if (frequency === 'Weekly' || frequency === 'Bi-Weekly') {
+            const intervalDays = frequency === 'Weekly' ? 7 : 14;
+            let currentDate = new Date(startDate.getTime());
             
-            let tempNextDate = new Date(nextDate.getFullYear(), nextDate.getMonth(), startDay);
-
-            if (tempNextDate.getTime() > endDate.getTime() || nextDate.getMonth() > endDate.getMonth() + 12) {
-                break;
+            while (currentDate.getTime() <= endDate.getTime()) {
+                sessionCount++;
+                currentDate.setDate(currentDate.getDate() + intervalDays);
             }
+            
+        } else if (frequency === 'Monthly') {
+            const startDay = startDate.getDate();
+            let currentDate = new Date(startDate.getTime());
+            
+            if(currentDate.getTime() <= endDate.getTime()) {
+                sessionCount = 1; 
+            } else {
+                sessionCount = 0;
+            }
+            
+            let nextDate = new Date(startDate.getTime());
 
-            if (tempNextDate.getTime() >= startDate.getTime() && tempNextDate.getTime() <= endDate.getTime()) {
-                if (tempNextDate.getDate() === startDay) {
+            while (true) {
+                nextDate.setMonth(nextDate.getMonth() + 1); 
+                
+                let tempNextDate = new Date(nextDate.getFullYear(), nextDate.getMonth(), startDay);
+
+                if (tempNextDate.getTime() > endDate.getTime() || nextDate.getMonth() > endDate.getMonth() + 12) {
+                    break;
+                }
+
+                if (tempNextDate.getTime() >= startDate.getTime() && tempNextDate.getTime() <= endDate.getTime()) {
+                    if (tempNextDate.getDate() === startDay) {
+                        sessionCount++;
+                    }
+                } else if (nextDate.getTime() <= endDate.getTime() && nextDate.getDate() === startDay) {
                     sessionCount++;
                 }
-            } else if (nextDate.getTime() <= endDate.getTime() && nextDate.getDate() === startDay) {
-                sessionCount++;
-            }
 
-            if (nextDate.getTime() > endDate.getTime()) {
-                break;
+                if (nextDate.getTime() > endDate.getTime()) {
+                    break;
+                }
             }
+            
+        } else {
+            helperElement.style.display = 'none';
+            if (hiddenSessionInput) hiddenSessionInput.value = '';
+            return;
         }
+
+        if (sessionCount === 0 && startDate.getTime() <= endDate.getTime()) {
+            sessionCount = 1;
+        }
+
+        helperElement.textContent = `Estimated Sessions: ${sessionCount}`;
+        helperElement.style.display = 'block';
         
-    } else {
-        helperElement.style.display = 'none';
-        if (hiddenSessionInput) hiddenSessionInput.value = ''; // Clear hidden value
-        return;
+        if (hiddenSessionInput) {
+            hiddenSessionInput.value = sessionCount;
+        }
     }
 
-    // Final safety check
-    if (sessionCount === 0 && startDate.getTime() <= endDate.getTime()) {
-        sessionCount = 1;
-    }
-
-    helperElement.textContent = `Estimated Sessions: ${sessionCount}`;
-    helperElement.style.display = 'block';
     
-    // UPDATE HIDDEN INPUT WITH SESSION COUNT (Add this)
-    if (hiddenSessionInput) {
-        hiddenSessionInput.value = sessionCount;
-    }
-}
-
-
-    bookingTimeInput.addEventListener("change", () => {
-        const hasBookingTime = bookingTimeInput.value !== "";
-        if (hasBookingTime) {
+bookingTimeInput.addEventListener("change", () => {
+    const hasBookingTime = bookingTimeInput.value !== "";
+    if (hasBookingTime) {
+        // Validate immediately on change
+        if (validateAndShowTimeGuide()) {
             removeInvalidClass(bookingTimeInput);
             durationSelect.disabled = false;
+            // ✅ ADD THIS LINE: Update available durations based on start time
+            updateAvailableDurations(bookingTimeInput.value);
         } else {
-            resetDependentFields(bookingTimeInput, durationSelect);
+            durationSelect.disabled = true;
         }
-        updateDurationHelper();
-    });
+    } else {
+        resetDependentFields(bookingTimeInput, durationSelect);
+    }
+    updateDurationHelper();
+});
     
-    // --- REAL-TIME TIME VALIDATION AND GUIDE
+    // ========== UPDATED TIME VALIDATION (WITH RESTRICTIONS) ==========
     function validateAndShowTimeGuide() {
         const timeValue = bookingTimeInput.value;
         const timeErrorMessage = document.getElementById("bookingTimeErrorMessage");
 
         timeErrorMessage.textContent = "";
         timeErrorMessage.classList.remove("show");
+        removeInvalidClass(bookingTimeInput);
 
         if (timeValue === '') {
-            return; 
+            return false; 
         }
 
         const [hours, minutes] = timeValue.split(':').map(Number);
         const totalMinutes = hours * 60 + minutes;
         
-        const isValidTime = totalMinutes >= 540 && totalMinutes <= 1080; // 9:00 AM to 6:00 PM
+        // Check 9 AM to 6 PM range
+        const isValidTime = totalMinutes >= 540 && totalMinutes <= 1080;
 
         if (!isValidTime) {
             timeErrorMessage.textContent = "Please choose between 9 AM and 6 PM";
             timeErrorMessage.classList.add("show");
+            addInvalidClass(bookingTimeInput);
+            return false;
         }
+        
+        // ✅ Check if time is in restricted period
+        const restrictionCheck = isTimeRestricted(timeValue);
+        if (restrictionCheck.restricted) {
+            timeErrorMessage.textContent = "⛔ " + restrictionCheck.reason;
+            timeErrorMessage.classList.add("show");
+            addInvalidClass(bookingTimeInput);
+            return false;
+        }
+        
+        return true;
     }
 
     bookingTimeInput.addEventListener("input", validateAndShowTimeGuide);
-    bookingTimeInput.addEventListener("change", validateAndShowTimeGuide);
 
-
-    // --- FLATPICKR & TIME VALIDATION ---
+    // --- FLATPICKR ---
     const fpStart = flatpickr(startDateInput, {
         dateFormat: "Y-m-d",
         minDate: "today",
@@ -861,7 +925,7 @@ function updateSessionCountHelper() {
     const fpEnd = flatpickr(endDateInput, {
         dateFormat: "Y-m-d",
         minDate: "today",
-        enable: [() => true] // Initialize with enable all days
+        enable: [() => true]
     });
 
     function getPreferredDayNumber(day) {
@@ -872,16 +936,13 @@ function updateSessionCountHelper() {
     function enableFlatpickrForPreferredDay(chosenDay) {
         const preferredDayNum = getPreferredDayNumber(chosenDay);
         
-        // Restriction for Start Date (must be on preferred day)
         fpStart.set('disable', [
             function (date) {
                 return date.getDay() !== preferredDayNum;
             }
         ]);
         
-        // Auto-select the next available preferred day
         let nextDate = new Date();
-        // Set to next preferred day, but ensure it's not today if today is the preferred day and time is past
         while (nextDate.getDay() !== preferredDayNum || nextDate.getTime() < new Date().getTime() - (24 * 60 * 60 * 1000)) {
             nextDate.setDate(nextDate.getDate() + 1);
         }
@@ -892,25 +953,36 @@ function updateSessionCountHelper() {
             nextDate.setDate(nextDate.getDate() + 7);
         }
         
-        // **FIX 1: Set the Start Date value WITHOUT triggering the change event (false)**
         fpStart.setDate(nextDate.toISOString().split('T')[0], false); 
         
-        // **FIX 2: Ensure End Date is fully reset, cleared, and DISABLED, waiting for user interaction.**
         endDateInput.disabled = true; 
         endDateInput.value = "";
         endDateInput.placeholder = "Please select a start date first.";
         fpEnd.clear(); 
-        fpEnd.set('defaultDate', null); // <<< FIX: I-reset ang view ng End Date picker
-        fpEnd.set('minDate', 'today'); // <<< ITO ANG FINAL FIX para bumalik sa current month
-        fpEnd.set('enable', [() => true]); // I-reset ang enable function
+        fpEnd.set('defaultDate', null);
+        fpEnd.set('minDate', 'today');
+        fpEnd.set('enable', [() => true]);
     }
     
     function validateTimeRange() {
         const timeValue = bookingTimeInput.value;
+        if (!timeValue) return false;
+        
         const [hours, minutes] = timeValue.split(':').map(Number);
         const totalMinutes = hours * 60 + minutes;
         
-        return totalMinutes >= 540 && totalMinutes <= 1080; // 9:00 AM to 6:00 PM
+        // Check 9 AM to 6 PM
+        if (totalMinutes < 540 || totalMinutes > 1080) {
+            return false;
+        }
+        
+        // Check restricted times
+        const restrictionCheck = isTimeRestricted(timeValue);
+        if (restrictionCheck.restricted) {
+            return false;
+        }
+        
+        return true;
     }
 
     // --- REAL-TIME VALIDATION REMOVAL ---
@@ -924,6 +996,7 @@ function updateSessionCountHelper() {
         if (durationSelect.value.trim() !== '') {
             removeInvalidClass(durationSelect);
         }
+        updateDurationHelper();
     });
 
     propertyLayoutTextarea.addEventListener('input', () => {
@@ -945,33 +1018,26 @@ function updateSessionCountHelper() {
             } else {
                 materialsNeededContainer.style.display = 'none';
                 materialsNeededInput.required = false;
-                removeInvalidClass(materialsNeededInput); // Remove red border when not needed
+                removeInvalidClass(materialsNeededInput);
             }
         });
     });
 
-    // --- DURATION COMPLETION TIME HELPER ---
-  // --- UAE BREAK CALCULATION FUNCTIONS ---
-    
-    // Check if work period includes the 1:00 PM - 2:00 PM break
+    // --- UAE BREAK CALCULATION FUNCTIONS ---
     function includesBreakTime(startTime, workHours) {
         if (!startTime || !workHours) return false;
         
         const [hours, minutes] = startTime.split(':').map(Number);
         const startMinutes = hours * 60 + minutes;
         
-        // Prayer + Lunch break is 1:00 PM - 2:00 PM (13:00 - 14:00)
-        const breakStart = 13 * 60; // 1:00 PM in minutes
-        const breakEnd = 14 * 60;   // 2:00 PM in minutes
+        const breakStart = 13 * 60;
+        const breakEnd = 14 * 60;
         
-        // Calculate end time in minutes (without break)
         const endMinutes = startMinutes + (workHours * 60);
         
-        // Check if the work period overlaps with break time
         return startMinutes < breakEnd && endMinutes > breakStart;
     }
 
-    // Calculate actual duration with break
     function calculateActualDuration(startTime, workHours) {
         const hasBreak = includesBreakTime(startTime, workHours);
         const breakDuration = hasBreak ? 1 : 0;
@@ -985,12 +1051,10 @@ function updateSessionCountHelper() {
         };
     }
 
-    // Check if duration exceeds 5 consecutive hours
     function checkConsecutiveHours(workHours) {
         return workHours > 5;
     }
 
-    // --- DURATION COMPLETION TIME HELPER ---
     function updateDurationHelper() {
         const duration = parseInt(durationSelect.value);
         const timeValue = bookingTimeInput.value;
@@ -1000,21 +1064,18 @@ function updateSessionCountHelper() {
             return;
         }
 
-        // Calculate UAE break requirements
         const durationCalc = calculateActualDuration(timeValue, duration);
 
         const [hours, minutes] = timeValue.split(":").map(Number);
         const startTime = new Date();
         startTime.setHours(hours, minutes, 0);
 
-        // Add TOTAL hours (work + break)
         const endTime = new Date(startTime.getTime() + durationCalc.totalHours * 60 * 60 * 1000);
         let endHours = endTime.getHours();
         const endMinutes = endTime.getMinutes();
         const ampm = endHours >= 12 ? 'PM' : 'AM';
         endHours = endHours % 12 || 12;
 
-        // Format start time
         const startAmpm = hours >= 12 ? 'PM' : 'AM';
         const startHours12 = hours % 12 || 12;
 
@@ -1028,17 +1089,14 @@ function updateSessionCountHelper() {
 
         let completionText = `${startHours12}:${minutes.toString().padStart(2, '0')} ${startAmpm} - ${endHours}:${endMinutes.toString().padStart(2, '0')} ${ampm}`;
         
-        // Show work hours
         completionText += ` (${duration} hrs work`;
         
-        // Add break information if applicable
         if (durationCalc.hasBreak) {
             completionText += ` + 1 hr break [1:00 PM - 2:00 PM Prayer/Lunch]`;
         }
         
         completionText += `)`;
 
-        // Warning if exceeds 5 consecutive hours without break
         if (checkConsecutiveHours(duration) && !durationCalc.hasBreak) {
             completionText += ` ⚠️ Exceeds 5 hours without break`;
             helperElement.style.color = '#d9534f';
@@ -1050,71 +1108,56 @@ function updateSessionCountHelper() {
         helperElement.style.display = 'block';
     }
 
-    durationSelect.addEventListener("change", updateDurationHelper);
-    bookingTimeInput.addEventListener('change', updateDurationHelper);
+    
 
     // --- FINAL VALIDATION FUNCTION ---
     function validateRecurringForm() {
         let isValid = true;
         
-        // Clear all previous errors
         const allFormGroups = document.querySelectorAll('.form-group');
         allFormGroups.forEach(group => {
             group.classList.remove('is-invalid-group');
             group.querySelectorAll('.error-message').forEach(el => {
-                // Only clear error messages for fields that will be re-validated below
                 if(el.id !== "endDateErrorMessage" && el.id !== "bookingTimeErrorMessage") el.classList.remove("show");
             });
         });
 
-        // Date Range Validation (Run first to clear specific date errors)
         if (!validateDateRange()) {
             isValid = false;
         }
         
-        // Manual validation for the service card group
         const serviceOptionsGroup = document.querySelector('.service-options').closest('.form-group');
         if (serviceTypeHidden.value === "") {
             serviceOptionsGroup.classList.add('is-invalid-group');
             isValid = false;
         }
 
-        // REQUIRED FIELDS CHECK
         const formElements = [clientTypeSelect, addressInput, frequencySelect,
             preferredDaySelect, startDateInput, endDateInput, durationSelect,
             propertyLayoutTextarea];
 
         formElements.forEach(el => {
-            // Special handling for endDateInput if it's empty
             if (el.id === 'endDate' && el.value.trim() === '') {
-                // If End Date is empty, apply the required field border
                 addInvalidClass(el);
                 isValid = false;
             } 
-            // Generic required field check for all others
             else if (el.hasAttribute('required') && el.value.trim() === '') {
                 addInvalidClass(el);
                 isValid = false;
             }
         });
 
-        // TIME VALIDATION (Preferred Time)
+        // ✅ UPDATED TIME VALIDATION - Use validateAndShowTimeGuide
         const timeValue = bookingTimeInput.value.trim();
-        const timeErrorMessage = document.getElementById("bookingTimeErrorMessage");
         if (timeValue === '') {
             addInvalidClass(bookingTimeInput);
             isValid = false;
-        } else if (!validateTimeRange()) {
-            addInvalidClass(bookingTimeInput);
-            timeErrorMessage.textContent = "Please choose between 9 AM and 6 PM";
-            timeErrorMessage.classList.add("show");
-            isValid = false;
         } else {
-            removeInvalidClass(bookingTimeInput);
-            timeErrorMessage.classList.remove("show");
+            if (!validateAndShowTimeGuide()) {
+                isValid = false;
+            }
         }
 
-        // Cleaning Materials validation
         const selectedMaterialOption = document.querySelector('input[name="cleaningMaterials"]:checked');
         const materialsRadioGroup = materialsYes.closest('.form-group');
         if (!selectedMaterialOption) {
@@ -1187,6 +1230,8 @@ function updateSessionCountHelper() {
 
     generalCleaningBtn.classList.remove("active");
 });
+
+
 </script>
 
 <script src="client_db.js"></script>

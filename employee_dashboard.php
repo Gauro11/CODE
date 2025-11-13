@@ -1,9 +1,13 @@
 <?php
-include 'connection.php';
+// ✅ Start session FIRST
 session_start();
 
-// ✅ ENABLE DEBUG MODE - Set to true to see diagnostic information
-$DEBUG_MODE = false; // Change to false after checking
+// ✅ Include database connection
+require_once 'connection.php';
+
+// ✅ Increase limits for complex queries
+ini_set('max_execution_time', 300);
+ini_set('memory_limit', '256M');
 
 // ✅ Ensure employee is logged in
 if (!isset($_SESSION['email'])) {
@@ -15,6 +19,9 @@ if (!isset($_SESSION['email'])) {
 $employeeEmail = $_SESSION['email'];
 $employeeQuery = "SELECT id, first_name, last_name, position FROM employees WHERE email = ?";
 $stmt = $conn->prepare($employeeQuery);
+if (!$stmt) {
+    die("Error preparing employee query: " . $conn->error);
+}
 $stmt->bind_param("s", $employeeEmail);
 $stmt->execute();
 $employeeResult = $stmt->get_result();
@@ -32,8 +39,13 @@ $employeePosition = $employee['position'] ?? 'N/A';
 // ========== HELPER FUNCTION: Generate recurring occurrences ==========
 function generateRecurringOccurrences($booking, $targetDate) {
     $occurrences = [];
+    
+    if (!isset($booking['frequency']) || !isset($booking['start_date'])) {
+        return $occurrences;
+    }
+    
     $frequency = $booking['frequency'];
-    $preferredDay = $booking['preferred_day'];
+    $preferredDay = $booking['preferred_day'] ?? '';
     $startDate = $booking['start_date'];
     $endDate = $booking['end_date'] ? $booking['end_date'] : date('Y-m-d', strtotime('+1 year'));
     
@@ -76,10 +88,14 @@ function generateRecurringOccurrences($booking, $targetDate) {
 
 // Helper function to calculate next occurrence
 function getNextOccurrence($booking, $fromDate) {
+    if (!isset($booking['frequency']) || !isset($booking['start_date'])) {
+        return null;
+    }
+    
     $frequency = $booking['frequency'];
-    $preferredDay = $booking['preferred_day'];
+    $preferredDay = $booking['preferred_day'] ?? '';
     $startDate = $booking['start_date'];
-    $endDate = $booking['end_date'];
+    $endDate = $booking['end_date'] ?? null;
     
     $current = strtotime(max($startDate, $fromDate));
     $endTime = $endDate ? strtotime($endDate) : strtotime('+1 year');
@@ -115,7 +131,7 @@ function getNextOccurrence($booking, $fromDate) {
         $current = strtotime('+1 day', $current);
     }
     
-    return null; // No valid occurrence found
+    return null;
 }
 
 // ==================== DASHBOARD STATISTICS ====================
@@ -130,11 +146,14 @@ $todayOneTimeQuery = "
     AND service_date = ? 
     AND status IN ('Confirmed', 'Pending', 'Ongoing')
     AND (
-        cleaners LIKE CONCAT('%', ?, '%')
-        OR drivers LIKE CONCAT('%', ?, '%')
+        FIND_IN_SET(?, REPLACE(cleaners, ', ', ',')) > 0
+        OR FIND_IN_SET(?, REPLACE(drivers, ', ', ',')) > 0
     )
 ";
 $stmt = $conn->prepare($todayOneTimeQuery);
+if (!$stmt) {
+    die("Error preparing today one-time query: " . $conn->error);
+}
 $stmt->bind_param("sss", $today, $employeeName, $employeeName);
 $stmt->execute();
 $todayOneTimeCount = $stmt->get_result()->fetch_assoc()['total'];
@@ -147,21 +166,26 @@ $todayRecurringQuery = "
     AND (end_date IS NULL OR end_date >= ?)
     AND status IN ('Confirmed', 'Pending', 'Ongoing', 'Active')
     AND (
-        cleaners LIKE CONCAT('%', ?, '%')
-        OR drivers LIKE CONCAT('%', ?, '%')
+        FIND_IN_SET(?, REPLACE(cleaners, ', ', ',')) > 0
+        OR FIND_IN_SET(?, REPLACE(drivers, ', ', ',')) > 0
     )
 ";
 $stmt = $conn->prepare($todayRecurringQuery);
+if (!$stmt) {
+    die("Error preparing today recurring query: " . $conn->error);
+}
 $stmt->bind_param("ssss", $today, $today, $employeeName, $employeeName);
 $stmt->execute();
 $todayRecurringResult = $stmt->get_result();
 
 // Count recurring appointments that fall on today
 $todayRecurringCount = 0;
-while ($booking = $todayRecurringResult->fetch_assoc()) {
-    $occurrences = generateRecurringOccurrences($booking, $today);
-    if (count($occurrences) > 0) {
-        $todayRecurringCount++;
+if ($todayRecurringResult) {
+    while ($booking = $todayRecurringResult->fetch_assoc()) {
+        $occurrences = generateRecurringOccurrences($booking, $today);
+        if (count($occurrences) > 0) {
+            $todayRecurringCount++;
+        }
     }
 }
 
@@ -176,11 +200,14 @@ $upcomingOneTimeQuery = "
     AND service_date BETWEEN ? AND ?
     AND status = 'Confirmed'
     AND (
-        cleaners LIKE CONCAT('%', ?, '%')
-        OR drivers LIKE CONCAT('%', ?, '%')
+        FIND_IN_SET(?, REPLACE(cleaners, ', ', ',')) > 0
+        OR FIND_IN_SET(?, REPLACE(drivers, ', ', ',')) > 0
     )
 ";
 $stmt = $conn->prepare($upcomingOneTimeQuery);
+if (!$stmt) {
+    die("Error preparing upcoming one-time query: " . $conn->error);
+}
 $stmt->bind_param("ssss", $today, $sevenDaysLater, $employeeName, $employeeName);
 $stmt->execute();
 $upcomingOneTimeCount = $stmt->get_result()->fetch_assoc()['total'];
@@ -193,29 +220,34 @@ $upcomingRecurringQuery = "
     AND (end_date IS NULL OR end_date >= ?)
     AND status IN ('Confirmed', 'Active')
     AND (
-        cleaners LIKE CONCAT('%', ?, '%')
-        OR drivers LIKE CONCAT('%', ?, '%')
+        FIND_IN_SET(?, REPLACE(cleaners, ', ', ',')) > 0
+        OR FIND_IN_SET(?, REPLACE(drivers, ', ', ',')) > 0
     )
 ";
 $stmt = $conn->prepare($upcomingRecurringQuery);
+if (!$stmt) {
+    die("Error preparing upcoming recurring query: " . $conn->error);
+}
 $stmt->bind_param("ssss", $sevenDaysLater, $today, $employeeName, $employeeName);
 $stmt->execute();
 $upcomingRecurringResult = $stmt->get_result();
 
 // Count recurring appointments in next 7 days
 $upcomingRecurringCount = 0;
-while ($booking = $upcomingRecurringResult->fetch_assoc()) {
-    $current = strtotime($today);
-    $end = strtotime($sevenDaysLater);
-    
-    while ($current <= $end) {
-        $checkDate = date('Y-m-d', $current);
-        $occurrences = generateRecurringOccurrences($booking, $checkDate);
-        if (count($occurrences) > 0) {
-            $upcomingRecurringCount++;
-            break; // Count each booking only once
+if ($upcomingRecurringResult) {
+    while ($booking = $upcomingRecurringResult->fetch_assoc()) {
+        $current = strtotime($today);
+        $end = strtotime($sevenDaysLater);
+        
+        while ($current <= $end) {
+            $checkDate = date('Y-m-d', $current);
+            $occurrences = generateRecurringOccurrences($booking, $checkDate);
+            if (count($occurrences) > 0) {
+                $upcomingRecurringCount++;
+                break;
+            }
+            $current = strtotime('+1 day', $current);
         }
-        $current = strtotime('+1 day', $current);
     }
 }
 
@@ -228,11 +260,14 @@ $pendingQuery = "
     FROM bookings 
     WHERE status = 'Pending'
     AND (
-        cleaners LIKE CONCAT('%', ?, '%')
-        OR drivers LIKE CONCAT('%', ?, '%')
+        FIND_IN_SET(?, REPLACE(cleaners, ', ', ',')) > 0
+        OR FIND_IN_SET(?, REPLACE(drivers, ', ', ',')) > 0
     )
 ";
 $stmt = $conn->prepare($pendingQuery);
+if (!$stmt) {
+    die("Error preparing pending query: " . $conn->error);
+}
 $stmt->bind_param("ss", $employeeName, $employeeName);
 $stmt->execute();
 $pendingCount = $stmt->get_result()->fetch_assoc()['total'];
@@ -243,13 +278,16 @@ $oneTimeQuery = "
     WHERE booking_type = 'One-Time'
     AND service_date >= ?
     AND (
-        cleaners LIKE CONCAT('%', ?, '%')
-        OR drivers LIKE CONCAT('%', ?, '%')
+        FIND_IN_SET(?, REPLACE(cleaners, ', ', ',')) > 0
+        OR FIND_IN_SET(?, REPLACE(drivers, ', ', ',')) > 0
     )
     ORDER BY service_date ASC, service_time ASC
     LIMIT 5
 ";
 $stmt = $conn->prepare($oneTimeQuery);
+if (!$stmt) {
+    die("Error preparing one-time appointments query: " . $conn->error);
+}
 $stmt->bind_param("sss", $today, $employeeName, $employeeName);
 $stmt->execute();
 $oneTimeResult = $stmt->get_result();
@@ -261,42 +299,49 @@ $recurringQuery = "
     AND start_date <= ?
     AND (end_date IS NULL OR end_date >= ?)
     AND (
-        cleaners LIKE CONCAT('%', ?, '%')
-        OR drivers LIKE CONCAT('%', ?, '%')
+        FIND_IN_SET(?, REPLACE(cleaners, ', ', ',')) > 0
+        OR FIND_IN_SET(?, REPLACE(drivers, ', ', ',')) > 0
     )
     ORDER BY start_date ASC, service_time ASC
+    LIMIT 10
 ";
 $stmt = $conn->prepare($recurringQuery);
-$thirtyDaysLater = date('Y-m-d', strtotime('+30 days')); // Look ahead 30 days
+if (!$stmt) {
+    die("Error preparing recurring appointments query: " . $conn->error);
+}
+$thirtyDaysLater = date('Y-m-d', strtotime('+30 days'));
 $stmt->bind_param("ssss", $thirtyDaysLater, $today, $employeeName, $employeeName);
 $stmt->execute();
 $recurringResultRaw = $stmt->get_result();
 
 // Generate next occurrences for recurring bookings
 $recurringAppointments = [];
-while ($booking = $recurringResultRaw->fetch_assoc()) {
-    $nextOccurrence = getNextOccurrence($booking, $today);
-    if ($nextOccurrence) {
-        $booking['service_date'] = $nextOccurrence; // Add the calculated date
-        $recurringAppointments[] = $booking;
+if ($recurringResultRaw) {
+    while ($booking = $recurringResultRaw->fetch_assoc()) {
+        $nextOccurrence = getNextOccurrence($booking, $today);
+        if ($nextOccurrence) {
+            $booking['service_date'] = $nextOccurrence;
+            $recurringAppointments[] = $booking;
+        }
     }
 }
 
 // Sort by next occurrence date
-usort($recurringAppointments, function($a, $b) {
-    return strtotime($a['service_date']) - strtotime($b['service_date']);
-});
-
-// Limit to 5
-$recurringAppointments = array_slice($recurringAppointments, 0, 5);
+if (!empty($recurringAppointments)) {
+    usort($recurringAppointments, function($a, $b) {
+        return strtotime($a['service_date']) - strtotime($b['service_date']);
+    });
+    $recurringAppointments = array_slice($recurringAppointments, 0, 5);
+}
 
 // Helper function to format reference number
 function formatRefNo($id, $serviceType, $date) {
-    $serviceCode = '';
-    if (strpos(strtolower($serviceType), 'deep') !== false) $serviceCode = 'DC';
-    elseif (strpos(strtolower($serviceType), 'general') !== false) $serviceCode = 'GC';
-    elseif (strpos(strtolower($serviceType), 'move') !== false) $serviceCode = 'MC';
-    else $serviceCode = 'OT';
+    $serviceCode = 'OT';
+    $serviceTypeLower = strtolower($serviceType);
+    
+    if (strpos($serviceTypeLower, 'deep') !== false) $serviceCode = 'DC';
+    elseif (strpos($serviceTypeLower, 'general') !== false) $serviceCode = 'GC';
+    elseif (strpos($serviceTypeLower, 'move') !== false) $serviceCode = 'MC';
     
     $yearMonth = date('ym', strtotime($date));
     return "ALZ-{$serviceCode}-{$yearMonth}-" . str_pad($id, 4, '0', STR_PAD_LEFT);
@@ -304,57 +349,29 @@ function formatRefNo($id, $serviceType, $date) {
 
 // Helper function to calculate price
 function calculatePrice($materialsProvided, $duration) {
-    preg_match('/(\d+(\.\d+)?)/', $materialsProvided, $matches);
+    preg_match('/(\d+(\.\d+)?)/', $materialsProvided ?? '', $matches);
     $rate = isset($matches[1]) ? (float)$matches[1] : 0;
-    $hours = (float)$duration;
+    $hours = (float)($duration ?? 0);
     return $rate * $hours;
 }
 
 // Helper function to generate status badge
 function getStatusBadge($status) {
-    $statusLower = strtolower($status);
-    $badgeClass = '';
+    $statusLower = strtolower($status ?? 'pending');
+    $badgeClass = 'pending';
     
-    switch($statusLower) {
-        case 'pending':
-            $badgeClass = 'pending';
-            break;
-        case 'confirmed':
-        case 'active':
-            $badgeClass = 'confirmed';
-            break;
-        case 'ongoing':
-            $badgeClass = 'ongoing';
-            break;
-        case 'completed':
-            $badgeClass = 'completed';
-            break;
-        case 'cancelled':
-            $badgeClass = 'cancelled';
-            break;
-        default:
-            $badgeClass = 'pending';
-    }
+    $statusMap = [
+        'pending' => 'pending',
+        'confirmed' => 'confirmed',
+        'active' => 'confirmed',
+        'ongoing' => 'ongoing',
+        'completed' => 'completed',
+        'cancelled' => 'cancelled'
+    ];
+    
+    $badgeClass = $statusMap[$statusLower] ?? 'pending';
     
     return '<span class="status-badge ' . $badgeClass . '">' . htmlspecialchars($status) . '</span>';
-}
-
-// ==================== DEBUG SECTION (if enabled) ====================
-if ($DEBUG_MODE) {
-    echo "<div style='background: #f0f0f0; padding: 20px; margin: 20px; border: 2px solid #333; border-radius: 10px; font-family: monospace;'>";
-    echo "<h2 style='color: #d32f2f;'>🔍 DEBUG MODE ENABLED</h2>";
-    echo "<p><strong>Logged-in Employee:</strong> " . htmlspecialchars($employeeName) . "</p>";
-    echo "<p><strong>Today's Date:</strong> $today</p>";
-    echo "<hr>";
-    echo "<h3>📊 Statistics:</h3>";
-    echo "<p><strong>Today One-Time Count:</strong> $todayOneTimeCount</p>";
-    echo "<p><strong>Today Recurring Count:</strong> $todayRecurringCount</p>";
-    echo "<p><strong>Total Today:</strong> $todayCount</p>";
-    echo "<p><strong>Upcoming One-Time Count (7 days):</strong> $upcomingOneTimeCount</p>";
-    echo "<p><strong>Upcoming Recurring Count (7 days):</strong> $upcomingRecurringCount</p>";
-    echo "<p><strong>Total Upcoming:</strong> $upcomingCount</p>";
-    echo "<p><strong>Pending Count:</strong> $pendingCount</p>";
-    echo "</div>";
 }
 
 $conn->close();
@@ -788,6 +805,189 @@ justify-self: start;
     display: block;
     color: #ccc;
 }
+/* ========== IMPROVED APPOINTMENT CARD DESIGN ========== */
+
+.appointment-list-item {
+    background-color: #ffffff;
+    border-radius: 15px; /* Slightly larger radius */
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12);
+    padding: 25px 30px; /* Increased padding for bigger size */
+    margin-bottom: 20px; /* More spacing between cards */
+    transition: transform 0.3s, box-shadow 0.3s;
+    border: 1px solid #e0e0e0;
+    position: relative;
+    min-height: 280px; /* Set minimum height for consistency */
+}
+
+.appointment-list-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+}
+
+/* Appointment Details Grid - Larger Font Sizes */
+.appointment-details {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px 25px; /* Increased gap */
+    margin-bottom: 20px;
+    margin-top: 10px;
+}
+
+.appointment-details p {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    font-size: 1.05em; /* Increased from 0.95em */
+    color: #444;
+    word-break: break-word;
+    line-height: 1.5; /* Better readability */
+}
+
+.appointment-details p strong {
+    font-weight: 600;
+    color: #333;
+}
+
+.appointment-details p i {
+    color: #007bff;
+    font-size: 1.2em; /* Larger icons */
+}
+
+/* Reference Number Styling - Bigger and Bold */
+.appointment-details .ref-no-detail {
+    font-size: 1.15em; /* Larger reference number */
+    color: #333;
+    font-weight: 600;
+}
+
+.appointment-details .ref-no-value {
+    color: #B32133;
+    font-weight: 700;
+    font-size: 1.1em;
+}
+
+
+
+.appointment-details .price-detail span.aed-color {
+    color: #b50909ff; /* Green color for money amount */
+   
+}
+
+/* Status Badge - Slightly Larger */
+.appointment-details .status-detail {
+    grid-column: 1 / -1;
+    font-size: 1.05em;
+}
+
+.status-badge {
+    padding: 6px 14px; /* Increased padding */
+    font-size: 0.95em;
+    font-weight: 600;
+}
+
+/* Button Group - Better Spacing */
+.button-group-top {
+    position: absolute;
+    top: 20px; /* More space from top */
+    right: 20px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.action-btn {
+    padding: 10px 16px; /* Larger buttons */
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 8px;
+    text-align: center;
+    transition: all 0.3s;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.95em; /* Slightly larger text */
+}
+
+/* Divider Line - Thicker and More Visible */
+.appointment-list-item .divider {
+    border: 0;
+    height: 2px; /* Thicker line */
+    background: linear-gradient(to right, transparent, #ccc 20%, #ccc 80%, transparent);
+    margin: 18px 0;
+    width: 100%;
+}
+
+/* Container Title - Bigger */
+.container-title {
+    font-size: 1.75em; /* Increased from 1.5em */
+    color: #333;
+    margin-bottom: 25px;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-weight: 700;
+}
+
+.container-title i {
+    font-size: 1.6em; /* Larger icon */
+    color: #007bff;
+}
+
+/* Dashboard Container - More Padding */
+.dashboard__container {
+    background-color: #ffffff;
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 35px 30px; /* Increased padding */
+    margin-top: 30px;
+    margin-bottom: 20px;
+}
+
+/* Full Width Details - Larger Font */
+.appointment-details .full-width-detail {
+    grid-column: 1 / -1;
+    font-size: 1.05em;
+}
+
+/* Duration and Service Type - Better Alignment */
+.appointment-details .duration-detail,
+.appointment-details .service-type-detail {
+    font-size: 1.05em;
+}
+
+/* Recurring Details Styling */
+.appointment-details p.recurring-details {
+    font-size: 1.05em;
+}
+
+/* Responsive Design - Maintain readability on smaller screens */
+@media (max-width: 768px) {
+    .appointment-list-item {
+        padding: 20px;
+        min-height: auto;
+    }
+    
+    .appointment-details {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .appointment-details .price-detail {
+        grid-column: 1;
+        justify-self: stretch;
+        font-size: 1.3em;
+    }
+    
+    .button-group-top {
+        position: static;
+        margin-bottom: 15px;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+}
 </style>
 </head>
 <body>
@@ -875,6 +1075,7 @@ justify-self: start;
 <ul>
 <!-- <li><a href="EMP_timeoff_request.php"><i class='bx bx-calendar-exclamation'></i> Request Time Off</a></li> -->
 <li><a href="EMP_appointments_history.php"><i class='bx bx-list-check'></i> View Appointment History</a></li>
+<li><a href="EMP_appointments_today.php"><i class='bx bx-list-check'></i> View Todays Appointment</a></li>
 
 </ul>
 </div>

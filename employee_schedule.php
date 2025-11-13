@@ -5,7 +5,7 @@ session_start();
 
 // ✅ Ensure employee is logged in
 if (!isset($_SESSION['email'])) {
-    echo "<script>alert('Please log in first.'); window.location.href='login.php';</script>";
+    echo "<script>alert('Please log in first.'); window.location.href='landing_page2.html';</script>";
     exit;
 }
 
@@ -18,7 +18,7 @@ $stmt->execute();
 $employee_result = $stmt->get_result();
 
 if ($employee_result->num_rows == 0) {
-    echo "<script>alert('Employee not found.'); window.location.href='login.php';</script>";
+    echo "<script>alert('Employee not found.'); window.location.href='landing_page2.html';</script>";
     exit;
 }
 
@@ -269,7 +269,7 @@ if ($view == 'week') {
 }
 
 .modal__header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient( #007bff);
     color: white;
     padding: 20px 25px;
     border-radius: 15px 15px 0 0;
@@ -592,7 +592,7 @@ if ($view == 'week') {
 }
 
 .day-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient( #007bff);
     color: white;
     padding: 12px 20px;
     font-weight: 600;
@@ -763,7 +763,7 @@ if ($view == 'week') {
 }
 
 .employee-chip {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient( #007bff);
     color: white;
     padding: 6px 12px;
     border-radius: 20px;
@@ -881,62 +881,74 @@ if ($view == 'week') {
                     <!-- Weekly Schedule Grid -->
                     <div class="schedule-container">
                         <div class="schedule-grid">
-                            <!-- Header Row -->
-                            <div class="schedule-header">
-                                <div class="schedule-header-cell time-column">Time</div>
-                                <?php
-                                $current = strtotime($week_start);
-                                for ($i = 0; $i < 7; $i++):
-                                    $day_date = date('Y-m-d', $current);
-                                    $is_today = ($day_date == $current_date);
-                                ?>
-                                    <div class="schedule-header-cell" style="<?= $is_today ? 'background:  #E87722;' : '' ?>">
-                                        <div><?= date('l', $current) ?></div>
-                                        <div style="font-size: 12px; opacity: 0.9;"><?= date('M d', $current) ?></div>
-                                    </div>
-                                <?php
-                                    $current = strtotime('+1 day', $current);
-                                endfor;
-                                ?>
-                            </div>
+    <!-- Header Row -->
+    <div class="schedule-header">
+        <div class="schedule-header-cell time-column">Time</div>
+        <?php
+        $current = strtotime($week_start);
+        for ($i = 0; $i < 7; $i++):
+            $day_date = date('Y-m-d', $current);
+            $is_today = ($day_date == $current_date);
+        ?>
+            <div class="schedule-header-cell" style="<?= $is_today ? 'background:  #E87722;' : '' ?>">
+                <div><?= date('l', $current) ?></div>
+                <div style="font-size: 12px; opacity: 0.9;"><?= date('M d', $current) ?></div>
+            </div>
+        <?php
+            $current = strtotime('+1 day', $current);
+        endfor;
+        ?>
+    </div>
 
-                            <!-- Time Slot Rows -->
-                            <?php foreach ($schedule_grid as $time => $days): ?>
-                                <div class="schedule-row">
-                                    <div class="schedule-cell time-cell">
-                                        <?= date('g A', strtotime($time)) ?>
-                                    </div>
-                                    <?php foreach ($days as $day => $bookings): ?>
-                                        <div class="schedule-cell">
-                                            <?php if (count($bookings) > 0): ?>
-                                                <?php foreach ($bookings as $booking): 
-                                                    $status_class = strtolower(str_replace(' ', '-', $booking['status']));
-                                                ?>
-                                                    <div class="schedule-item <?= $status_class ?>" 
-                                                         onclick="showBookingDetails(<?= $booking['id'] ?>)"
-                                                         title="<?= htmlspecialchars($booking['full_name'] . ' - ' . $booking['service_type']) ?>">
-                                                        <div class="schedule-item-time">
-                                                            <?= date('g:i A', strtotime($booking['service_time'])) ?>
-                                                        </div>
-                                                        <div class="schedule-item-client">
-                                                            <?= htmlspecialchars($booking['full_name']) ?>
-                                                        </div>
-                                                        <div class="schedule-item-service">
-                                                            <?= htmlspecialchars($booking['service_type']) ?>
-                                                        </div>
-                                                        <?php if (!empty($booking['duration'])): ?>
-                                                            <div style="font-size: 10px; margin-top: 3px; opacity: 0.8;">
-                                                                <i class='bx bx-time'></i> <?= htmlspecialchars($booking['duration']) ?>
-                                                            </div>
-                                                        <?php endif; ?>
-                                                    </div>
-                                                <?php endforeach; ?>
-                                            <?php endif; ?>
-                                        </div>
-                                    <?php endforeach; ?>
+    <!-- Time Slot Rows -->
+    <?php foreach ($schedule_grid as $time => $days): ?>
+        <div class="schedule-row">
+            <div class="schedule-cell time-cell">
+    <?php
+    // Custom labels for certain time slots with descriptions
+    if ($time === '13:00:00') { // 1 PM
+        echo '1 PM - 2:00 PM (Prayer/Lunch)';
+    } elseif ($time === '17:00:00') { // 5 PM
+        echo '5 PM - 5:30 PM (Short break)';
+    } else {
+        echo date('g A', strtotime($time));
+    }
+    ?>
+</div>
+
+
+            <?php foreach ($days as $day => $bookings): ?>
+                <div class="schedule-cell">
+                    <?php if (count($bookings) > 0): ?>
+                        <?php foreach ($bookings as $booking): 
+                            $status_class = strtolower(str_replace(' ', '-', $booking['status']));
+                        ?>
+                            <div class="schedule-item <?= $status_class ?>" 
+                                 onclick="showBookingDetails(<?= $booking['id'] ?>)"
+                                 title="<?= htmlspecialchars($booking['full_name'] . ' - ' . $booking['service_type']) ?>">
+                                <div class="schedule-item-time">
+                                    <?= date('g:i A', strtotime($booking['service_time'])) ?>
                                 </div>
-                            <?php endforeach; ?>
-                        </div>
+                                <div class="schedule-item-client">
+                                    <?= htmlspecialchars($booking['full_name']) ?>
+                                </div>
+                                <div class="schedule-item-service">
+                                    <?= htmlspecialchars($booking['service_type']) ?>
+                                </div>
+                                <?php if (!empty($booking['duration'])): ?>
+                                    <div style="font-size: 10px; margin-top: 3px; opacity: 0.8;">
+                                        <i class='bx bx-time'></i> <?= htmlspecialchars($booking['duration']) ?>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    <?php endforeach; ?>
+</div>
+
                     </div>
 
                 <?php else: ?>

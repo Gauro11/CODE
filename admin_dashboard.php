@@ -2,11 +2,29 @@
 
 require_once 'connection.php';
 // ✅ Get current month and year
+
+
+session_start();
+
+// Get admin email from session, default to null
+$admin_email = $_SESSION['email'] ?? null;
+$adminFullName = 'Administrator'; // default if not found
+
+if ($admin_email) {
+    $query = "SELECT first_name, last_name FROM admins WHERE email = '$admin_email' LIMIT 1";
+    $result = $conn->query($query);
+    if ($result && $result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        $adminFullName = $row['first_name'] . ' ' . $row['last_name'];
+    }
+}
+
 $current_month_year = date('F Y');
 
 // ===========================
 // FETCH DYNAMIC DATA
 // ===========================
+
 
 // ✅ Total Clients (from clients table)
 $sql_clients = "SELECT COUNT(*) AS total FROM clients";
@@ -851,6 +869,26 @@ margin-bottom: 20px;
     margin: 10px 0;
 }
 
+.booking-info-row {
+    display: flex;
+    flex-wrap: wrap; /* allows wrapping on smaller screens */
+    gap: 15px;       /* space between columns */
+    margin-bottom: 4px;
+    align-items: center; /* vertically align items */
+}
+
+.booking-info-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 180px; /* ensures uniform width for alignment */
+    font-size: 14px;
+}
+
+.booking-info-row:last-child .booking-info-item {
+    min-width: 180px; /* apply same width to booked column */
+}
+
 
 /* --- Appointment List Items (Updated Layout) */
 /* ... (Rest of the CSS remains unchanged) ... */
@@ -923,7 +961,9 @@ margin-bottom: 20px;
         
     <main class="dashboard__content">
 <section id="dashboard" class="content__section active">
-<h2 class="section__title">Welcome back, Admin Name!!</h2>
+<h2 class="section__title">
+    Welcome back, <?= htmlspecialchars($adminFullName) ?>!
+</h2>
 <p class="welcome__message">Here's a quick overview of system activity and pending tasks. Use the sidebar for management and reports.</p>
 <div class="summary-cards-container">
     
@@ -1192,18 +1232,7 @@ function redirectTo(page) {
 </script>
 
 <style>
-.content__section {
-    padding: 20px;
-    border: 1px solid #ddd;
-    margin: 10px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: 0.3s;
-}
-.content__section:hover {
-    background-color: #f5f5f5;
-    transform: scale(1.02);
-}
+
 </style>
 
 

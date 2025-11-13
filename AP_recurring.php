@@ -77,79 +77,20 @@ function getEmployeeIdsByNames($conn, $names) {
     return $ids;
 }
 
-// ✅ UPDATED Function - Check conflicts ONLY based on bookings table (ignore employee status)
-function getUnavailableStaff($conn, $service_date, $service_time, $duration, $current_booking_id = null) {
-    // Calculate end time for the new booking
-    $duration_hours = durationToHours($duration);
-    $new_start = strtotime($service_time);
-    $new_end = $new_start + ($duration_hours * 3600);
-    $new_end_time = date('H:i:s', $new_end);
-    
-    // Get all bookings on the same date (excluding current booking and cancelled/completed)
-    if ($current_booking_id) {
-        $stmt = $conn->prepare("
-            SELECT cleaners, drivers, service_time, duration 
-            FROM bookings 
-            WHERE service_date = ? 
-            AND id != ?
-            AND status NOT IN ('Cancelled', 'Completed')
-        ");
-        $stmt->bind_param("si", $service_date, $current_booking_id);
-    } else {
-        $stmt = $conn->prepare("
-            SELECT cleaners, drivers, service_time, duration 
-            FROM bookings 
-            WHERE service_date = ? 
-            AND status NOT IN ('Cancelled', 'Completed')
-        ");
-        $stmt->bind_param("s", $service_date);
-    }
-    
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    $unavailable = [];
-    while ($row = $result->fetch_assoc()) {
-        // Calculate end time for existing booking
-        $existing_start = $row['service_time'];
-        $existing_duration_hours = durationToHours($row['duration']);
-        $existing_end = strtotime($existing_start) + ($existing_duration_hours * 3600);
-        $existing_end_time = date('H:i:s', $existing_end);
-        
-        // Check if time ranges overlap
-        if (timeRangesOverlap($service_time, $new_end_time, $existing_start, $existing_end_time)) {
-            // Add cleaners to unavailable list
-            if (!empty($row['cleaners'])) {
-                $cleaners = explode(',', $row['cleaners']);
-                foreach ($cleaners as $cleaner) {
-                    $unavailable[] = trim($cleaner);
-                }
-            }
-            
-            // Add drivers to unavailable list
-            if (!empty($row['drivers'])) {
-                $drivers = explode(',', $row['drivers']);
-                foreach ($drivers as $driver) {
-                    $unavailable[] = trim($driver);
-                }
-            }
-        }
-    }
-    $stmt->close();
-    
-    return array_unique($unavailable); // Remove duplicates
-}
-
-// ✅ NEW FUNCTION: Check conflicts for RECURRING bookings based on preferred_day
+// ✅ KEEP ONLY THIS ONE - Check conflicts for RECURRING bookings based on preferred_day
 function getUnavailableStaffRecurring($conn, $preferred_day, $service_time, $duration, $current_booking_id = null) {
     $duration_hours = durationToHours($duration);
     $new_start = strtotime($service_time);
     $new_end = $new_start + ($duration_hours * 3600);
     $new_end_time = date('H:i:s', $new_end);
     
+    $unavailable = [];
+    $conflicts = [];
+    
+    // ===== CHECK OTHER RECURRING bookings on the same preferred day =====
     if ($current_booking_id) {
         $stmt = $conn->prepare("
-            SELECT cleaners, drivers, service_time, duration 
+            SELECT cleaners, drivers, service_time, duration, id
             FROM bookings 
             WHERE booking_type = 'Recurring'
             AND preferred_day = ? 
@@ -159,7 +100,7 @@ function getUnavailableStaffRecurring($conn, $preferred_day, $service_time, $dur
         $stmt->bind_param("si", $preferred_day, $current_booking_id);
     } else {
         $stmt = $conn->prepare("
-            SELECT cleaners, drivers, service_time, duration 
+            SELECT cleaners, drivers, service_time, duration, id
             FROM bookings 
             WHERE booking_type = 'Recurring'
             AND preferred_day = ? 
@@ -170,9 +111,6 @@ function getUnavailableStaffRecurring($conn, $preferred_day, $service_time, $dur
     
     $stmt->execute();
     $result = $stmt->get_result();
-    
-    $unavailable = [];
-    $conflicts = [];
     
     while ($row = $result->fetch_assoc()) {
         $existing_start = $row['service_time'];
@@ -187,8 +125,11 @@ function getUnavailableStaffRecurring($conn, $preferred_day, $service_time, $dur
                 $cleaners = explode(',', $row['cleaners']);
                 foreach ($cleaners as $cleaner) {
                     $name = trim($cleaner);
-                    $unavailable[] = $name;
-                    $conflicts[$name] = $conflict_time;
+                    // Only add if not already in the list (prevents duplicates)
+                    if (!in_array($name, $unavailable)) {
+                        $unavailable[] = $name;
+                        $conflicts[$name] = $conflict_time . ' (Recurring #' . $row['id'] . ')';
+                    }
                 }
             }
             
@@ -196,8 +137,11 @@ function getUnavailableStaffRecurring($conn, $preferred_day, $service_time, $dur
                 $drivers = explode(',', $row['drivers']);
                 foreach ($drivers as $driver) {
                     $name = trim($driver);
-                    $unavailable[] = $name;
-                    $conflicts[$name] = $conflict_time;
+                    // Only add if not already in the list (prevents duplicates)
+                    if (!in_array($name, $unavailable)) {
+                        $unavailable[] = $name;
+                        $conflicts[$name] = $conflict_time . ' (Recurring #' . $row['id'] . ')';
+                    }
                 }
             }
         }
@@ -205,7 +149,7 @@ function getUnavailableStaffRecurring($conn, $preferred_day, $service_time, $dur
     $stmt->close();
     
     return [
-        'unavailable_staff' => array_unique($unavailable),
+        'unavailable_staff' => $unavailable, // ✅ Already unique, no need for array_unique()
         'conflicts' => $conflicts
     ];
 }
@@ -395,18 +339,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
         exit;
     }
     
-    $completed_sessions = $result['remaining_sessions'] ?? 0; // ✅ This is now COMPLETED count
+    $completed_sessions = $result['remaining_sessions'] ?? 0;
     $total = $result['estimated_sessions'];
-    $remaining = $total - $completed_sessions; // ✅ Calculate how many LEFT
+    $remaining = $total - $completed_sessions;
     
-    // ✅ Special handling for "Session Complete" status
     if ($status === 'Session Complete') {
         
         if ($remaining > 0) {
-            $new_completed = $completed_sessions + 1; // ✅ INCREMENT by 1
+            $new_completed = $completed_sessions + 1;
             $new_remaining = $total - $new_completed;
             
-            // ✅ If this was the last session, change to "Completed"
             if ($new_completed >= $total) {
                 $update = $conn->prepare("UPDATE bookings SET status = 'Completed', remaining_sessions = ? WHERE id = ?");
                 $update->bind_param("ii", $total, $id);
@@ -418,7 +360,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
                     window.location='AP_recurring.php';
                 </script>";
             } else {
-                // ✅ Increment session count, set status to "Session Complete"
                 $update = $conn->prepare("UPDATE bookings SET remaining_sessions = ?, status = 'Session Complete' WHERE id = ?");
                 $update->bind_param("ii", $new_completed, $id);
                 $update->execute();
@@ -430,7 +371,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
                 </script>";
             }
         } else {
-            // All sessions already completed
             echo "<script>
                 alert('⚠️ ALL SESSIONS ALREADY COMPLETED!\\n\\nTotal: $total/$total sessions\\nNo more sessions to complete.');
                 window.location='AP_recurring.php';
@@ -438,7 +378,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
         }
         
     } else {
-        // ✅ Regular status update (no session changes)
         $update = $conn->prepare("UPDATE bookings SET status= ? WHERE id = ?");
         $update->bind_param("si", $status, $id);
         
@@ -1194,7 +1133,8 @@ $status_colors = [
         <td><?= htmlspecialchars($row['preferred_day']) ?></td>
         <td><?= htmlspecialchars($row['start_date']) ?></td>
         <td><?= htmlspecialchars($row['end_date']) ?></td>
-        <td><?= htmlspecialchars($row['service_time']) ?></td>
+       <td><?= date("h:i A", strtotime($row['service_time'])) ?></td>
+
         <td class="staff-names">
             <i class='bx bx-spray-can'></i>
             <?= getEmployeeNames($conn, $row['cleaners']) ?>

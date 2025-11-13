@@ -37,6 +37,42 @@ $propertyLayout    = $_POST['propertyLayout'] ?? '';
 $cleaningMaterials = $_POST['cleaningMaterials'] ?? 'No - 35 AED / hr';
 $additionalRequest = $_POST['additionalRequest'] ?? '';
 
+// ✅ ========== RESTRICTED TIME VALIDATION ==========
+function isTimeRestrictedPHP($timeString) {
+    $timeParts = explode(':', $timeString);
+    $hours = (int)$timeParts[0];
+    $minutes = (int)$timeParts[1];
+    $timeInMinutes = $hours * 60 + $minutes;
+    
+    // 1:00 PM - 2:00 PM (Prayer/Lunch)
+    $prayerLunchStart = 13 * 60; // 780 minutes
+    $prayerLunchEnd = 14 * 60;   // 840 minutes
+    
+    // 5:00 PM - 5:30 PM (Short Break)
+    $shortBreakStart = 17 * 60;      // 1020 minutes
+    $shortBreakEnd = 17 * 60 + 30;   // 1050 minutes
+    
+    if ($timeInMinutes >= $prayerLunchStart && $timeInMinutes < $prayerLunchEnd) {
+        return "1:00 PM - 2:00 PM is reserved for Prayer/Lunch Break";
+    }
+    
+    if ($timeInMinutes >= $shortBreakStart && $timeInMinutes < $shortBreakEnd) {
+        return "5:00 PM - 5:30 PM is reserved for Short Break";
+    }
+    
+    return false;
+}
+
+// Check if start time is restricted
+$restrictionError = isTimeRestrictedPHP($bookingTime);
+if ($restrictionError) {
+    echo "<script>
+            alert('⛔ Cannot book at this time!\\n\\n$restrictionError\\n\\nPlease choose a different time slot.');
+            window.history.back();
+          </script>";
+    exit;
+}
+
 // ✅ ========== AVAILABILITY CHECK ==========
 // Calculate end time based on duration (including break if applicable)
 function calculateEndTime($startTime, $duration) {
@@ -60,6 +96,21 @@ function calculateEndTime($startTime, $duration) {
 }
 
 $endTime = calculateEndTime($bookingTime, (int)$duration);
+
+// Validate that booking doesn't exceed 8:00 PM
+$endTimeParts = explode(':', $endTime);
+$endHour = (int)$endTimeParts[0];
+$endMinute = (int)$endTimeParts[1];
+$endTimeInMinutes = $endHour * 60 + $endMinute;
+$maxEndTime = 20 * 60; // 8:00 PM
+
+if ($endTimeInMinutes > $maxEndTime) {
+    echo "<script>
+            alert('⛔ Booking cannot extend beyond 8:00 PM!\\n\\nYour selected time and duration would end at " . date('g:i A', strtotime($endTime)) . "\\n\\nPlease choose a shorter duration or earlier start time.');
+            window.history.back();
+          </script>";
+    exit;
+}
 
 // Step 1: Count TOTAL employees in the system (Active/Available only)
 $totalEmployeesQuery = "SELECT COUNT(*) as total_employees 

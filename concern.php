@@ -75,46 +75,51 @@ if ($search) {
 <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 <link rel="stylesheet" href="admin_db.css">
 <style>
-/* Main content styling */
-
+/* --- Formal Table Styling --- */
 .search-sort { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
 .search-sort input, .search-sort select { padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; }
 .search-sort button { padding: 8px 16px; border: none; border-radius: 6px; background: #007bff; color: white; cursor: pointer; }
 
-/* Card-style list for issues */
-.issue-list { display: flex; flex-direction: column; gap: 15px; }
-.issue-card { background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 15px 20px; display: grid; 
-    grid-template-columns: 1fr 2fr 1.2fr 1.2fr 1fr 1fr 1.5fr auto; align-items: start; transition: transform 0.2s; gap: 5px; }
-.issue-card:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,0.15); }
-.issue-card div { padding: 5px 10px; word-wrap: break-word; }
-.issue-card .issue-action button { background: orange; border: none; padding: 6px 12px; border-radius: 6px; color: white; cursor: pointer; transition: background 0.2s; }
-.issue-card .issue-action button:hover { background: darkorange; }
-
-/* Photos */
-.issue-photos { display: flex; gap: 5px; flex-wrap: wrap; }
-.issue-photos img { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid #ccc; cursor: pointer; transition: transform 0.2s; }
-.issue-photos img:hover { transform: scale(1.1); border-color: #007bff; }
-
-/* Header for card list */
-.issue-card-header { font-weight: bold; color: #555; display: grid; grid-template-columns: 1fr 2fr 1.2fr 1.2fr 1fr 1fr 1.5fr auto; padding: 10px 20px; border-bottom: 1px solid #ddd; }
-
-/* Sidebar dropdown fix */
-.has-dropdown .dropdown__menu { display: none; }
-.has-dropdown.open .dropdown__menu { display: block; }
+.issue-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+.issue-table th, .issue-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    vertical-align: top;
+}
+.issue-table th {
+    background-color: #f2f2f2;
+    text-align: left;
+}
+.issue-table td img {
+    border-radius: 4px;
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    margin: 2px;
+    border: 1px solid #ccc;
+}
+.issue-table tr:hover {
+    background-color: #f9f9f9;
+}
+.issue-action button {
+    padding: 4px 8px;
+    background: orange;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.issue-action button:hover {
+    background: darkorange;
+}
 .dashboard__sidebar {
     min-width: 250px;
     width: 250px;
     flex-shrink: 0;
-}
-
-.dashboard__wrapper {
-    display: flex;
-    min-height: 100vh;
-}
-
-.dashboard__content {
-    flex: 1;
-    overflow-x: auto;
 }
 </style>
 </head>
@@ -152,11 +157,10 @@ if ($search) {
                 </ul>
             </li>
             <li class="menu__item"><a href="ES.php" class="menu__link"><i class='bx bx-time'></i> Employee Scheduling</a></li>
-             <li class="menu__item"><a href="manage_groups.php" class="menu__link "><i class='bx bx-group'></i> Manage Groups</a></li>
-             <li class="menu__item"><a href="admin_feedback_dashboard.php" class="menu__link "><i class='bx bx-star'></i> Feedback Overview</a></li>
-         
+            <li class="menu__item"><a href="manage_groups.php" class="menu__link "><i class='bx bx-group'></i> Manage Groups</a></li>
+            <li class="menu__item"><a href="admin_feedback_dashboard.php" class="menu__link "><i class='bx bx-star'></i> Feedback Overview</a></li>
             <li class="menu__item"><a href="Reports.php" class="menu__link "><i class='bx bx-file'></i> Reports</a></li>
-               <li class="menu__item"><a href="concern.php?content=profile" class="menu__link active" data-content="profile"><i class='bx bx-info-circle'></i> Issues&Concerns</a></li>
+            <li class="menu__item"><a href="concern.php?content=profile" class="menu__link active" data-content="profile"><i class='bx bx-info-circle'></i> Issues & Concerns</a></li>
             <li class="menu__item"><a href="admin_profile.php" class="menu__link"><i class='bx bx-user'></i> Profile</a></li>
             <li class="menu__item"><a href="javascript:void(0)" class="menu__link" onclick="showLogoutModal()"><i class='bx bx-log-out'></i> Logout</a></li>
         </ul>
@@ -178,55 +182,60 @@ if ($search) {
                     <button type="submit">Apply</button>
                 </form>
 
-                <div class="issue-list">
-                    <div class="issue-card-header">
-                        <div>Num#</div>
-                        <div>Client & Issue</div>
-                        <div>Service Date</div>
-                        <div>Address</div>
-                        <div>Cleaners</div>
-                        <div>Drivers</div>
-                        <div>Photos</div>
-                        <div>Action</div>
-                    </div>
-
-                    <?php if ($result && $result->num_rows > 0): ?>
-                        <?php while($row = $result->fetch_assoc()): ?>
-                            <div class="issue-card">
-                                <div><?= htmlspecialchars($row['phone']) ?></div>
-                                <div>
-                                    <?= htmlspecialchars($row['full_name']) ?><br>
-                                    <small><?= htmlspecialchars($row['issue_type']) ?>: <?= htmlspecialchars($row['issue_description']) ?></small>
-                                </div>
-                                <div><?= htmlspecialchars($row['service_date']) ?> <?= htmlspecialchars($row['service_time']) ?></div>
-                                <div><?= htmlspecialchars($row['address']) ?></div>
-                                <div><?= htmlspecialchars($row['cleaners']) ?></div>
-                                <div><?= htmlspecialchars($row['drivers']) ?></div>
-                                <div class="issue-photos">
-                                    <?php
-                                    $photos = ['issue_photo1', 'issue_photo2', 'issue_photo3'];
-                                    foreach($photos as $photo){
-                                        if($row[$photo]){
-                                            $path = 'uploads/issues/' . $row[$photo];
-                                            echo "<a href='".htmlspecialchars($path)."' target='_blank'>
-                                                    <img src='".htmlspecialchars($path)."' alt='Issue Photo'>
-                                                  </a>";
+                <table class="issue-table">
+                    <thead>
+                        <tr>
+                            <th>Num#</th>
+                            <th>Client & Issue</th>
+                            <th>Service Date</th>
+                            <th>Address</th>
+                            <th>Cleaners</th>
+                            <th>Drivers</th>
+                            <th>Photos</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if ($result && $result->num_rows > 0): ?>
+                            <?php while($row = $result->fetch_assoc()): ?>
+                                <tr>
+                                    <td><?= htmlspecialchars($row['phone']) ?></td>
+                                    <td>
+                                        <?= htmlspecialchars($row['full_name']) ?><br>
+                                        <small><?= htmlspecialchars($row['issue_type']) ?>: <?= htmlspecialchars($row['issue_description']) ?></small>
+                                    </td>
+                                    <td><?= htmlspecialchars($row['service_date']) ?> <?= date("h:i A", strtotime($row['service_time'])) ?></td>
+                                    <td><?= htmlspecialchars($row['address']) ?></td>
+                                    <td><?= htmlspecialchars($row['cleaners']) ?></td>
+                                    <td><?= htmlspecialchars($row['drivers']) ?></td>
+                                    <td>
+                                        <?php
+                                        $photos = ['issue_photo1', 'issue_photo2', 'issue_photo3'];
+                                        foreach($photos as $photo){
+                                            if($row[$photo]){
+                                                $path = 'uploads/issues/' . $row[$photo];
+                                                echo "<a href='".htmlspecialchars($path)."' target='_blank'>
+                                                        <img src='".htmlspecialchars($path)."' alt='Issue Photo'>
+                                                      </a>";
+                                            }
                                         }
-                                    }
-                                    ?>
-                                </div>
-                                <div class="issue-action">
-                                    <form method="POST" style="display:inline;">
-                                        <input type="hidden" name="booking_id" value="<?= $row['id'] ?>">
-                                        <button type="submit" name="resolve">Resolve</button>
-                                    </form>
-                                </div>
-                            </div>
-                        <?php endwhile; ?>
-                    <?php else: ?>
-                        <div class="issue-card" style="text-align:center; grid-column: span 8;">No bookings with issues found</div>
-                    <?php endif; ?>
-                </div>
+                                        ?>
+                                    </td>
+                                    <td class="issue-action">
+                                        <form method="POST" style="display:inline;">
+                                            <input type="hidden" name="booking_id" value="<?= $row['id'] ?>">
+                                            <button type="submit" name="resolve">Resolve</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <?php endwhile; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="8" style="text-align:center;">No bookings with issues found</td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
             </div>
         </section>
     </main>
@@ -253,6 +262,7 @@ function showLogoutModal() {
     if (!document.getElementById('logoutModal')) return;
     document.getElementById('logoutModal').classList.add('show');
 }
+
 </script>
 
 </body>
