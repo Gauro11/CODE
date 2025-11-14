@@ -81,6 +81,33 @@ $age = $admin['age'];
 <link rel="stylesheet" href="client_db.css">
 
 <style>
+
+    /* FORCE DROPDOWN TO WORK */
+.dropdown__menu {
+    max-height: 0 !important;
+    overflow: hidden !important;
+    transition: max-height 0.3s ease-out !important;
+    padding: 0 !important;
+    background-color: #f7f7f7 !important;
+}
+
+.has-dropdown.active-dropdown .dropdown__menu {
+    max-height: 300px !important;
+    padding: 5px 0 !important;
+}
+
+.has-dropdown.active-dropdown .arrow-icon {
+    transform: rotate(180deg) !important;
+}
+
+.arrow-icon {
+    transition: transform 0.3s ease !important;
+}
+
+.dropdown__menu .menu__link {
+    padding-left: 50px !important;
+    font-size: 0.9em !important;
+}
 /* --- SIDEBAR DROPDOWN STYLES (NEW) --- */
 /* Hide dropdown menu by default */
 .dropdown__menu {
@@ -421,38 +448,34 @@ background-color: #303099;
 
 
 <div class="dashboard__wrapper">
-<aside class="dashboard__sidebar">
-<ul class="sidebar__menu">
-<li class="menu__item"><a href="admin_dashboard.php?content=dashboard" class="menu__link" data-content="dashboard"><i class='bx bx-home-alt-2'></i> Dashboard</a></li>
-
-<li class="menu__item has-dropdown">
-<a href="#" class="menu__link" data-content="book-appointment-parent"><i class='bx bx-calendar'></i> Manage Appointments <i class='bx bx-chevron-down arrow-icon'></i></a>
-<ul class="dropdown__menu">
-<li class="menu__item"><a href="AD_one-time.php" class="menu__link">One-Time Service</a></li>
-<li class="menu__item"><a href="AD_recurring.php" class="menu__link">Recurring Service</a></li>
-</ul>
-</li>
-
-<li class="menu__item has-dropdown">
-<a href="#" class="menu__link" data-content="history-parent"><i class='bx bx-history'></i> Manage Users <i class='bx bx-chevron-down arrow-icon'></i></a>
-<ul class="dropdown__menu">
-<li class="menu__item"><a href="AU_clients.php" class="menu__link">Client Accounts</a></li>
-<li class="menu__item"><a href="AU_cleaners.php" class="menu__link">Cleaner Accounts</a></li>
-</ul>
-</li>
-<li class="menu__item"><a href="ES.php" class="menu__link"><i class='bx bx-time'></i> Employee Scheduling</a></li>
-<li class="menu__item"><a href="manage_groups.php" class="menu__link "><i class='bx bx-group'></i> Manage Groups</a></li>
- <li class="menu__item"><a href="admin_feedback_dashboard.php" class="menu__link "><i class='bx bx-star'></i> Feedback Overview</a></li>
- <!-- <li class="menu__item"><a href="FR.php" class="menu__link"><i class='bx bx-star'></i> Feedback & Ratings</a></li> -->
-<li class="menu__item has-dropdown">
-
-</li>
-<li class="menu__item"><a href="Reports.php?content=reports" class="menu__link" data-content="reports"><i class='bx bx-file'></i> Reports</a></li>
-   <li class="menu__item"><a href="concern.php?content=profile" class="menu__link" data-content="profile"><i class='bx bx-info-circle'></i> Issues&Concerns</a></li>
-<li class="menu__item"><a href="admin_profile.php" class="menu__link active" data-content="profile"><i class='bx bx-user'></i> My Profile</a></li>
-<li class="menu__item"><a href="javascript:void(0)" class="menu__link" data-content="logout" onclick="showLogoutModal()"><i class='bx bx-log-out'></i> Logout</a></li>
-</ul>
-</aside>
+ <aside class="dashboard__sidebar">
+        <ul class="sidebar__menu">
+            <li class="menu__item"><a href="admin_dashboard.php?content=dashboard" class="menu__link"><i class='bx bx-home-alt-2'></i> Dashboard</a></li>
+            <li class="menu__item has-dropdown">
+                <a href="#" class="menu__link"><i class='bx bx-user-circle'></i> User Management <i class='bx bx-chevron-down arrow-icon'></i></a>
+                <ul class="dropdown__menu">
+                    <li class="menu__item"><a href="clients.php" class="menu__link">Clients</a></li>
+                    <li class="menu__item"><a href="UM_employees.php" class="menu__link">Employees</a></li>
+                    <li class="menu__item"><a href="UM_admins.php" class="menu__link">Admins</a></li>
+                    <li class="menu__item"><a href="archived_clients.php?content=manage-archive" class="menu__link">Archive</a></li>
+                </ul>
+            </li>
+            <li class="menu__item has-dropdown">
+                <a href="#" class="menu__link"><i class='bx bx-calendar-check'></i> Appointment Management <i class='bx bx-chevron-down arrow-icon'></i></a>
+                <ul class="dropdown__menu">
+                    <li class="menu__item"><a href="AP_one-time.php" class="menu__link">One-time Service</a></li>
+                    <li class="menu__item"><a href="AP_recurring.php" class="menu__link">Recurring Service</a></li>
+                </ul>
+            </li>
+            <li class="menu__item"><a href="ES.php" class="menu__link"><i class='bx bx-time'></i> Employee Scheduling</a></li>
+            <li class="menu__item"><a href="manage_groups.php" class="menu__link "><i class='bx bx-group'></i> Manage Groups</a></li>
+            <li class="menu__item"><a href="admin_feedback_dashboard.php" class="menu__link "><i class='bx bx-star'></i> Feedback Overview</a></li>
+            <li class="menu__item"><a href="Reports.php" class="menu__link "><i class='bx bx-file'></i> Reports</a></li>
+            <li class="menu__item"><a href="concern.php?content=profile" class="menu__link " data-content="profile"><i class='bx bx-info-circle'></i> Issues & Concerns</a></li>
+            <li class="menu__item"><a href="admin_profile.php" class="menu__link active"><i class='bx bx-user'></i> Profile</a></li>
+            <li class="menu__item"><a href="javascript:void(0)" class="menu__link" onclick="showLogoutModal()"><i class='bx bx-log-out'></i> Logout</a></li>
+        </ul>
+    </aside>
 
 <main class="dashboard__content">
 <div class="profile-form-container">
@@ -545,243 +568,173 @@ background-color: #303099;
 </div>
 </div>
 </div>
-
 <script>
-    
-const editBtn = document.getElementById('editBtn');
-const saveBtn = document.getElementById('saveBtn');
-const cancelBtn = document.getElementById('cancelBtn');
-const formFields = document.querySelectorAll('#profileForm input, #profileForm select');
-
-let originalValues = {};
-
-// Save original values
-formFields.forEach(field => {
-    originalValues[field.id] = field.value;
-});
-
-// Edit button
-editBtn.addEventListener('click', () => {
-    formFields.forEach(field => field.disabled = false);
-    editBtn.style.display = 'none';
-    saveBtn.style.display = 'inline-block';
-    cancelBtn.style.display = 'inline-block';
-});
-
-// Cancel button
-cancelBtn.addEventListener('click', () => {
-    formFields.forEach(field => {
-        field.value = originalValues[field.id];
-        field.disabled = true;
-    });
-    editBtn.style.display = 'inline-block';
-    saveBtn.style.display = 'none';
-    cancelBtn.style.display = 'none';
-});
-
-// Optional: Show success modal after form submission
-function showSuccessModal() {
-    const modal = document.getElementById('successModal');
-    modal.style.display = 'block';
-}
-
-function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if(modal) modal.style.display = 'none';
-}
-</script>
-
-
-<script>
-// --- START SIDEBAR DROPDOWN TOGGLE LOGIC (NEW) ---
 document.addEventListener('DOMContentLoaded', () => {
-    const dropdownToggles = document.querySelectorAll('.has-dropdown > .menu__link');
+    // --- SIDEBAR DROPDOWN TOGGLE LOGIC ---
+    const dropdownToggles = document.querySelectorAll('.has-dropdown > .menu__link');
 
-    dropdownToggles.forEach(toggle => {
-        // I-prevent ang default action para hindi mag-redirect sa '#'
-        toggle.addEventListener('click', (e) => {
-            e.preventDefault();
-            
-            // Hanapin ang parent <li> element
-            const parentItem = toggle.closest('.has-dropdown');
-            
-            // I-toggle ang active-dropdown class
-            parentItem.classList.toggle('active-dropdown');
+    dropdownToggles.forEach(toggle => {
+        toggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            const parentItem = toggle.closest('.has-dropdown');
+            parentItem.classList.toggle('active-dropdown');
 
-            // Optionally, i-close ang iba pang bukas na dropdowns
-            document.querySelectorAll('.has-dropdown.active-dropdown').forEach(item => {
-                if (item !== parentItem) {
-                    item.classList.remove('active-dropdown');
-                }
-            });
-        });
-    });
-});
-// --- END SIDEBAR DROPDOWN TOGGLE LOGIC ---
+            // Close other open dropdowns
+            document.querySelectorAll('.has-dropdown.active-dropdown').forEach(item => {
+                if (item !== parentItem) {
+                    item.classList.remove('active-dropdown');
+                }
+            });
+        });
+    });
 
+    // --- PROFILE EDIT/SAVE/CANCEL LOGIC ---
+    const editBtn = document.getElementById('editBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const formFields = document.querySelectorAll('#profileForm input, #profileForm select');
+    const contactNumberInput = document.getElementById('contact_number');
+    
+    let originalValues = {};
+    
+    // Save original values
+    formFields.forEach(field => {
+        originalValues[field.id] = field.value;
+    });
 
-// Profile Edit/Save/Cancel Logic
-const editBtn = document.getElementById('editBtn');
-const saveBtn = document.getElementById('saveBtn');
-const cancelBtn = document.getElementById('cancelBtn');
-const inputs = document.querySelectorAll('#profileForm input');
-const contactNumberInput = document.getElementById('contactNumber'); 
+    // Function to set cursor position
+    function setCursorPosition(input, pos) {
+        if (input.setSelectionRange) {
+            input.focus();
+            input.setSelectionRange(pos, pos);
+        }
+    }
 
-// Iimbak ang orihinal na values sa isang JS object
-const originalValues = {
-firstName: "<?php echo htmlspecialchars("Admin"); ?>", // Updated Admin Data
-lastName: "<?php echo htmlspecialchars("Alazima"); ?>", // Updated Admin Data
-birthday: "<?php echo htmlspecialchars("1985-01-15"); ?>", // Updated Admin Data
-contactNumber: "<?php echo htmlspecialchars("+971551234567"); ?>", // Updated Admin Data
-emailAddress: "<?php echo htmlspecialchars("admin@alazima.com"); ?>" // Updated Admin Data
-};
-let originalContactNumber = originalValues.contactNumber; 
+    // Contact Number Input Validation
+    if (contactNumberInput) {
+        contactNumberInput.addEventListener('keydown', (e) => {
+            if (contactNumberInput.disabled) return;
 
-// Function to set cursor position
-function setCursorPosition(input, pos) {
-if (input.setSelectionRange) {
-input.focus();
-input.setSelectionRange(pos, pos);
-}
-}
+            const prefix = '+971';
+            const start = contactNumberInput.selectionStart;
+            const end = contactNumberInput.selectionEnd;
+            const value = contactNumberInput.value;
 
-// EVENT LISTENER FOR CONTACT NUMBER: Enforce prefix and restrict non-digit input
-contactNumberInput.addEventListener('keydown', (e) => {
-if (contactNumberInput.disabled) return;
+            // Prevent deleting/editing the prefix (+971)
+            if (
+                (e.key === 'Backspace' && start <= prefix.length && start === end) ||
+                (e.key === 'Delete' && start < prefix.length) ||
+                (e.key === '-' || e.key === ' ')
+            ) {
+                e.preventDefault();
+                if (e.key === 'Backspace') {
+                    setCursorPosition(contactNumberInput, prefix.length);
+                }
+                return;
+            }
 
-const prefix = '+971';
-const start = contactNumberInput.selectionStart;
-const end = contactNumberInput.selectionEnd;
-const value = contactNumberInput.value;
+            // Restrict input to numbers (0-9) only
+            if (!e.metaKey && !e.ctrlKey && e.key.length === 1 && (e.key < '0' || e.key > '9')) {
+                e.preventDefault();
+                return;
+            }
 
-// 1. Prevent deleting/editing the prefix (+971)
-if (
-(e.key === 'Backspace' && start <= prefix.length && start === end) ||
-(e.key === 'Delete' && start < prefix.length) ||
-(e.key === '-' || e.key === ' ')
-) {
-e.preventDefault();
-if (e.key === 'Backspace') {
-setCursorPosition(contactNumberInput, prefix.length);
-}
-return;
-}
+            // Limit length (13 chars: +971 and 9 digits)
+            if (value.length >= 13 && start >= prefix.length && e.key.length === 1 && (e.key >= '0' && e.key <= '9') && start === end) {
+                e.preventDefault();
+            }
+        });
 
-// 2. Restrict input to numbers (0-9) only for new typing
-if (!e.metaKey && !e.ctrlKey && e.key.length === 1 && (e.key < '0' || e.key > '9')) {
-e.preventDefault();
-return;
-}
+        contactNumberInput.addEventListener('input', () => {
+            const prefix = '+971';
+            let value = contactNumberInput.value;
 
-// 3. Limit length (13 chars: +971 and 9 digits)
-if (value.length >= 13 && start >= prefix.length && e.key.length === 1 && (e.key >= '0' && e.key <= '9') && start === end) {
-e.preventDefault();
-}
-});
+            // Clean non-digit characters except + at the start
+            let cleanValue = prefix + value.substring(prefix.length).replace(/[^\d]/g, '');
 
-// Event listener for real-time input cleaning (removes any non-digit character that slips through)
-contactNumberInput.addEventListener('input', () => {
-const prefix = '+971';
-let value = contactNumberInput.value;
+            // Enforce 13 character limit
+            if (cleanValue.length > 13) {
+                cleanValue = cleanValue.substring(0, 13);
+            }
 
-// Clean non-digit characters except + at the start and enforce the prefix
-let cleanValue = prefix + value.substring(prefix.length).replace(/[^\d]/g, '');
+            if (contactNumberInput.value !== cleanValue) {
+                contactNumberInput.value = cleanValue;
+            }
 
-// Enforce 13 character limit
-if (cleanValue.length > 13) {
-cleanValue = cleanValue.substring(0, 13);
-}
+            // Keep cursor away from the prefix area
+            if (contactNumberInput.selectionStart < prefix.length) {
+                setCursorPosition(contactNumberInput, prefix.length);
+            }
+        });
+    }
 
-// If the displayed value needs cleaning, update it
-if (contactNumberInput.value !== cleanValue) {
-contactNumberInput.value = cleanValue;
-}
+    // Edit Button
+    editBtn.addEventListener('click', () => {
+        formFields.forEach(field => field.disabled = false);
+        editBtn.style.display = 'none';
+        saveBtn.style.display = 'inline-block';
+        cancelBtn.style.display = 'inline-block';
+    });
 
-// Keep cursor away from the prefix area
-if (contactNumberInput.selectionStart < prefix.length) {
-setCursorPosition(contactNumberInput, prefix.length);
-}
-});
+    // Cancel Button
+    cancelBtn.addEventListener('click', () => {
+        formFields.forEach(field => {
+            field.value = originalValues[field.id];
+            field.disabled = true;
+        });
+        editBtn.style.display = 'inline-block';
+        saveBtn.style.display = 'none';
+        cancelBtn.style.display = 'none';
+    });
 
+    // Form Submit
+    document.getElementById('profileForm').addEventListener('submit', (e) => {
+        // Validate contact number
+        if (contactNumberInput && !contactNumberInput.checkValidity()) {
+            setCursorPosition(contactNumberInput, 4);
+            return;
+        }
 
-editBtn.addEventListener('click', () => {
-// I-store ang original contact number bago mag-edit
-originalContactNumber = contactNumberInput.value; 
-inputs.forEach(input => input.disabled = false);
+        // Form will submit normally to PHP for database update
+        // The PHP redirect will show the success message
+    });
 
-// Wala nang automatic focus dito.
+    // --- LOGOUT MODAL LISTENERS ---
+    const cancelLogoutBtn = document.getElementById('cancelLogout');
+    const confirmLogoutBtn = document.getElementById('confirmLogout');
 
-editBtn.style.display = 'none';
-saveBtn.style.display = 'inline-block';
-cancelBtn.style.display = 'inline-block';
-});
+    if (cancelLogoutBtn) {
+        cancelLogoutBtn.addEventListener('click', () => {
+            closeModal('logoutModal');
+        });
+    }
 
-cancelBtn.addEventListener('click', () => {
-inputs.forEach(input => {
-        // I-restore ang original value mula sa JS object
-        input.value = originalValues[input.id];
-        input.disabled = true;
-});
-
-// Siguraduhin na ang contact number ay restored din
-contactNumberInput.value = originalContactNumber;
-
-saveBtn.style.display = 'none';
-cancelBtn.style.display = 'none';
-editBtn.style.display = 'inline-block';
-});
-
-document.getElementById('profileForm').addEventListener('submit', e => {
-// Ang checkValidity() at pattern attribute ang mag-ha-handle ng error pop-up.
-if (!contactNumberInput.checkValidity()) {
-// Ensure the cursor is set after the prefix if validation fails
-setCursorPosition(contactNumberInput, 4);
-return; // Let the browser handle the error display
-}
-
-e.preventDefault(); // I-prevent ang default submit para sa Success Modal (at server submit)
-
-// Dito mo na isasagawa ang AJAX/fetch request para i-save ang data sa database.
-
-// Simulate Success:
-showModal('successModal');
-inputs.forEach(input => input.disabled = true);
-saveBtn.style.display = 'none';
-cancelBtn.style.display = 'none';
-editBtn.style.display = 'inline-block';
+    if (confirmLogoutBtn) {
+        confirmLogoutBtn.addEventListener('click', () => {
+            window.location.href = "admin_logout.php";
+        });
+    }
 });
 
-// Modal Functions (No Transition)
+// --- MODAL FUNCTIONS (GLOBAL SCOPE) ---
 function showModal(id) {
-const modal = document.getElementById(id);
-if (modal) {
-modal.style.display = 'flex';
-}
+    const modal = document.getElementById(id);
+    if (modal) {
+        modal.style.display = 'flex';
+    }
 }
 
 function closeModal(id) {
-const modal = document.getElementById(id);
-if (modal) {
-modal.style.display = 'none';
-}
+    const modal = document.getElementById(id);
+    if (modal) {
+        modal.style.display = 'none';
+    }
 }
 
-// Added the necessary function to specifically show the logout modal
 function showLogoutModal() {
-showModal('logoutModal');
+    showModal('logoutModal');
 }
-
-// Event listeners for the logout modal buttons (using the new IDs)
-document.getElementById('cancelLogout').addEventListener('click', () => {
-closeModal('logoutModal');
-});
-
-// For demonstration, confirmLogout just closes the modal (You would add your actual logout logic here)
-document.getElementById('confirmLogout').addEventListener('click', () => {
-// window.location.href = "admin_logout.php";  // Example logout redirect (Updated)
-closeModal('logoutModal'); // For now, just close the modal
-});
-
 </script>
 
 </body>
