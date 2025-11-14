@@ -712,7 +712,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (confirmLogoutBtn) {
         confirmLogoutBtn.addEventListener('click', () => {
-            window.location.href = "admin_logout.php";
+            window.location.href = "landing_page2.html";
         });
     }
 });
