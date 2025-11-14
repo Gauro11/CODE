@@ -18,7 +18,7 @@ $client = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
 if (!$client) {
-    echo "<script>alert('Client not found.'); window.location.href='login.php';</script>";
+    echo "<script>alert('Client not found.'); window.location.href='landing_page2.html';</script>";
     exit;
 }
 

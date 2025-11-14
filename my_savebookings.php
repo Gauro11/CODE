@@ -4,7 +4,7 @@ require 'connection.php';
 
 // ✅ Ensure client is logged in
 if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'clients') {
-    echo "<script>alert('You must log in as a client first.'); window.location.href='login.php';</script>";
+    echo "<script>alert('You must log in as a client first.'); window.location.href='landing_page2.html';</script>";
     exit;
 }
 
@@ -18,7 +18,7 @@ $client = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
 if (!$client) {
-    echo "<script>alert('Client not found.'); window.location.href='login.php';</script>";
+    echo "<script>alert('Client not found.'); window.location.href='landing_page2.html';</script>";
     exit;
 }
 
