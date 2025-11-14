@@ -28,247 +28,9 @@ $employeeFirstName = $employee['first_name'];
 $employeeLastName = $employee['last_name'];
 $employeePosition = $employee['position'] ?? 'N/A';
 
-// ✅ ENABLE DEBUG MODE - Set to true to see diagnostic information
-$DEBUG_MODE = false; // Change to false after checking
-
-// ==================== DEBUG SECTION ====================
-if ($DEBUG_MODE) {
-    echo "<div style='background: #fff3cd; padding: 20px; margin: 20px; border: 2px solid #ffc107; border-radius: 10px; font-family: monospace;'>";
-    echo "<h2 style='color: #856404;'>🔍 DEBUG MODE - Staff Ratings</h2>";
-    echo "<p><strong>Logged-in Employee ID:</strong> " . $employeeId . "</p>";
-    echo "<p><strong>Employee Name:</strong> " . $employeeName . "</p>";
-    echo "<hr style='margin: 20px 0;'>";
-    
-    // Check all staff_ratings entries
-    $debugQuery = "SELECT * FROM staff_ratings ORDER BY created_at DESC LIMIT 20";
-    $debugResult = $conn->query($debugQuery);
-    
-    echo "<h3>📋 All Staff Ratings (Last 20):</h3>";
-    echo "<table style='width: 100%; border-collapse: collapse; background: white;'>";
-    echo "<tr style='background: #856404; color: white;'>";
-    echo "<th style='padding: 10px; border: 1px solid #ddd;'>ID</th>";
-    echo "<th style='padding: 10px; border: 1px solid #ddd;'>Booking ID</th>";
-    echo "<th style='padding: 10px; border: 1px solid #ddd;'>Employee ID</th>";
-    echo "<th style='padding: 10px; border: 1px solid #ddd;'>Staff Type</th>";
-    echo "<th style='padding: 10px; border: 1px solid #ddd;'>Rating</th>";
-    echo "<th style='padding: 10px; border: 1px solid #ddd;'>Created At</th>";
-    echo "<th style='padding: 10px; border: 1px solid #ddd;'>Match?</th>";
-    echo "</tr>";
-    
-    $foundMatch = false;
-    while ($row = $debugResult->fetch_assoc()) {
-        $isMatch = ($row['employee_id'] == $employeeId);
-        if ($isMatch) $foundMatch = true;
-        
-        $rowColor = $isMatch ? 'background: #d4edda;' : '';
-        echo "<tr style='$rowColor'>";
-        echo "<td style='padding: 8px; border: 1px solid #ddd;'>" . $row['id'] . "</td>";
-        echo "<td style='padding: 8px; border: 1px solid #ddd;'>" . $row['booking_id'] . "</td>";
-        echo "<td style='padding: 8px; border: 1px solid #ddd;'>" . $row['employee_id'] . "</td>";
-        echo "<td style='padding: 8px; border: 1px solid #ddd;'>" . $row['staff_type'] . "</td>";
-        echo "<td style='padding: 8px; border: 1px solid #ddd;'><strong>" . $row['rating'] . " ⭐</strong></td>";
-        echo "<td style='padding: 8px; border: 1px solid #ddd;'>" . $row['created_at'] . "</td>";
-        echo "<td style='padding: 8px; border: 1px solid #ddd; font-weight: bold;'>" . ($isMatch ? '✅ YES' : '❌ NO') . "</td>";
-        echo "</tr>";
-    }
-    echo "</table>";
-    
-    if (!$foundMatch) {
-        echo "<p style='color: #d32f2f; font-weight: bold; margin-top: 20px;'>⚠️ WARNING: No ratings found for Employee ID: $employeeId</p>";
-        echo "<p style='color: #856404;'>💡 This could mean:</p>";
-        echo "<ul style='color: #856404;'>";
-        echo "<li>The employee_id in staff_ratings table doesn't match your employee ID</li>";
-        echo "<li>No ratings have been submitted yet for this employee</li>";
-        echo "<li>The staff_ratings table is empty</li>";
-        echo "</ul>";
-    } else {
-        echo "<p style='color: #4caf50; font-weight: bold; margin-top: 20px;'>✅ Found matching ratings! (highlighted in green)</p>";
-    }
-    
-    // Check bookings for name matches
-    echo "<hr style='margin: 20px 0;'>";
-    echo "<h3>📦 Checking Bookings for Name Matches:</h3>";
-    $bookingCheckQuery = "
-        SELECT id, service_date, cleaners, drivers 
-        FROM bookings 
-        WHERE cleaners LIKE CONCAT('%', ?, '%') OR drivers LIKE CONCAT('%', ?, '%')
-        LIMIT 10
-    ";
-    $stmt = $conn->prepare($bookingCheckQuery);
-    $stmt->bind_param("ss", $employeeName, $employeeName);
-    $stmt->execute();
-    $bookingCheckResult = $stmt->get_result();
-    
-    if ($bookingCheckResult->num_rows > 0) {
-        echo "<p style='color: #4caf50;'>✅ Found " . $bookingCheckResult->num_rows . " bookings with your name:</p>";
-        echo "<table style='width: 100%; border-collapse: collapse; background: white;'>";
-        echo "<tr style='background: #4caf50; color: white;'>";
-        echo "<th style='padding: 8px; border: 1px solid #ddd;'>Booking ID</th>";
-        echo "<th style='padding: 8px; border: 1px solid #ddd;'>Service Date</th>";
-        echo "<th style='padding: 8px; border: 1px solid #ddd;'>Cleaners</th>";
-        echo "<th style='padding: 8px; border: 1px solid #ddd;'>Drivers</th>";
-        echo "<th style='padding: 8px; border: 1px solid #ddd;'>Has Rating?</th>";
-        echo "</tr>";
-        
-        while ($brow = $bookingCheckResult->fetch_assoc()) {
-            // Check if this booking has a rating
-            $ratingCheckQuery = "SELECT id FROM staff_ratings WHERE booking_id = ?";
-            $rStmt = $conn->prepare($ratingCheckQuery);
-            $rStmt->bind_param("i", $brow['id']);
-            $rStmt->execute();
-            $hasRating = $rStmt->get_result()->num_rows > 0 ? '✅ YES' : '❌ NO';
-            
-            echo "<tr>";
-            echo "<td style='padding: 8px; border: 1px solid #ddd;'>" . $brow['id'] . "</td>";
-            echo "<td style='padding: 8px; border: 1px solid #ddd;'>" . $brow['service_date'] . "</td>";
-            echo "<td style='padding: 8px; border: 1px solid #ddd;'>" . ($brow['cleaners'] ?? 'NULL') . "</td>";
-            echo "<td style='padding: 8px; border: 1px solid #ddd;'>" . ($brow['drivers'] ?? 'NULL') . "</td>";
-            echo "<td style='padding: 8px; border: 1px solid #ddd; font-weight: bold;'>" . $hasRating . "</td>";
-            echo "</tr>";
-        }
-        echo "</table>";
-    } else {
-        echo "<p style='color: #d32f2f;'>❌ No bookings found with your name: $employeeName</p>";
-        echo "<p style='color: #856404;'>Also checked for: '$employeeFirstName' and '$employeeLastName'</p>";
-    }
-    
-    // NEW: Cross-reference - Check which ratings exist for bookings with your name
-    echo "<hr style='margin: 20px 0;'>";
-    echo "<h3>🔗 Cross-Reference: Ratings for YOUR Bookings:</h3>";
-    $crossRefQuery = "
-        SELECT 
-            b.id as booking_id,
-            b.service_date,
-            b.cleaners,
-            b.drivers,
-            sr.id as rating_id,
-            sr.employee_id as rated_employee_id,
-            sr.staff_type,
-            sr.rating
-        FROM bookings b
-        LEFT JOIN staff_ratings sr ON b.id = sr.booking_id
-        WHERE (
-            b.cleaners LIKE CONCAT('%', ?, '%')
-            OR b.cleaners LIKE CONCAT('%', ?, '%')
-            OR b.cleaners LIKE CONCAT('%', ?, '%')
-            OR b.drivers LIKE CONCAT('%', ?, '%')
-            OR b.drivers LIKE CONCAT('%', ?, '%')
-            OR b.drivers LIKE CONCAT('%', ?, '%')
-        )
-        ORDER BY b.service_date DESC
-        LIMIT 10
-    ";
-    $stmt = $conn->prepare($crossRefQuery);
-    $stmt->bind_param("ssssss", 
-        $employeeName, $employeeFirstName, $employeeLastName,
-        $employeeName, $employeeFirstName, $employeeLastName
-    );
-    $stmt->execute();
-    $crossRefResult = $stmt->get_result();
-    
-    if ($crossRefResult->num_rows > 0) {
-        echo "<p style='color: #4caf50;'>✅ Found bookings where you appear:</p>";
-        echo "<table style='width: 100%; border-collapse: collapse; background: white;'>";
-        echo "<tr style='background: #673ab7; color: white;'>";
-        echo "<th style='padding: 8px; border: 1px solid #ddd;'>Booking ID</th>";
-        echo "<th style='padding: 8px; border: 1px solid #ddd;'>Date</th>";
-        echo "<th style='padding: 8px; border: 1px solid #ddd;'>Cleaners</th>";
-        echo "<th style='padding: 8px; border: 1px solid #ddd;'>Drivers</th>";
-        echo "<th style='padding: 8px; border: 1px solid #ddd;'>Rating?</th>";
-        echo "<th style='padding: 8px; border: 1px solid #ddd;'>Rated Emp ID</th>";
-        echo "<th style='padding: 8px; border: 1px solid #ddd;'>Staff Type</th>";
-        echo "<th style='padding: 8px; border: 1px solid #ddd;'>Stars</th>";
-        echo "<th style='padding: 8px; border: 1px solid #ddd;'>Match?</th>";
-        echo "</tr>";
-        
-        while ($crow = $crossRefResult->fetch_assoc()) {
-            $hasRating = $crow['rating_id'] ? 'YES' : 'NO';
-            $ratedEmpId = $crow['rated_employee_id'] ?? 'N/A';
-            $staffType = $crow['staff_type'] ?? 'N/A';
-            $stars = $crow['rating'] ?? 'N/A';
-            
-            // Check if rating should match
-            $shouldMatch = false;
-            $reason = '';
-            if ($crow['rating_id']) {
-                // Check if employee ID matches
-                if ($crow['rated_employee_id'] == $employeeId) {
-                    $shouldMatch = true;
-                    $reason = 'ID Match';
-                }
-                // Check if name appears in correct field
-                $cleanersMatch = stripos($crow['cleaners'] ?? '', $employeeName) !== false ||
-                                stripos($crow['cleaners'] ?? '', $employeeFirstName) !== false ||
-                                stripos($crow['cleaners'] ?? '', $employeeLastName) !== false;
-                $driversMatch = stripos($crow['drivers'] ?? '', $employeeName) !== false ||
-                               stripos($crow['drivers'] ?? '', $employeeFirstName) !== false ||
-                               stripos($crow['drivers'] ?? '', $employeeLastName) !== false;
-                
-                if ($crow['staff_type'] == 'cleaner' && $cleanersMatch) {
-                    $shouldMatch = true;
-                    $reason = 'Name in Cleaners';
-                } elseif ($crow['staff_type'] == 'driver' && $driversMatch) {
-                    $shouldMatch = true;
-                    $reason = 'Name in Drivers';
-                }
-            }
-            
-            $rowColor = $shouldMatch ? 'background: #c8e6c9;' : ($hasRating == 'YES' ? 'background: #ffebee;' : '');
-            echo "<tr style='$rowColor'>";
-            echo "<td style='padding: 8px; border: 1px solid #ddd;'>" . $crow['booking_id'] . "</td>";
-            echo "<td style='padding: 8px; border: 1px solid #ddd;'>" . $crow['service_date'] . "</td>";
-            echo "<td style='padding: 8px; border: 1px solid #ddd;'>" . ($crow['cleaners'] ?? 'NULL') . "</td>";
-            echo "<td style='padding: 8px; border: 1px solid #ddd;'>" . ($crow['drivers'] ?? 'NULL') . "</td>";
-            echo "<td style='padding: 8px; border: 1px solid #ddd; font-weight: bold;'>" . $hasRating . "</td>";
-            echo "<td style='padding: 8px; border: 1px solid #ddd;'>" . $ratedEmpId . "</td>";
-            echo "<td style='padding: 8px; border: 1px solid #ddd;'>" . $staffType . "</td>";
-            echo "<td style='padding: 8px; border: 1px solid #ddd;'><strong>" . $stars . ($stars != 'N/A' ? ' ⭐' : '') . "</strong></td>";
-            echo "<td style='padding: 8px; border: 1px solid #ddd;'>" . ($shouldMatch ? "✅ $reason" : ($hasRating == 'YES' ? '❌ No Match' : '')) . "</td>";
-            echo "</tr>";
-        }
-        echo "</table>";
-        echo "<p style='margin-top: 10px;'><strong>Legend:</strong></p>";
-        echo "<ul>";
-        echo "<li>🟢 Green = Rating should appear for you</li>";
-        echo "<li>🔴 Red = Rating exists but doesn't match you</li>";
-        echo "<li>⚪ White = No rating yet</li>";
-        echo "</ul>";
-    } else {
-        echo "<p style='color: #d32f2f;'>❌ No bookings found containing your name</p>";
-    }
-    
-    // Check employees table
-    echo "<hr style='margin: 20px 0;'>";
-    echo "<h3>👥 All Employees (for reference):</h3>";
-    $empDebugQuery = "SELECT id, first_name, last_name, email, position FROM employees LIMIT 10";
-    $empDebugResult = $conn->query($empDebugQuery);
-    
-    echo "<table style='width: 100%; border-collapse: collapse; background: white;'>";
-    echo "<tr style='background: #856404; color: white;'>";
-    echo "<th style='padding: 10px; border: 1px solid #ddd;'>ID</th>";
-    echo "<th style='padding: 10px; border: 1px solid #ddd;'>Name</th>";
-    echo "<th style='padding: 10px; border: 1px solid #ddd;'>Email</th>";
-    echo "<th style='padding: 10px; border: 1px solid #ddd;'>Position</th>";
-    echo "</tr>";
-    
-    while ($row = $empDebugResult->fetch_assoc()) {
-        $isCurrentEmp = ($row['id'] == $employeeId);
-        $rowColor = $isCurrentEmp ? 'background: #d4edda;' : '';
-        echo "<tr style='$rowColor'>";
-        echo "<td style='padding: 8px; border: 1px solid #ddd;'>" . $row['id'] . "</td>";
-        echo "<td style='padding: 8px; border: 1px solid #ddd;'>" . $row['first_name'] . " " . $row['last_name'] . "</td>";
-        echo "<td style='padding: 8px; border: 1px solid #ddd;'>" . $row['email'] . "</td>";
-        echo "<td style='padding: 8px; border: 1px solid #ddd;'>" . $row['position'] . "</td>";
-        echo "</tr>";
-    }
-    echo "</table>";
-    
-    echo "</div>";
-}
-
-// Fetch all ratings for this employee (by ID OR by name match in bookings)
+// ✅ FIXED QUERY - No more duplicates!
 $ratingsQuery = "
-    SELECT DISTINCT
+    SELECT 
         sr.id,
         sr.booking_id,
         sr.staff_type,
@@ -280,129 +42,31 @@ $ratingsQuery = "
         b.booking_type,
         b.full_name,
         b.address,
-        b.status as status,
+        b.status,
         b.cleaners,
         b.drivers
     FROM staff_ratings sr
     INNER JOIN bookings b ON sr.booking_id = b.id
-    WHERE (
-        sr.employee_id = ?
-        OR (
-            sr.staff_type = 'cleaner' AND (
-                b.cleaners LIKE CONCAT('%', ?, '%')
-                OR b.cleaners LIKE CONCAT('%', ?, '%')
-                OR b.cleaners LIKE CONCAT('%', ?, '%')
-            )
-        )
-        OR (
-            sr.staff_type = 'driver' AND (
-                b.drivers LIKE CONCAT('%', ?, '%')
-                OR b.drivers LIKE CONCAT('%', ?, '%')
-                OR b.drivers LIKE CONCAT('%', ?, '%')
-            )
-        )
-    )
+    WHERE sr.employee_id = ?
     ORDER BY sr.created_at DESC
 ";
 
 $stmt = $conn->prepare($ratingsQuery);
-$stmt->bind_param("issssss", 
-    $employeeId, 
-    $employeeName, $employeeFirstName, $employeeLastName,
-    $employeeName, $employeeFirstName, $employeeLastName
-);
+$stmt->bind_param("i", $employeeId);
 $stmt->execute();
 $ratingsResult = $stmt->get_result();
-
-// DEBUG: Show query results
-if ($DEBUG_MODE) {
-    echo "<div style='background: #e3f2fd; padding: 20px; margin: 20px; border: 2px solid #2196f3; border-radius: 10px;'>";
-    echo "<h3 style='color: #1565c0;'>🔎 Query Results Debug:</h3>";
-    echo "<p><strong>Number of rows returned:</strong> " . $ratingsResult->num_rows . "</p>";
-    
-    if ($ratingsResult->num_rows > 0) {
-        echo "<p style='color: #4caf50; font-weight: bold;'>✅ Found ratings for this employee!</p>";
-        echo "<table style='width: 100%; border-collapse: collapse; background: white; margin-top: 10px;'>";
-        echo "<tr style='background: #2196f3; color: white;'>";
-        echo "<th style='padding: 8px; border: 1px solid #ddd;'>Rating ID</th>";
-        echo "<th style='padding: 8px; border: 1px solid #ddd;'>Booking ID</th>";
-        echo "<th style='padding: 8px; border: 1px solid #ddd;'>Stars</th>";
-        echo "<th style='padding: 8px; border: 1px solid #ddd;'>Staff Type</th>";
-        echo "<th style='padding: 8px; border: 1px solid #ddd;'>Client</th>";
-        echo "<th style='padding: 8px; border: 1px solid #ddd;'>Date</th>";
-        echo "</tr>";
-        
-        // Store current position
-        $tempResults = [];
-        while ($tempRow = $ratingsResult->fetch_assoc()) {
-            $tempResults[] = $tempRow;
-            echo "<tr>";
-            echo "<td style='padding: 8px; border: 1px solid #ddd;'>" . $tempRow['id'] . "</td>";
-            echo "<td style='padding: 8px; border: 1px solid #ddd;'>" . $tempRow['booking_id'] . "</td>";
-            echo "<td style='padding: 8px; border: 1px solid #ddd;'><strong>" . $tempRow['rating'] . " ⭐</strong></td>";
-            echo "<td style='padding: 8px; border: 1px solid #ddd;'>" . $tempRow['staff_type'] . "</td>";
-            echo "<td style='padding: 8px; border: 1px solid #ddd;'>" . ($tempRow['full_name'] ?? 'N/A') . "</td>";
-            echo "<td style='padding: 8px; border: 1px solid #ddd;'>" . $tempRow['created_at'] . "</td>";
-            echo "</tr>";
-        }
-        echo "</table>";
-        
-        // Restore data for processing
-        $ratingsResult = $tempResults;
-    } else {
-        echo "<p style='color: #d32f2f; font-weight: bold;'>❌ No ratings returned by query</p>";
-        echo "<p style='color: #856404;'>This means either:</p>";
-        echo "<ul style='color: #856404;'>";
-        echo "<li>Employee ID $employeeId has no direct ratings in staff_ratings</li>";
-        echo "<li>Employee name '$employeeName' doesn't appear in any booking's cleaners/drivers fields</li>";
-        echo "<li>Or both conditions are not met</li>";
-        echo "</ul>";
-    }
-    
-    echo "<p><strong>Query used:</strong></p>";
-    echo "<pre style='background: white; padding: 10px; border-radius: 5px; overflow-x: auto; font-size: 0.85em;'>";
-    echo htmlspecialchars($ratingsQuery);
-    echo "</pre>";
-    echo "<p><strong>Parameters:</strong></p>";
-    echo "<ul>";
-    echo "<li>Employee ID: $employeeId</li>";
-    echo "<li>Employee Full Name: $employeeName</li>";
-    echo "<li>Employee First Name: $employeeFirstName</li>";
-    echo "<li>Employee Last Name: $employeeLastName</li>";
-    echo "<li>Employee Position: $employeePosition</li>";
-    echo "</ul>";
-    
-    echo "<p style='margin-top: 15px;'><strong>🔍 What the query is looking for:</strong></p>";
-    echo "<ol style='color: #1565c0;'>";
-    echo "<li>Direct match: staff_ratings.employee_id = $employeeId</li>";
-    echo "<li>OR if staff_type='cleaner': bookings.cleaners contains '$employeeName' OR '$employeeFirstName' OR '$employeeLastName'</li>";
-    echo "<li>OR if staff_type='driver': bookings.drivers contains '$employeeName' OR '$employeeFirstName' OR '$employeeLastName'</li>";
-    echo "</ol>";
-    echo "</div>";
-}
 
 // Calculate statistics
 $totalRatings = 0;
 $sumRatings = 0;
 $ratingCounts = [1 => 0, 2 => 0, 3 => 0, 4 => 0, 5 => 0];
-
 $ratingsData = [];
-if (is_array($ratingsResult)) {
-    // If we used the debug workaround
-    $ratingsData = $ratingsResult;
-    foreach ($ratingsData as $row) {
-        $totalRatings++;
-        $sumRatings += $row['rating'];
-        $ratingCounts[$row['rating']]++;
-    }
-} else {
-    // Normal flow
-    while ($row = $ratingsResult->fetch_assoc()) {
-        $ratingsData[] = $row;
-        $totalRatings++;
-        $sumRatings += $row['rating'];
-        $ratingCounts[$row['rating']]++;
-    }
+
+while ($row = $ratingsResult->fetch_assoc()) {
+    $ratingsData[] = $row;
+    $totalRatings++;
+    $sumRatings += $row['rating'];
+    $ratingCounts[$row['rating']]++;
 }
 
 $averageRating = $totalRatings > 0 ? round($sumRatings / $totalRatings, 1) : 0;
@@ -444,8 +108,38 @@ $conn->close();
 <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 <link rel="stylesheet" href="client_db.css">
 <style>
+/* FORCE DROPDOWN TO WORK */
+.dropdown__menu {
+    list-style: none;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+    transition: max-height 0.3s ease-out !important;
+    background-color: #f7f7f7 !important;
+}
+
+.has-dropdown.active-dropdown .dropdown__menu {
+    max-height: 300px !important;
+    padding: 5px 0 !important;
+}
+
+.has-dropdown.active-dropdown .arrow-icon {
+    transform: rotate(180deg) !important;
+}
+
+.arrow-icon {
+    transition: transform 0.3s ease !important;
+    margin-left: auto;
+}
+
+.dropdown__menu .menu__link {
+    padding-left: 50px !important;
+    font-size: 0.9em !important;
+}
+
 .ratings-header {
-    background: linear-gradient( #007bff);
+    background: linear-gradient(#007bff);
     color: white;
     padding: 30px;
     border-radius: 15px;
@@ -513,7 +207,7 @@ $conn->close();
 
 .breakdown-bar-fill {
     height: 100%;
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(#007bff);
     transition: width 0.3s ease;
 }
 
@@ -665,7 +359,6 @@ $conn->close();
     outline: none;
     border-color: #667eea;
 }
-
 </style>
 </head>
 <body>
@@ -765,7 +458,6 @@ $conn->close();
 <option value="2">2 Stars</option>
 <option value="1">1 Star</option>
 </select>
-
 </div>
 </div>
 
@@ -814,7 +506,6 @@ $conn->close();
 <?php endforeach; ?>
 </div>
 
-
 <?php else: ?>
 <div class="no-ratings">
 <i class='bx bx-star'></i>
@@ -825,47 +516,58 @@ $conn->close();
 
 </main>
 </div>
+
 <script>
-// Filter functionality - FIXED: Removed typeFilter reference
-document.getElementById('ratingFilter')?.addEventListener('change', filterRatings);
+document.addEventListener('DOMContentLoaded', () => {
+    // --- SIDEBAR DROPDOWN TOGGLE ---
+    const dropdownToggles = document.querySelectorAll('.has-dropdown > .menu__link');
 
-function filterRatings() {
-    const ratingFilter = document.getElementById('ratingFilter').value;
-    const cards = document.querySelectorAll('.rating-card');
-    
-    cards.forEach(card => {
-        const cardRating = card.getAttribute('data-rating');
-        
-        let showCard = true;
-        
-        if (ratingFilter !== 'all' && cardRating !== ratingFilter) {
-            showCard = false;
-        }
-        
-        card.style.display = showCard ? 'block' : 'none';
-    });
-}
-
-// Sidebar dropdown toggle functionality - MUST BE BEFORE OTHER CODE
-document.addEventListener('DOMContentLoaded', function() {
-    const dropdownParents = document.querySelectorAll('.has-dropdown');
-    
-    dropdownParents.forEach(parent => {
-        const parentLink = parent.querySelector('.menu__link');
-        
-        if (parentLink) {
-            parentLink.addEventListener('click', function(e) {
-                e.preventDefault();
-                parent.classList.toggle('open');
+    dropdownToggles.forEach(toggle => {
+        toggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            const parentItem = toggle.closest('.has-dropdown');
+            const wasActive = parentItem.classList.contains('active-dropdown');
+            
+            // Close all dropdowns
+            document.querySelectorAll('.has-dropdown').forEach(item => {
+                item.classList.remove('active-dropdown');
             });
-        }
+            
+            // Open this one if it wasn't active
+            if (!wasActive) {
+                parentItem.classList.add('active-dropdown');
+            }
+        });
     });
+
+    // --- FILTER FUNCTIONALITY ---
+    const ratingFilter = document.getElementById('ratingFilter');
     
-    // Mobile menu toggle
+    if (ratingFilter) {
+        ratingFilter.addEventListener('change', filterRatings);
+    }
+    
+    function filterRatings() {
+        const selectedRating = ratingFilter.value;
+        const cards = document.querySelectorAll('.rating-card');
+        
+        cards.forEach(card => {
+            const cardRating = card.getAttribute('data-rating');
+            
+            if (selectedRating === 'all' || cardRating === selectedRating) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    // --- MOBILE MENU TOGGLE ---
     const navToggle = document.getElementById('nav-toggle');
     const sidebar = document.querySelector('.dashboard__sidebar');
 
-    if (navToggle) {
+    if (navToggle && sidebar) {
         navToggle.addEventListener('click', () => {
             sidebar.classList.toggle('show');
         });
