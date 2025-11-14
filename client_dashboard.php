@@ -575,6 +575,7 @@ margin-bottom: 20px;
 }
 
 /* --- New CSS for Recurring Plan Status Tags --- */
+/* --- New CSS for Recurring Plan Status Tags --- */
 .overall-plan-tag {
     display: inline-flex;
     align-items: center;
@@ -589,24 +590,31 @@ margin-bottom: 20px;
     color: inherit; 
 }
 
-/* Green for ACTIVE */
+/* Blue for ACTIVE */
 .overall-plan-tag.overall-active {
-    background-color: #e8f9e8;
-    color: #008a00;        /* Dark Green */
-    border: 1px solid #c3e6cb;
+    background-color: #cce5ff;  /* Light Blue background */
+    color: #004085;             /* Dark Blue text */
+    border: 1px solid #b8daff;  /* Blue border */
 }
 
-/* Orange/Yellow for PENDING */
-.overall-plan-tag.overall-pending     {
+/* Yellow for PAUSED */
+.overall-plan-tag.overall-paused {
+    background-color: #fff3cd;  /* Light Yellow background */
+    color: #856404;             /* Dark Orange/Brown text */
+    border: 1px solid #ffeeba;  /* Yellow border */
+}
+
+/* Gray for PENDING */
+.overall-plan-tag.overall-pending {
     background-color: #e0e5ea;
     color: #495057;
     border: 1px solid #c4ccd5;
 }
 
-/* Red for SUSPENDED (Added for completeness if needed) */
+/* Red for SUSPENDED */
 .overall-plan-tag.overall-suspended {
-    background-color: #fcebeb; /* Light Red background */
-    color: #b32133; /* Dark Red text/icon */
+    background-color: #fcebeb;
+    color: #b32133;
     border: 1px solid #b32133;
 }
 
@@ -1113,9 +1121,9 @@ if ($combined_result && $combined_result->num_rows > 0) {
                     <p><i class="bx bx-building-house"></i> <strong>Client Type:</strong> '.$client_type.'</p>
                     <p class="service-type-detail"><i class="bx bx-wrench"></i> <strong>Service Type:</strong> '.$service_type.'</p>
                     <p class="full-width-detail status-detail">
-                        <strong>Status:</strong>
-                        <span class="status-tag '.strtolower($status).'"><i class="bx bx-hourglass"></i> '.$status.'</span>
-                    </p>
+    <strong>Status:</strong>
+    <span class="overall-plan-tag overall-'.strtolower($status).'"><i class="bx bx-hourglass"></i> '.$status.'</span>
+</p>
                 </div>
             </div>';
         }

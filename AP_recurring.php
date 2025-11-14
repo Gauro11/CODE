@@ -78,6 +78,7 @@ function getEmployeeIdsByNames($conn, $names) {
 }
 
 // ✅ KEEP ONLY THIS ONE - Check conflicts for RECURRING bookings based on preferred_day
+// ✅ UPDATED: Check conflicts for RECURRING bookings (checks both recurring AND one-time)
 function getUnavailableStaffRecurring($conn, $preferred_day, $service_time, $duration, $current_booking_id = null) {
     $duration_hours = durationToHours($duration);
     $new_start = strtotime($service_time);
@@ -87,7 +88,7 @@ function getUnavailableStaffRecurring($conn, $preferred_day, $service_time, $dur
     $unavailable = [];
     $conflicts = [];
     
-    // ===== CHECK OTHER RECURRING bookings on the same preferred day =====
+    // ===== 1. CHECK OTHER RECURRING bookings on the same preferred day =====
     if ($current_booking_id) {
         $stmt = $conn->prepare("
             SELECT cleaners, drivers, service_time, duration, id
@@ -125,7 +126,6 @@ function getUnavailableStaffRecurring($conn, $preferred_day, $service_time, $dur
                 $cleaners = explode(',', $row['cleaners']);
                 foreach ($cleaners as $cleaner) {
                     $name = trim($cleaner);
-                    // Only add if not already in the list (prevents duplicates)
                     if (!in_array($name, $unavailable)) {
                         $unavailable[] = $name;
                         $conflicts[$name] = $conflict_time . ' (Recurring #' . $row['id'] . ')';
@@ -137,7 +137,6 @@ function getUnavailableStaffRecurring($conn, $preferred_day, $service_time, $dur
                 $drivers = explode(',', $row['drivers']);
                 foreach ($drivers as $driver) {
                     $name = trim($driver);
-                    // Only add if not already in the list (prevents duplicates)
                     if (!in_array($name, $unavailable)) {
                         $unavailable[] = $name;
                         $conflicts[$name] = $conflict_time . ' (Recurring #' . $row['id'] . ')';
@@ -148,8 +147,71 @@ function getUnavailableStaffRecurring($conn, $preferred_day, $service_time, $dur
     }
     $stmt->close();
     
+    // ===== 2. CHECK ONE-TIME bookings that fall on the same day of week =====
+    // Get all future one-time bookings where DAYOFWEEK(service_date) matches preferred_day
+    $day_map = [
+        'Sunday' => 1,
+        'Monday' => 2,
+        'Tuesday' => 3,
+        'Wednesday' => 4,
+        'Thursday' => 5,
+        'Friday' => 6,
+        'Saturday' => 7
+    ];
+    
+    $day_number = $day_map[$preferred_day] ?? null;
+    
+    if ($day_number) {
+        $stmt = $conn->prepare("
+            SELECT cleaners, drivers, service_time, duration, id, service_date
+            FROM bookings 
+            WHERE booking_type = 'One-Time'
+            AND DAYOFWEEK(service_date) = ?
+            AND service_date >= CURDATE()
+            AND status NOT IN ('Cancelled', 'Completed', 'No Show')
+        ");
+        $stmt->bind_param("i", $day_number);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        while ($row = $result->fetch_assoc()) {
+            $existing_start = $row['service_time'];
+            $existing_duration_hours = durationToHours($row['duration']);
+            $existing_end = strtotime($existing_start) + ($existing_duration_hours * 3600);
+            $existing_end_time = date('H:i:s', $existing_end);
+            
+            if (timeRangesOverlap($service_time, $new_end_time, $existing_start, $existing_end_time)) {
+                $conflict_time = date('H:i', strtotime($existing_start)) . ' - ' . date('H:i', $existing_end);
+                $conflict_date = date('M d, Y', strtotime($row['service_date']));
+                
+                if (!empty($row['cleaners'])) {
+                    $cleaners = explode(',', $row['cleaners']);
+                    foreach ($cleaners as $cleaner) {
+                        $name = trim($cleaner);
+                        if (!in_array($name, $unavailable)) {
+                            $unavailable[] = $name;
+                            $conflicts[$name] = $conflict_time . ' (One-Time on ' . $conflict_date . ')';
+                        }
+                    }
+                }
+                
+                if (!empty($row['drivers'])) {
+                    $drivers = explode(',', $row['drivers']);
+                    foreach ($drivers as $driver) {
+                        $name = trim($driver);
+                        if (!in_array($name, $unavailable)) {
+                            $unavailable[] = $name;
+                            $conflicts[$name] = $conflict_time . ' (One-Time on ' . $conflict_date . ')';
+                        }
+                    }
+                }
+            }
+        }
+        $stmt->close();
+    }
+    
     return [
-        'unavailable_staff' => $unavailable, // ✅ Already unique, no need for array_unique()
+        'unavailable_staff' => $unavailable,
         'conflicts' => $conflicts
     ];
 }
