@@ -494,7 +494,7 @@ color: #333;
     border-top-color: #6A5ACD; 
 }
 .summary-card.pending-feedback {
-    border-top-color: #FF9800;
+    border-top-color: #4CAF50;
 }
 .summary-card.quick-actions {
     border-top-color: #4CAF50;
@@ -540,7 +540,7 @@ font-size: 1.2em;
 display: flex;
 align-items: center;
 justify-content: center;
-background-color: #FF9800;
+background-color: #4CAF50;
 color: white;
 text-decoration: none;
 border-radius: 5px;
@@ -549,33 +549,68 @@ transition: background-color 0.3s, transform 0.2s;
 margin-top: 10px;
 }
 .pending-feedback .feedback-link:hover {
-background-color: #e68900;
+background-color: #4CAF50;
 transform: translateY(-2px);
 }
 .pending-feedback .feedback-link i {
 margin-right: 8px;
 }
+/* Replace your existing .quick-actions a styles with this */
+/* Fix for Quick Links inside pending-feedback card */
+
+.pending-feedback ul li a {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    background-color: #4CAF50;  /* Green color */
+    padding: 10px 15px;
+    border-radius: 5px;
+    text-decoration: none;
+    color: white;
+    font-size: 0.95em;
+    transition: background-color 0.3s, transform 0.2s;
+    margin-bottom: 25px;
+}
+
+.pending-feedback ul li a:hover {
+    background-color: #45a049;  /* Darker green on hover */
+    transform: translateY(-2px);
+}
+
+.pending-feedback ul li a i {
+    margin-right: 10px;
+    font-size: 1.2rem;
+    color: white;
+}
+
+.pending-feedback ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
 .quick-actions a {
-display: flex;
-align-items: center;
-justify-content: flex-start;
-background-color: #4CAF50;
-padding: 10px 15px;
-border-radius: 5px;
-text-decoration: none;
-color: white;
-font-size: 0.95em;
-transition: background-color 0.3s, transform 0.2s;
-margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    background-color: #4CAF50;  /* Changed from orange to green */
+    padding: 10px 15px;
+    border-radius: 5px;
+    text-decoration: none;
+    color: white;
+    font-size: 0.95em;
+    transition: background-color 0.3s, transform 0.2s;
+    margin-bottom: 10px;
 }
+
 .quick-actions a:hover {
-background-color: #45a049;
-transform: translateY(-2px);
+    background-color: #45a049;  /* Darker green on hover */
+    transform: translateY(-2px);
 }
+
 .quick-actions a i {
-margin-right: 10px;
-font-size: 1.2rem;
-color: white;
+    margin-right: 10px;
+    font-size: 1.2rem;
+    color: white;
 }
 .quick-actions ul {
 list-style: none;
@@ -1063,17 +1098,14 @@ justify-self: start;
 </div>
 <div class="summary-card pending-feedback">
 <div class="card-content">
-<!-- <h3>Pending Time Off</h3>
-<p>You have 0 pending Time Off requests.</p>
-<a href="#" class="feedback-link"><i class='bx bx-time-five'></i> View Request Status</a>
-</div> -->
+
 <i class='bx bx-bell card-icon'></i>
 </div>
-<div class="summary-card quick-actions">
+
 <div class="card-content">
 <h3>Quick Links</h3>
 <ul>
-<!-- <li><a href="EMP_timeoff_request.php"><i class='bx bx-calendar-exclamation'></i> Request Time Off</a></li> -->
+
 <li><a href="EMP_appointments_history.php"><i class='bx bx-list-check'></i> View Appointment History</a></li>
 <li><a href="EMP_appointments_today.php"><i class='bx bx-list-check'></i> View Todays Appointment</a></li>
 
@@ -1099,11 +1131,8 @@ justify-self: start;
                     <!-- <a href="booking_details.php?id=<?php echo $booking['id']; ?>" class="action-btn view-details-btn"><i class='bx bx-show'></i> View</a> -->
                     <a href="tel:<?php echo $booking['phone']; ?>" class="action-btn call-btn"><i class='bx bx-phone'></i> Call Client</a>
                     <div class="dropdown-menu-container">
-                        <button class="more-options-btn"><i class='bx bx-dots-vertical-rounded'></i></button>
-                        <ul class="dropdown-menu">
-                            <li><a href="#" class="edit-link"><i class='bx bx-play-circle'></i> Start Job</a></li>
-                            <li><a href="#" class="cancel-link"><i class='bx bx-check-circle'></i> Complete Job</a></li>
-                        </ul>
+                        
+                       
                     </div>
                 </div>
                 <div class="appointment-details">
@@ -1162,11 +1191,7 @@ justify-self: start;
                     <!-- <a href="booking_details.php?id=<?php echo $booking['id']; ?>" class="action-btn view-details-btn"><i class='bx bx-show'></i> View</a> -->
                     <a href="tel:<?php echo $booking['phone']; ?>" class="action-btn call-btn"><i class='bx bx-phone'></i> Call Client</a>
                     <div class="dropdown-menu-container">
-                        <button class="more-options-btn"><i class='bx bx-dots-vertical-rounded'></i></button>
-                        <ul class="dropdown-menu">
-                            <li><a href="#" class="edit-link"><i class='bx bx-play-circle'></i> Start Job</a></li>
-                            <li><a href="#" class="cancel-link"><i class='bx bx-check-circle'></i> Complete Job</a></li>
-                        </ul>
+                        
                     </div>
                 </div>
                 <div class="appointment-details">

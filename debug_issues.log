@@ -390,3 +390,5 @@ Stack trace:
 [13-Nov-2025 15:41:30 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 1700
 [13-Nov-2025 20:22:45 Europe/Berlin] PHP Warning:  Undefined variable $booking in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 1787
 [13-Nov-2025 20:22:45 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 1787
+[14-Nov-2025 12:51:19 Europe/Berlin] PHP Warning:  Undefined variable $booking in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 1787
+[14-Nov-2025 12:51:19 Europe/Berlin] PHP Warning:  Trying to access array offset on value of type null in C:\Users\asus\Downloads\CODE\FR_one-time.php on line 1787

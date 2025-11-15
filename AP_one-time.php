@@ -1069,27 +1069,52 @@ $status_colors = [
         <div class="content-container">
             <h2><i class='bx bx-calendar-check'></i> Appointment Management - One-Time Bookings</h2>
             
+            <!-- SEARCH BAR (Frontend Only) -->
+            <div class="search-container">
+                <div class="search-form">
+                    <div class="search-input-wrapper">
+                        <i class='bx bx-search'></i>
+                        <input 
+                            type="text" 
+                            id="searchInput"
+                            class="search-input" 
+                            placeholder="Search by name, or service type..." 
+                            onkeyup="searchTable()"
+                        >
+                        <button class="clear-search" id="clearSearchBtn" style="display: none;" onclick="clearSearch()">
+                            <i class='bx bx-x'></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Search Results Info -->
+            <div id="searchResultsInfo" style="display: none; padding: 10px; background: #e7f3ff; border-radius: 6px; margin-bottom: 15px;">
+                <i class='bx bx-info-circle'></i> 
+                <span id="resultsCount"></span>
+            </div>
+            
             <!-- STATUS FILTER TABS -->
             <div class="status-tabs">
-                <a href="AP_one-time.php?status=All" class="status-tab all <?= $status_filter === 'All' ? 'active' : '' ?>">
+                <a href="AP_one-time.php?status=All<?= !empty($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '' ?>" class="status-tab all <?= $status_filter === 'All' ? 'active' : '' ?>">
                     <i class='bx bx-list-ul'></i> All
                 </a>
-                <a href="AP_one-time.php?status=Pending" class="status-tab pending <?= $status_filter === 'Pending' ? 'active' : '' ?>">
+                <a href="AP_one-time.php?status=Pending<?= !empty($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '' ?>" class="status-tab pending <?= $status_filter === 'Pending' ? 'active' : '' ?>">
                     <i class='bx bx-time'></i> Pending
                 </a>
-                <a href="AP_one-time.php?status=Confirmed" class="status-tab confirmed <?= $status_filter === 'Confirmed' ? 'active' : '' ?>">
+                <a href="AP_one-time.php?status=Confirmed<?= !empty($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '' ?>" class="status-tab confirmed <?= $status_filter === 'Confirmed' ? 'active' : '' ?>">
                     <i class='bx bx-check-circle'></i> Confirmed
                 </a>
-                <a href="AP_one-time.php?status=Ongoing" class="status-tab ongoing <?= $status_filter === 'Ongoing' ? 'active' : '' ?>">
+                <a href="AP_one-time.php?status=Ongoing<?= !empty($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '' ?>" class="status-tab ongoing <?= $status_filter === 'Ongoing' ? 'active' : '' ?>">
                     <i class='bx bx-loader-alt'></i> Ongoing
                 </a>
-                <a href="AP_one-time.php?status=Completed" class="status-tab completed <?= $status_filter === 'Completed' ? 'active' : '' ?>">
+                <a href="AP_one-time.php?status=Completed<?= !empty($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '' ?>" class="status-tab completed <?= $status_filter === 'Completed' ? 'active' : '' ?>">
                     <i class='bx bx-check-double'></i> Completed
                 </a>
-                <a href="AP_one-time.php?status=Cancelled" class="status-tab cancelled <?= $status_filter === 'Cancelled' ? 'active' : '' ?>">
+                <a href="AP_one-time.php?status=Cancelled<?= !empty($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '' ?>" class="status-tab cancelled <?= $status_filter === 'Cancelled' ? 'active' : '' ?>">
                     <i class='bx bx-x-circle'></i> Cancelled
                 </a>
-                <a href="AP_one-time.php?status=No Show" class="status-tab no-show <?= $status_filter === 'No Show' ? 'active' : '' ?>">
+                <a href="AP_one-time.php?status=No Show<?= !empty($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '' ?>" class="status-tab no-show <?= $status_filter === 'No Show' ? 'active' : '' ?>">
                     <i class='bx bx-user-x'></i> No Show
                 </a>
             </div>
@@ -1120,7 +1145,7 @@ $status_colors = [
         <td><?= htmlspecialchars($row['phone']) ?></td>
         <td><?= htmlspecialchars($row['service_type']) ?></td>
         <td><?= htmlspecialchars($row['service_date']) ?></td>
-   <td><?= date("h:i A", strtotime($row['service_time'])) ?></td>
+        <td><?= date("h:i A", strtotime($row['service_time'])) ?></td>
         <td class="staff-names">
             <i class='bx bx-spray-can'></i>
             <?= getEmployeeNames($conn, $row['cleaners']) ?>
@@ -1137,22 +1162,13 @@ $status_colors = [
                     <i class='bx bx-dots-horizontal-rounded'></i>
                 </button>
                 <div class="dropdown-content">
-                    <!-- View always available -->
-                    <!-- <button class="btn btn-view" onclick='openModal(<?= $rowData ?>)'>
-                        <i class='bx bx-show'></i> View
-                    </button> -->
-
                     <?php if ($status === 'Pending'): ?>
                         <button class="btn btn-call" onclick="callClient('<?= htmlspecialchars($row['phone']) ?>')">
                             <i class='bx bx-phone'></i> Call
                         </button>
-                        <!-- <button class="btn btn-edit" onclick='openEditModal(<?= $rowData ?>)'>
-                            <i class='bx bx-edit'></i> Edit
-                        </button> -->
                         <button class="btn btn-assign" onclick='openAssignModal(<?= $rowData ?>)'>
-    <i class='bx bx-user-plus'></i> Assign Staff
-</button>
-
+                            <i class='bx bx-user-plus'></i> Assign Staff
+                        </button>
                         <button class="btn btn-cancel" onclick="confirmCancel(<?= $row['id'] ?>)">
                             <i class='bx bx-x'></i> Cancel
                         </button>
@@ -1161,16 +1177,9 @@ $status_colors = [
                         <button class="btn btn-call" onclick="callClient('<?= htmlspecialchars($row['phone']) ?>')">
                             <i class='bx bx-phone'></i> Call
                         </button>
-                        <!-- <button class="btn btn-edit" onclick='openEditModal(<?= $rowData ?>)'>
-                            <i class='bx bx-edit'></i> Edit
-                        </button> -->
-                       <button class="btn btn-assign" onclick='openAssignModal(<?= $rowData ?>)'>
-    <i class='bx bx-user-plus'></i> Assign Staff
-</button>
-
-                        <!-- <button class="btn btn-reschedule" onclick='openRescheduleModal(<?= $rowData ?>)'>
-                            <i class='bx bx-calendar-edit'></i> Reschedule
-                        </button> -->
+                        <button class="btn btn-assign" onclick='openAssignModal(<?= $rowData ?>)'>
+                            <i class='bx bx-user-plus'></i> Assign Staff
+                        </button>
                         <button class="btn btn-cancel" onclick="confirmCancel(<?= $row['id'] ?>)">
                             <i class='bx bx-x'></i> Cancel
                         </button>
@@ -1179,23 +1188,12 @@ $status_colors = [
                         <button class="btn btn-call" onclick="callClient('<?= htmlspecialchars($row['phone']) ?>')">
                             <i class='bx bx-phone'></i> Call
                         </button>
-                        <!-- <button class="btn btn-edit" onclick='openEditModal(<?= $rowData ?>)'>
-                            <i class='bx bx-edit'></i> Edit
-                        </button> -->
-                        <button class="btn btn-assign" onclick='openAssignModal(<?= $rowData ?>)'>
-                            <i class='bx bx-user-plus'></i> Assign Staff
-                        </button>
+                       
 
                     <?php elseif ($status === 'Completed'): ?>
                         <button class="btn btn-call" onclick="callClient('<?= htmlspecialchars($row['phone']) ?>')">
                             <i class='bx bx-phone'></i> Call
                         </button>
-                        <!-- <button class="btn btn-report" onclick='openCompletionReport(<?= $rowData ?>)'>
-                            <i class='bx bx-file'></i> Report
-                        </button>
-                        <button class="btn btn-invoice" onclick='openInvoiceModal(<?= $rowData ?>)'>
-                            <i class='bx bx-receipt'></i> Invoice
-                        </button> -->
                     <?php endif; ?>
 
                     <!-- Update Status Dropdown -->
@@ -1221,6 +1219,244 @@ $status_colors = [
         </div>
     </section>
 </main>
+
+<style>
+/* Search Container Styles */
+.search-container {
+    margin: 20px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.search-form {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.search-input-wrapper {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.search-input-wrapper > .bx-search {
+    position: absolute;
+    left: 12px;
+    font-size: 20px;
+    color: #6c757d;
+    pointer-events: none;
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px 40px 12px 40px;
+    border: 2px solid #dee2e6;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+.clear-search {
+    position: absolute;
+    right: 12px;
+    color: #6c757d;
+    cursor: pointer;
+    font-size: 20px;
+    transition: color 0.2s;
+    text-decoration: none;
+    background: none;
+    border: none;
+    padding: 5px;
+}
+
+.clear-search:hover {
+    color: #dc3545;
+}
+
+.search-btn {
+    padding: 12px 24px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.3s ease;
+    white-space: nowrap;
+}
+
+.search-btn:hover {
+    background: #45a049;
+}
+
+.search-btn i {
+    font-size: 18px;
+}
+
+
+
+/* No results message */
+.no-results-row {
+    background-color: #fff3cd !important;
+}
+
+.no-results-row td {
+    text-align: center;
+    padding: 30px !important;
+    color: #856404;
+    font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .search-form {
+        flex-direction: column;
+    }
+    
+    .search-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
+
+<script>
+// Frontend-only table search function
+function searchTable() {
+    const input = document.getElementById('searchInput');
+    const filter = input.value.toLowerCase().trim();
+    const table = document.querySelector('table tbody');
+    const rows = table.getElementsByTagName('tr');
+    const clearBtn = document.getElementById('clearSearchBtn');
+    const resultsInfo = document.getElementById('searchResultsInfo');
+    const resultsCount = document.getElementById('resultsCount');
+    
+    let visibleCount = 0;
+    let totalCount = 0;
+    
+    // Show/hide clear button
+    clearBtn.style.display = filter ? 'block' : 'none';
+    
+    // Loop through all table rows
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        
+        // Skip "no data" rows
+        if (row.classList.contains('no-data') || row.querySelector('.no-data')) {
+            continue;
+        }
+        
+        totalCount++;
+        
+        // Get text content from relevant columns (name, phone, service type)
+        const cells = row.getElementsByTagName('td');
+        if (cells.length > 0) {
+            const name = cells[0].textContent || cells[0].innerText;
+            const phone = cells[1].textContent || cells[1].innerText;
+            const serviceType = cells[2].textContent || cells[2].innerText;
+            
+            // Combine all searchable text
+            const searchText = (name + phone + serviceType).toLowerCase();
+            
+            // Show/hide row based on match
+            if (searchText.includes(filter) || filter === '') {
+                row.style.display = '';
+                visibleCount++;
+                
+                // Optional: Highlight matching text
+                if (filter) {
+                    highlightText(cells[0], filter);
+                    highlightText(cells[1], filter);
+                    highlightText(cells[2], filter);
+                }
+            } else {
+                row.style.display = 'none';
+            }
+        }
+    }
+    
+    // Show results info
+    if (filter) {
+        resultsInfo.style.display = 'block';
+        resultsCount.textContent = `Found ${visibleCount} of ${totalCount} bookings`;
+        
+        if (visibleCount === 0) {
+            // Show "no results" message
+            const noResultsRow = table.querySelector('.no-results-row');
+            if (!noResultsRow) {
+                const newRow = table.insertRow(0);
+                newRow.className = 'no-results-row';
+                newRow.innerHTML = '<td colspan="9"><i class="bx bx-search-alt"></i> No bookings match your search</td>';
+            }
+        } else {
+            // Remove "no results" message if it exists
+            const noResultsRow = table.querySelector('.no-results-row');
+            if (noResultsRow) {
+                noResultsRow.remove();
+            }
+        }
+    } else {
+        resultsInfo.style.display = 'none';
+        // Remove "no results" message
+        const noResultsRow = table.querySelector('.no-results-row');
+        if (noResultsRow) {
+            noResultsRow.remove();
+        }
+    }
+}
+
+// Clear search function
+function clearSearch() {
+    document.getElementById('searchInput').value = '';
+    searchTable();
+    document.getElementById('searchInput').focus();
+}
+
+// Highlight matching text (optional visual enhancement)
+function highlightText(cell, searchTerm) {
+    if (!searchTerm) {
+        // Remove all highlights
+        cell.innerHTML = cell.textContent;
+        return;
+    }
+    
+    const text = cell.textContent;
+    const regex = new RegExp(`(${searchTerm})`, 'gi');
+    const highlightedText = text.replace(regex, '<span class="highlight">$1</span>');
+    
+    // Only update if there's a match
+    if (text !== highlightedText) {
+        cell.innerHTML = highlightedText;
+    }
+}
+
+// Optional: Search on Enter key
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchTable();
+            }
+        });
+    }
+});
+</script>
+
 
 
 <!-- ASSIGN STAFF MODAL --><!-- ASSIGN STAFF MODAL --><!-- ASSIGN STAFF MODAL WITH GROUPS -->

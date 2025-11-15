@@ -13,7 +13,17 @@ class SentimentAnalyzer {
     'courteous','prompt','attentive','thankful','grateful','appreciated','worth','recommend','flawless','pristine',
     'sparkling','immaculate','gleaming','shining','fresh','organized','tidy','highly','recommended','excellent job',
     'fantastic job','went above and beyond','above and beyond','great experience','extremely happy','spotless',
-    'everything looks spotless','smells so fresh','very professional','friendly and efficient'
+    'everything looks spotless','smells so fresh','very professional','friendly and efficient',
+
+    
+    'awesome service','high quality','super clean','very satisfied','perfect job','top notch','super fast',
+    'very friendly','great work','amazing service','excellent service','very helpful','great attitude',
+    'outstanding job','great communication','very neat','super neat','well done','perfectly done',
+    'beyond expectations','more than expected','five star','5 star','fast service','on time','very organized',
+    'love the result','top quality','super helpful','very polite','great cleaner','amazing cleaner',
+    'excellent cleaning','best experience','very trustworthy','super professional','highly impressed',
+    'very thorough','very detailed','excellent attention to detail','beautiful work','very smooth process',
+    'very convenient','great teamwork','nice job','very clean','extremely clean','everything is perfect'
 ];
 
     
@@ -25,7 +35,17 @@ class SentimentAnalyzer {
     'faulty','incompetent','lazy','negligent','disrespectful','unreliable','unsatisfactory','dusty','grimy',
     'stained','smelly','filthy','overlooked','rushed','skipped','untouched','missed spots','missed several spots',
     'bathroom still dirty','completely unsatisfied','not worth','poor quality','very slow','careless work',
-    'dirty after they left','didn’t clean properly','didnt clean properly','unprofessional and rude'
+    'dirty after they left','didn’t clean properly','didnt clean properly','unprofessional and rude',
+
+    'horrible service','very bad','really bad','super slow','poor service','not satisfied','not happy at all',
+    'not good','terrible experience','bad experience','did not like','not clean','still dirty','still messy',
+    'not worth the money','waste of money','waste of time','very rude','very unprofessional','not helpful',
+    'didn’t finish the job','did not finish the job','unfinished work','left early','did not show up',
+    'no show','never came','came late','very late','very disappointing','not cleaned properly',
+    'poor attitude','dirty work','unacceptable service','very careless','not organized','very messy',
+    'terrible cleaning','horrible cleaning','still dust everywhere','missed a lot of areas','missed many spots',
+    'did a poor job','not detailed','rushed job','very noisy','bad smell left','did not follow instructions',
+    'poor communication','didn’t arrive on time','unreliable service','low quality','terrible quality'
 ];
 
 private $neutral_phrases = [

@@ -295,53 +295,120 @@ tbody tr:hover {
 
         <!-- All Staff Ratings (Detailed) -->
         <div class="content-container report-section">
-            <h2><i class='bx bx-star'></i> All Staff Ratings</h2>
-            <p>Complete list of all ratings received by staff members.</p>
+    <h2><i class='bx bx-star'></i> All Staff Ratings</h2>
+    <p>Complete list of all ratings received by staff members.</p>
 
-            <table>
-                <thead>
-                    <tr>
-                        
-                        <th>Date</th>
-                        <th>Employee Name</th>
-                        <th>Position</th>
-                        
-                        <th>Client</th>
-                        <th>Service Date</th>
-                        <th>Service Type</th>
-                        <th>Rating</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php 
-                    if($ratingsResult && $ratingsResult->num_rows > 0):
-                        while($rating = $ratingsResult->fetch_assoc()): 
-                            $ratingClass = 'rating-' . $rating['rating'];
-                    ?>
-                        <tr>
-                            
-                            <td><?php echo date('M d, Y', strtotime($rating['created_at'])); ?></td>
-                            <td><?php echo htmlspecialchars($rating['first_name'] . ' ' . $rating['last_name']); ?></td>
-                            <td><?php echo htmlspecialchars($rating['position'] ?? 'N/A'); ?></td>
-                            
-                            <td><?php echo htmlspecialchars($rating['client_name'] ?? 'N/A'); ?></td>
-                            <td><?php echo $rating['service_date'] ? date('M d, Y', strtotime($rating['service_date'])) : 'N/A'; ?></td>
-                            <td><?php echo htmlspecialchars($rating['service_type'] ?? 'N/A'); ?></td>
-                            <td>
-                                <span class="rating-badge <?php echo $ratingClass; ?>">
-                                    <span class="rating-stars">★</span> <?php echo $rating['rating']; ?>/5
-                                </span>
-                            </td>
-                        </tr>
-                    <?php 
-                        endwhile;
-                    else:
-                    ?>
-                        <tr><td colspan="9" style="text-align:center;">No ratings data found</td></tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
+    <!-- 🔍 SEARCH BAR -->
+    <input type="text" id="ratingsSearch" placeholder="Search..." class="search-input">
+
+    <!-- 📄 SCROLLABLE TABLE WRAPPER -->
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Employee Name</th>
+                    <th>Position</th>
+                    <th>Client</th>
+                    <th>Service Date</th>
+                    <th>Service Type</th>
+                    <th>Rating</th>
+                </tr>
+            </thead>
+
+            <tbody id="ratingsTable">
+                <?php 
+                if($ratingsResult && $ratingsResult->num_rows > 0):
+                    while($rating = $ratingsResult->fetch_assoc()): 
+                        $ratingClass = 'rating-' . $rating['rating'];
+                ?>
+                <tr>
+                    <td><?php echo date('M d, Y', strtotime($rating['created_at'])); ?></td>
+
+                    <td><?php echo htmlspecialchars($rating['first_name'] . ' ' . $rating['last_name']); ?></td>
+
+                    <td><?php echo htmlspecialchars($rating['position'] ?? 'N/A'); ?></td>
+
+                    <td><?php echo htmlspecialchars($rating['client_name'] ?? 'N/A'); ?></td>
+
+                    <td><?php echo $rating['service_date'] ? date('M d, Y', strtotime($rating['service_date'])) : 'N/A'; ?></td>
+
+                    <td><?php echo htmlspecialchars($rating['service_type'] ?? 'N/A'); ?></td>
+
+                    <td>
+                        <span class="rating-badge <?php echo $ratingClass; ?>">
+                            <span class="rating-stars">★</span> <?php echo $rating['rating']; ?>/5
+                        </span>
+                    </td>
+                </tr>
+                <?php 
+                    endwhile;
+                else:
+                ?>
+                <tr>
+                    <td colspan="7" style="text-align:center;">No ratings data found</td>
+                </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+<!-- ✅ CSS -->
+<style>
+/* Search Bar */
+.search-input {
+    width: 250px;
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+/* Scrollable container */
+.table-container {
+    max-height: 350px; /* adjust as needed */
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+
+/* Table styling */
+.table-container table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table-container th,
+.table-container td {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+/* Sticky Header */
+.table-container thead th {
+    position: sticky;
+    top: 0;
+    background: #f4f4f4;
+    z-index: 2;
+}
+</style>
+
+
+<!-- ✅ Search Filter Script -->
+<script>
+document.getElementById('ratingsSearch').addEventListener('keyup', function() {
+    let value = this.value.toLowerCase();
+    let rows = document.querySelectorAll('#ratingsTable tr');
+
+    rows.forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(value) ? '' : 'none';
+    });
+});
+</script>
+
 
     </main>
 </div><div id="logoutModal" class="modal">

@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_employee'])) {
     $position = trim($_POST['position']);
     
     // Hash default password
-    $password = password_hash('employee123', PASSWORD_DEFAULT);
+    $password = password_hash('Employee123!', PASSWORD_DEFAULT);
     $archived = 0; // default active
     
     $stmt = $conn->prepare("INSERT INTO employees (first_name, last_name, email, password, phone_number, age, birthdate, gender, position, archived) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
@@ -322,6 +322,10 @@ th { background: #f4f4f4; }
 .btn--primary:hover {
     background: #0056b3;
 }
+#addEmployeeForm {
+    padding: 30px;
+}
+
 </style>
 </head>
 <body>
@@ -466,7 +470,8 @@ th { background: #f4f4f4; }
                 
                 <div class="form-group">
                     <label>Contact Number *</label>
-                    <input type="text" name="phone_number" id="add_phone_number" required>
+                   <input type="text" name="phone_number" id="add_phone_number" value="+971" required maxlength="16">
+
                 </div>
             </div>
             
@@ -542,7 +547,7 @@ th { background: #f4f4f4; }
                 
                 <div class="form-group">
                     <label>Contact Number *</label>
-                    <input type="text" name="phone_number" id="phone_number" required>
+                    <input type="text" name="phone_number" id="add_phone_number" value="+971" required maxlength="16">
                 </div>
             </div>
             
@@ -597,6 +602,33 @@ th { background: #f4f4f4; }
 </div>
 </div>
 </div>
+<script>
+const phoneInput = document.getElementById("add_phone_number");
+
+// Always ensure +971 shows, even when the user tries to delete it
+phoneInput.addEventListener("input", function () {
+    let val = this.value;
+
+    // Remove everything except numbers and +
+    val = val.replace(/[^0-9+]/g, "");
+
+    // Force prefix +971
+    if (!val.startsWith("+971")) {
+        val = "+971" + val.replace("+971", "");
+    }
+
+    this.value = val;
+});
+
+// Prevent deleting +971 with backspace
+phoneInput.addEventListener("keydown", function (e) {
+    if (this.selectionStart <= 4 && (e.key === "Backspace" || e.key === "Delete")) {
+        e.preventDefault();
+    }
+});
+</script>
+
+
 
 <script>
 const navLinks = document.querySelectorAll('.sidebar__menu .menu__link');

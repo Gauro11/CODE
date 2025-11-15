@@ -556,7 +556,6 @@
 
             <div class="forms-wrapper">
                 <!-- Login Form -->
-                 
                 <form action="login_process.php" method="POST" class="login-form active-form" id="loginFormContainer">
                     <div class="error-message" id="loginError">
                         <i class='bx bx-error-circle'></i>
@@ -577,6 +576,15 @@
                             <i class='bx bx-lock-alt'></i>
                             <input type="password" id="password" name="password" placeholder="Enter your password" required autocomplete="current-password">
                             <i class='bx bx-show-alt password-toggle' data-target="password"></i>
+                        </div>
+                        <div class="password-requirements" id="loginPasswordRequirements">
+                            <ul>
+                                <li id="loginLengthCheck"><i class='bx bx-x'></i> At least 8 characters</li>
+                                <li id="loginUppercaseCheck"><i class='bx bx-x'></i> One uppercase letter (A-Z)</li>
+                                <li id="loginLowercaseCheck"><i class='bx bx-x'></i> One lowercase letter (a-z)</li>
+                                <li id="loginNumberCheck"><i class='bx bx-x'></i> One number (0-9)</li>
+                                <li id="loginSymbolCheck"><i class='bx bx-x'></i> One symbol (!@#$%&*)</li>
+                            </ul>
                         </div>
                         <a href="#" class="forgot-password-link" id="forgotPasswordLink">Forgot Password?</a>
                     </div>
@@ -716,94 +724,94 @@
                 </form>
 
                 <!-- Sign Up Form -->
-                <!-- Sign Up Form -->
-<form action="sign_up.php" method="POST" class="login-form" id="signupFormContainer" novalidate>
-    <div class="error-message" id="signupError">
-        <i class='bx bx-error-circle'></i>
-        <span id="signupErrorText">Please check the form for errors.</span>
-    </div>
+                <form action="sign_up.php" method="POST" class="login-form" id="signupFormContainer" novalidate>
+                    <div class="error-message" id="signupError">
+                        <i class='bx bx-error-circle'></i>
+                        <span id="signupErrorText">Please check the form for errors.</span>
+                    </div>
 
-    <div class="form-row">
-        <div class="form-group">
-            <label for="firstName"><span class="required">*</span> First Name</label>
-            <div class="input-wrapper">
-                <i class='bx bx-user'></i>
-                <input type="text" id="firstName" name="firstName" placeholder="First name" required>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firstName"><span class="required">*</span> First Name</label>
+                            <div class="input-wrapper">
+                                <i class='bx bx-user'></i>
+                                <input type="text" id="firstName" name="firstName" placeholder="First name" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="lastName"><span class="required">*</span> Last Name</label>
+                            <div class="input-wrapper">
+                                <i class='bx bx-user'></i>
+                                <input type="text" id="lastName" name="lastName" placeholder="Last name" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="birthday"><span class="required">*</span> Birthday</label>
+                            <div class="input-wrapper">
+                                <i class='bx bx-calendar'></i>
+                                <input type="date" id="birthday" name="birthday" max="" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="contactNumber"><span class="required">*</span> Contact Number</label>
+                            <div class="input-wrapper">
+                                <i class='bx bx-phone'></i>
+                                <input type="tel" id="contactNumber" name="contactNumber" placeholder="+971XXXXXXXXX" pattern="^\+971[0-9]{9}$" maxlength="13" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="signupEmail"><span class="required">*</span> Email Address</label>
+                        <div class="input-wrapper">
+                            <i class='bx bx-envelope'></i>
+                            <input type="email" id="signupEmail" name="email" placeholder="Enter your email address" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="signupPassword"><span class="required">*</span> Password</label>
+                        <div class="input-wrapper has-toggle">
+                            <i class='bx bx-lock-alt'></i>
+                            <input type="password" id="signupPassword" name="password" placeholder="Create password" required>
+                            <i class='bx bx-show-alt password-toggle' data-target="signupPassword"></i>
+                        </div>
+                        <div class="password-requirements" id="signupPasswordRequirements">
+                            <ul>
+                                <li id="signupLengthCheck"><i class='bx bx-x'></i> At least 8 characters</li>
+                                <li id="signupUppercaseCheck"><i class='bx bx-x'></i> One uppercase letter (A-Z)</li>
+                                <li id="signupLowercaseCheck"><i class='bx bx-x'></i> One lowercase letter (a-z)</li>
+                                <li id="signupNumberCheck"><i class='bx bx-x'></i> One number (0-9)</li>
+                                <li id="signupSymbolCheck"><i class='bx bx-x'></i> One symbol (!@#$%&*)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="confirmPassword"><span class="required">*</span> Confirm Password</label>
+                        <div class="input-wrapper has-toggle">
+                            <i class='bx bx-lock-alt'></i>
+                            <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm password" required>
+                            <i class='bx bx-show-alt password-toggle' data-target="confirmPassword"></i>
+                        </div>
+                        <div class="password-requirements" id="confirmPasswordMatch">
+                            <ul>
+                                <li id="matchCheck"><i class='bx bx-x'></i> Passwords must match</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="login-button">
+                        <i class='bx bx-user-plus'></i>
+                        <span>Create Account</span>
+                    </button>
+                </form>
             </div>
-        </div>
-
-        <div class="form-group">
-            <label for="lastName"><span class="required">*</span> Last Name</label>
-            <div class="input-wrapper">
-                <i class='bx bx-user'></i>
-                <input type="text" id="lastName" name="lastName" placeholder="Last name" required>
-            </div>
-        </div>
-    </div>
-
-    <div class="form-row">
-        <div class="form-group">
-            <label for="birthday"><span class="required">*</span> Birthday</label>
-            <div class="input-wrapper">
-                <i class='bx bx-calendar'></i>
-                <input type="date" id="birthday" name="birthday" max="" required>
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label for="contactNumber"><span class="required">*</span> Contact Number</label>
-            <div class="input-wrapper">
-                <i class='bx bx-phone'></i>
-                <input type="tel" id="contactNumber" name="contactNumber" placeholder="+971XXXXXXXXX" pattern="^\+971[0-9]{9}$" maxlength="13" required>
-            </div>
-        </div>
-    </div>
-
-    <div class="form-group full-width">
-        <label for="signupEmail"><span class="required">*</span> Email Address</label>
-        <div class="input-wrapper">
-            <i class='bx bx-envelope'></i>
-            <input type="email" id="signupEmail" name="email" placeholder="Enter your email address" required>
-        </div>
-    </div>
-
-    <div class="form-group full-width">
-        <label for="signupPassword"><span class="required">*</span> Password</label>
-        <div class="input-wrapper has-toggle">
-            <i class='bx bx-lock-alt'></i>
-            <input type="password" id="signupPassword" name="password" placeholder="Create password" required>
-            <i class='bx bx-show-alt password-toggle' data-target="signupPassword"></i>
-        </div>
-        <div class="password-requirements" id="signupPasswordRequirements">
-            <ul>
-                <li id="signupLengthCheck"><i class='bx bx-x'></i> At least 8 characters</li>
-                <li id="signupUppercaseCheck"><i class='bx bx-x'></i> One uppercase letter (A-Z)</li>
-                <li id="signupLowercaseCheck"><i class='bx bx-x'></i> One lowercase letter (a-z)</li>
-                <li id="signupNumberCheck"><i class='bx bx-x'></i> One number (0-9)</li>
-                <li id="signupSymbolCheck"><i class='bx bx-x'></i> One symbol (!@#$%&*)</li>
-            </ul>
-        </div>
-    </div>
-
-    <div class="form-group full-width">
-        <label for="confirmPassword"><span class="required">*</span> Confirm Password</label>
-        <div class="input-wrapper has-toggle">
-            <i class='bx bx-lock-alt'></i>
-            <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm password" required>
-            <i class='bx bx-show-alt password-toggle' data-target="confirmPassword"></i>
-        </div>
-        <div class="password-requirements" id="confirmPasswordMatch">
-            <ul>
-                <li id="matchCheck"><i class='bx bx-x'></i> Passwords must match</li>
-            </ul>
-        </div>
-    </div>
-
-    <button type="submit" class="login-button">
-        <i class='bx bx-user-plus'></i>
-        <span>Create Account</span>
-    </button>
-</form>
         </div>
     </main>
 
@@ -812,6 +820,7 @@
     </footer>
 
     <script>
+        
 // Tab switching functionality
 const loginTab = document.getElementById('loginTab');
 const signupTab = document.getElementById('signupTab');
@@ -1269,6 +1278,27 @@ function updateRequirement(element, isValid) {
     }
 }
 
+// Password validation for LOGIN
+const loginPassword = document.getElementById('password');
+const loginPasswordRequirements = document.getElementById('loginPasswordRequirements');
+
+function validateLoginPasswordStrength() {
+    const password = loginPassword.value;
+    updateRequirement(document.getElementById('loginLengthCheck'), password.length >= 8);
+    updateRequirement(document.getElementById('loginUppercaseCheck'), /[A-Z]/.test(password));
+    updateRequirement(document.getElementById('loginLowercaseCheck'), /[a-z]/.test(password));
+    updateRequirement(document.getElementById('loginNumberCheck'), /[0-9]/.test(password));
+    updateRequirement(document.getElementById('loginSymbolCheck'), /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password));
+}
+
+if (loginPassword && loginPasswordRequirements) {
+    loginPassword.addEventListener('focus', () => {
+        loginPasswordRequirements.classList.add('show');
+        validateLoginPasswordStrength();
+    });
+    loginPassword.addEventListener('input', validateLoginPasswordStrength);
+}
+
 // Password validation for RESET PASSWORD
 const resetNewPassword = document.getElementById('resetNewPassword');
 const resetConfirmPassword = document.getElementById('resetConfirmPassword');
@@ -1379,6 +1409,6 @@ if (confirmPasswordInput) {
     });
     confirmPasswordInput.addEventListener('input', checkSignupPasswordMatch);
 }
-</script>
+    </script>
 </body>
 </html>
